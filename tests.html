@@ -6,7 +6,7 @@
 			table { empty-cells:show; }
 			th { border:solid black 1px; background-color:#BBFF88; text-align:left; }
 			td { border:solid red 1px; background-color:white; }
-			form { background-color:#BBBBBB; }
+			.fixture { background-color:#BBBBBB; }
 			.match { background-color:white; }
 			.backref { background-color:#E0E0E0; }
 			.highlight { background-color:yellow; margin:1px; }
@@ -119,8 +119,12 @@
 	<body>
 		<script type="text/javascript">
 
+			document.write("<span>"+navigator.userAgent+"</span>");
+
 			for ( f=0 ; f<fixtures.length ; f++ )
 			{
+				document.write("<div class='fixture'>");
+
 				/////////
 				// The following don't work because we cannot distinguish between spaces escaped into '+'
 				// and original '+' once in the destination page
@@ -133,6 +137,7 @@
 				//	document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
 				/////////
 
+				// launches the test
 				document.write("<form onSubmit='javascript:return test(fixtures["+f+"]);'>");
 
 					document.write("<input type='submit' value='TEST'>");
@@ -152,6 +157,19 @@
 					document.write("</table>");
 
 				document.write("</form>");
+
+				// report form
+				document.write("<form action=''>");
+					document.write("<input type='hidden' name='user-agent' value=\""+navigator.userAgent+"\">");
+					document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
+					document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
+					document.write("<input type='hidden' name='highlight' value='"+fixtures[f][2]+"'>");
+					document.write("<input type='hidden' name='parentheses' value='"+fixtures[f][3]+"'>");
+					document.write("Success : <input type='checkbox' name='success'>");
+					document.write("Comment : <textarea name='comment' rows='2' cols='20' style='width:100%;'></textarea>");
+				document.write("</form>");
+
+				document.write("</div>");
 			}
 
 		</script>
