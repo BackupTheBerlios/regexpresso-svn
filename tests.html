@@ -10,6 +10,7 @@
 			.match { background-color:white; }
 			.backref { background-color:#E0E0E0; }
 			.highlight { background-color:yellow; margin:1px; }
+			.error { color:red; }
 		</style>
 
 		<script type="text/javascript">
@@ -84,6 +85,13 @@
 						false,
 						true,
 						["No match"]
+					],
+					[
+						"Any subject",
+						"<([A-Z][A-Z0-9]*)[^>]*>(.*?)</\1>",
+						false,
+						false,
+						["<span class='error'>A syntax exception is thrown.</span>"]
 					]
 				];
 
