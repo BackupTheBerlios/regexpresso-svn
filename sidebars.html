@@ -87,7 +87,7 @@
 		The general way to add a page to this sidebar is to call the API with the following Javascript snippet.
 <div class="code">
 <pre>&lt;SCRIPT type="Javascript"&gt;
-&lt;--
+&lt;!--
    function addNetscapePanel() {
       if ((typeof window.sidebar == "object") && (typeof window.sidebar.addPanel == "function"))
       {
@@ -118,7 +118,7 @@
 				<li>Although the <var>document</var> object references the sidebar itself in the Javascript code,
 				when it is used in "global" calls like <code>onClick</code> events,
 				it references the <var>document</var> object of the current context (i.e. the current main window).
-				So beware with the following code : <code>open("title",document.href,"width=240,height=240");</code>.
+				So beware with the following code : <code>open(document.href,"target","width=240,height=240");</code>.
 				If placed in an <code>onClick</code> event, for instance, it will open a new window with the main window's location,
 				not the sidebar's one.
 				
@@ -158,10 +158,11 @@
 <pre>&lt;a href="mysidebar.html" target="_search"&gt;Drag this link to your bookmarks bar.
 You can then click on this it to open mysidebar in the search pane.&lt/a&gt;</pre>
 </div>
-		From the search bar, one can access the main window using the <var>_main</var> target.
-		By the way, this now works with Firefox when used in an anchor (not a call to the Javascript <code>window.open</code> method).
 		Note that by clicking on such a link, the user will only open it in its search bar, not add it to its bookmarks.
 		This must be done by the user himself (like for any ordinary link).
+		From the search bar, one can access the main window using the <var>_main</var> target.
+		This also works with Firefox when used in an anchor (not a call to the Javascript <code>window.open</code> method).
+		With Firefox, don't use the <code>rel="sidebar"</code> attribute (see <a href="#rel">this section<a>).
 		</p>
 
 		<p>There is also another way : by linking to a custom <tt>.reg</tt> file.
@@ -252,7 +253,7 @@ You can then click on this it to open mysidebar in the search pane.&lt/a&gt;</pr
 		<p>As you can see, not a single line is matched by all browsers :(<br>
 		And make no mistake : Netscape, Mozilla and Firefox are so close
 		that they are most of the time taken as the same "family" of browsers,
-		so the <q>window.sidebar.addPanel</q> method is not more used in fact.
+		so the <code>window.sidebar.addPanel</code> method is not the most used, in fact.
 		</p>
 
 	</div>
@@ -264,8 +265,8 @@ You can then click on this it to open mysidebar in the search pane.&lt/a&gt;</pr
 		<h2>Other links</h2>
 
 		<ul>
-			<li><a href="http://tntluoma.com/sidebars/">Cool page and good links, mostly for Opera</a>
-			<li><a href="http://regexpresso.developer.berlios.de">RegExpresso, a sidebar based on this document</a>
+			<li><a href="http://tntluoma.com/sidebars/">A cool page with good links, mostly for Opera</a>
+			<li><a href="http://regexpresso.berlios.de">RegExpresso, a sidebar based on this document</a>
 			<li><a href="http://home.arcor.de/xbo/sidebar-cross-browser/">Cross-browser sidebar links</a>
 			<li><span class="warning">Missing links</span>
 		</ul>
