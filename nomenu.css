@@ -1,0 +1,5 @@
+/*
+	Removes the menu from the view.
+	Currently, it stills take some place (this is the behaviour of visibility:hidden).
+*/
+.menu { visibility:hidden; }

@@ -5,8 +5,8 @@ h1 small { color:gray; font-style:italic; }
 td, th { border:solid black 1px; }
 caption { font-size:large; font-weight:bold; }
 .url { font-weight:bold; background-color:#E0E0E0; }
-.var { font-weight:bold; }
-.var:before, .var:after { content:"\""; }
+var { font-weight:bold; }
+var:before, var:after { content:"\""; }
 .author { text-decoration:none; }
 span.author:before { content:"<"; }
 span.author:after { content:">"; }

@@ -43,7 +43,7 @@
 			<li><a href="#tips">Tips
 				<ul>
 					<li>How to remove the empty matches from the view ?
-					<li>RegExpresso executes when loading if both <span class="var">regex</span> and <span class="var">subject</span> are given in the URL.
+					<li>RegExpresso executes when loading if both <var>regex</var> and <var>subject</var> are given in the URL.
 					<li>Local installation
 				</ul></a>
 			<li><a href="#links">Other links</a>
@@ -69,7 +69,7 @@
 			<li><span class="regex">A regular expression</span>
 			<li><span class="outdated">Outdated / not accurate content</span>
 			<li><span class="url">A URL</span>
-			<li><span class="var">Any kind of variable / named parameter</span>
+			<li><var>Any kind of variable / named parameter</var>
 		</ul>
 
 	</div>
@@ -128,7 +128,9 @@
 		<h2>Quick start</h2>
 
 		<p>
-			<a href="javascript:void(open('regexpresso.html','_search'));" title="Bookmark this link to open it in Internet Explorer's sidebar"><img src="IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a>
+			<a href="regexpresso.html" target="_search">toto</a><br>
+			<!--a href="javascript:void(open('regexpresso.html','_search'));" title="Bookmark this link to open it in Internet Explorer's sidebar"><img src="IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a-->
+			<a href="regexpresso.html" target="_search" title="Bookmark this link to open it in Internet Explorer's sidebar"><img src="IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a>
 			<a href="javascript:netscape_addPanel('Regular expressions evaluator','http://regexpresso.berlios.de/regexpresso.html');" title="Add to Netscape/Mozilla sidebar"><img src="NS-sidebar.png" alt="Add to Netscape/Mozilla sidebar"></a>
 			<a href="regexpresso.html" rel="sidebar" title="RegExpBar"><img src="Opera-sidebar.png" alt="Add to Opera sidebar" title="Add to Opera sidebar"></a>
 			<a href="javascript:void(open('regexpresso.html','_blank','width=240,height=640,scrollbars=yes,resizable=yes'));" title="Test this tool online"><img src="new-47x50.png" width="48px"></a>
@@ -158,9 +160,9 @@
 			</ul>
 		where :
 			<ul>
-				<li><span class="var">pattern</span> is <a href="http://www.regular-expressions.info/reference.html">the regular expression pattern</a>
-				<li><span class="var">modifiers</span> is <a href="http://www.webreference.com/js/column5/modifiers.html">a sequence of characters in {'g','i'}</a>
-				<li><span class="var">replace</span> is <a href="http://www.webreference.com/js/column5/substitute.html">a substitution pattern</a>
+				<li><var>pattern</var> is <a href="http://www.regular-expressions.info/reference.html">the regular expression pattern</a>
+				<li><var>modifiers</var> is <a href="http://www.webreference.com/js/column5/modifiers.html">a sequence of characters in {'g','i'}</a>
+				<li><var>replace</var> is <a href="http://www.webreference.com/js/column5/substitute.html">a substitution pattern</a>
 			</ul>
 		</p>
 
@@ -172,7 +174,7 @@
 
 		<p><img src="menu.png"></p>
 
-		<p>There is an auto-hiding menu at the top of the window, that proposes different ways to open RegExpresso's window.</p>
+		<p>There is an auto-hiding menu at the top of the window that proposes different ways to open RegExpresso's window.</p>
 
 		<ul>
 			<li><img src="IE-22x22.png"> : Opens RegExpresso in Internet Explorer's search bar.
@@ -200,7 +202,7 @@
 		</ul>
 		While the formers can be altered by the user simply by typing some text in the web page,
 		the latters require the user to add them directly to the URL used to call the tool.
-		Indeed, those parameters are not frequently used, and it would have been a waste of space to include them in the form.
+		Indeed, those parameters are not frequently used, and it would have been wasting space to include them in the form.
 		Additionally, the form parameters can be passed in the URL the same way, so one can bookmark the full URL with parameters
 		to retrieve a given configuration of the tool.
 		</p>
@@ -217,17 +219,17 @@
 			</thead>
 			<tbody>
 				<tr>
-					<td><span class="var">subject</span></td>
+					<td><var>subject</var></td>
 					<td>A text area where to put the text the regular expression will parse.</td>
 					<td>Any text will do it.</td>
 				</tr>
 				<tr>
-					<td><span class="var">regex</span></td>
+					<td><var>regex</var></td>
 					<td>The regular expression, using the Perl syntax (<a href="http://www.webreference.com/js/column5/modifiers.html">Javascript restrictions</a> applied).</td>
 					<td><span class="regex">/\b\w*(e)/i</span> will match all words ending with 'e' or 'E'</td>
 				</tr>
 				<tr>
-					<td><span class="var">highlight</span></td>
+					<td><var>highlight</var></td>
 					<td>Switch the 'highlight' mode, where matches are highligthed and printed at their normal place in the subject,
 					so we don't loose the surrounding context.
 					In normal mode (highlight is unchecked), the matches are displayed one after another, line by line.
@@ -235,7 +237,7 @@
 					<td>checked/"on" = highlight mode ; unchecked/""(empty) = normal mode</td>
 				</tr>
 				<tr>
-					<td><span class="var">backref</span></td>
+					<td><var>backref</var></td>
 					<td>When using capturing parentheses in the regular expression,
 					there may be one or more "sub-matches" for every match.
 					This option tells whether or not to show them.
@@ -252,14 +254,14 @@
 			</thead>
 			<tbody>
 				<tr>
-					<td><span class="var">stylesheet</span></td>
+					<td><var>stylesheet</var></td>
 					<td>An URL to a stylesheet of type "text/css" to add to the tool.
 						Since this is CSS, this stylesheet can override the style attributes already defined in the default one embedded in RegExpresso.
 						</td>
 					<td>Any valid URL to a CSS stylesheet will do it.</td>
 				</tr>
 				<tr>
-					<td><span class="var">empty</span></td>
+					<td><var>empty</var></td>
 					<td>In highlight mode, empty matches are replaced by the "empty set" character :
 						<span class="unicode">&empty;</span> (may not be correctly rendered here).
 						This parameter can be set to change this default character.
@@ -282,7 +284,7 @@
 		<p>Basically, that means you can copy, modify and distribute this tool without any restrictions.
 		By the way, I would be happy to hear of any usage of RegExpresso :).
 		Any comment should be directed to the address located at the top of this page.<br>
-		The online RegExpresso page has most of its comments stripped, in order to reduce its size by some kilo-octets for faster loading.
+		If you look at the source of RegExpresso's page, you will find that the page has most of its comments stripped, in order to reduce its size by some kilo-octets for faster loading.
 		You can have a look at the full original code as well as the whole project at <a href="http://developer.berlios.de/projects/regexpresso">http://developer.berlios.de/projects/regexpresso</a>.
 		</p>
 
@@ -292,7 +294,7 @@
 
 		<h2>Tips</h2>
 
-		<h3>How to remove the empty matches from the view ?</h3>
+		<h3>How to remove all empty matches from the view ?</h3>
 
 		<p>The short answer : call this URL : <a href="http://regexpresso.berlios.de/regexpresso.html?empty=&stylesheet=http://regexpresso.berlios.de/noempty.css">http://regexpresso.berlios.de/regexpresso.html?empty=&amp;stylesheet=http://regexpresso.berlios.de/noempty.css</a>.
 		</p>
@@ -306,9 +308,9 @@
 		You can find such a stylesheet at <a href="http://regexpresso.berlios.de/noempty.css">http://regexpresso.berlios.de/noempty.css</a>.</ul>
 		</p>
 
-		<h3>RegExpresso executes when loading if both <span class="var">regex</span> and <span class="var">subject</span> are given in the URL.</h3>
+		<h3>RegExpresso executes when loading if both <var>regex</var> and <var>subject</var> are given in the URL.</h3>
 
-		<p>So you can use such URLs to remember or show the result of a regular expression.
+		<p>So you can use such URLs to remember or show the result of a regular expression without no user intervention at all.
 		</p>
 
 		<div class="outdated"><a name="local"></a>
