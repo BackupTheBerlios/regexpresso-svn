@@ -1,0 +1,151 @@
+<html>
+	<head>
+		<title>Unit tests for regexpresso</title>
+
+		<style type="text/css">
+			table { empty-cells:show; }
+			th { border:solid black 1px; background-color:#BBFF88; text-align:left; }
+			td { border:solid red 1px; background-color:white; }
+			form { background-color:#BBBBBB; }
+			.match { background-color:white; }
+			.backref { background-color:#E0E0E0; }
+			.highlight { background-color:yellow; margin:1px; }
+		</style>
+
+		<script type="text/javascript">
+
+			/**
+				Each entry of this array is like : [
+						subject::String,
+						regex::String,
+						highlight::Boolean,
+						parentheses::Boolean [,
+							match::String [,
+								match_parenthese::String,
+								...
+								]
+							]
+						]
+				@todo ? compute automatically the results rather than giving them in this array
+			*/
+			var fixtures = [
+					[	"START http://cbonar.free.fr/regexpresso/regexpresso.html END",
+						"/(\\w+):\\/\\/([^\\/:]+)(:\\d*)?([^# ]*)/",
+						false,
+						true,
+						[
+							"http://cbonar.free.fr/regexpresso/regexpresso.html",
+							"http",
+							"cbonar.free.fr",
+							"",
+							"/regexpresso/regexpresso.html"
+						]
+					],
+					[	"One Two Three",
+						"s/^([^ ]+) +([^ ]+)/$2 $1",
+						true,
+						false,
+						["<span class='highlight'>Two One</span> Three"]
+					],
+					[	"[Paste here the text to Evaluate]",
+						"/e/",
+						true,
+						true
+					],
+					[	"[Paste here the text to Evaluate]",
+						"/e/g",
+						true,
+						true
+					],
+					[	"[Paste here the text to Evaluate]",
+						"/e/i",
+						true,
+						true
+					],
+					[	"[Paste here the text to Evaluate]",
+						"/e/gi",
+						true,
+						true
+					],
+					[	"[Paste here the text to Evaluate]",
+						"/e/ig",
+						true,
+						true
+					],
+					[	"START http://cbonar.free.fr/regexpresso/regexpresso.html END",
+						"",
+						true,
+						true,
+						["A match between every character"]
+					],
+					[
+						"START http://cbonar.free.fr/regexpresso/regexpresso.html END",
+						"/toto",
+						false,
+						true,
+						["No match"]
+					]
+				];
+
+			/**
+				Open a window with the results of a fixture.
+				This function is able to escape correctly '+' signs.
+
+				@param fixture
+					One entry of the 'fixtures' array
+			*/
+			function test( fixture )
+			{
+				var url = "regexpresso.html";
+				url += "?subject=" + escape(fixture[0]).replace(/\+/g,"%2B");
+				url += "&regex=" + escape(fixture[1]).replace(/\+/g,"%2B");
+				if ( fixture[2] )
+					url += "&highlight=on";
+				if ( fixture[3] )
+					url += "&parentheses=on";
+				open(url,"test");
+				return false;
+			}
+		</script>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+			for ( f=0 ; f<fixtures.length ; f++ )
+			{
+				/////////
+				// The following don't work because we cannot distinguish between spaces escaped into '+'
+				// and original '+' once in the destination page
+				// Instead we forge the URL and call a "window.open" on it.
+				/////////
+				//document.write("<form action='regexpresso.html' target='test' method='get'>");
+				//	//document.write("<input type='hidden' name='highlight' value='on'>");
+				//	document.write("<input type='hidden' name='parentheses' value='on'>");
+				//	document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
+				//	document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
+				/////////
+
+				document.write("<form onSubmit='javascript:return test(fixtures["+f+"]);'>");
+
+					document.write("<input type='submit' value='TEST'>");
+
+					document.write("<table>");
+						document.write("<tr><th>"+fixtures[f][0]+"</th></tr>");
+						document.write("<tr><th>"+fixtures[f][1]+"</th></tr>");
+						document.write("<tr><th>highlight="+fixtures[f][2]+"</th></tr>");
+						document.write("<tr><th>parentheses="+fixtures[f][3]+"</th></tr>");
+						var results = fixtures[f][fixtures[f].length-1];
+						if ( results[0] != undefined )
+						{
+							document.write("<tr><td class='match'>"+results[0]+"</td></tr>");
+							for ( r=1 ; r<results.length ; r++ )
+								document.write("<tr><td class='backref'>"+results[r]+"</td></tr>");
+						}
+					document.write("</table>");
+
+				document.write("</form>");
+			}
+
+		</script>
+	</body>
+</html>

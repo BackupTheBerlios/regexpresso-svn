@@ -1,0 +1,3 @@
+/* Hide empty matches */
+.match_empty, .backref_empty, .highlight_empty { border:none; visibility:hide; }
+table { empty-cells:hide; }

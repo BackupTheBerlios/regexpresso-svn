@@ -1,0 +1,344 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html>
+
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta name="description" content="A regular expressions quick tester">
+	<meta name="author" content="cbonar@users.berlios.de">
+	<meta name="robots" content="index">
+	<meta name="keywords" content="regexpresso regular expressions expression sidebar javavascript tester evaluator">
+
+	<link rel="stylesheet" type="text/css" href="presto.css">
+
+	<script type="text/javascript" src="NS-sidebar.js"></script>
+
+	<title>RegExpresso's page</title>
+</head>
+
+<body>
+
+	<div>
+		<a href="http://developer.berlios.de"><img align="right" src="http://developer.berlios.de/bslogo.php?group_id=3235&type=1" width="124" height="32" border="0" alt="BerliOS Logo"></a>
+		<span class="author"><a href="mailto:cbonar@users.berlios.de" class="author">cbonar@users.berlios.de</a></span>
+	</div>
+
+	<hr>
+
+	<h1>RegEx<span class="presto">presso</span><br><small>Regular expressions, quick and dirty !</small></h1>
+
+	<div>
+		<h2>Index</h2>
+
+		<ul>
+			<li><a href="#introduction">Introduction</a>
+			<li><a href="#notations">Notations used in this document</a>
+			<li><a href="#requirements">Browser requirements / specifications</a>
+			<li><a href="#bugs">Known bugs and limitations</a>
+			<li><a href="#quickstart">Quick start</a>
+			<li><a href="#syntax">Regular expressions syntax</a>
+			<li><a href="#menu">Menu</a>
+			<li><a href="#params">Parameters</a>
+			<li><a href="#local" class="outdated">Local installation</a>
+			<li><a href="#license">Copyright and source</a>
+			<li><a href="#tips">Tips
+				<ul>
+					<li>How to remove the empty matches from the view ?
+					<li>RegExpresso executes when loading if both <span class="var">regex</span> and <span class="var">subject</span> are given in the URL.
+					<li>Local installation
+				</ul></a>
+			<li><a href="#links">Other links</a>
+		</ul>
+	</div>
+
+	<div><a name="introduction"></a>
+		<h2>Introduction</h2>
+
+		<p>This tool is mainly for programmers. It helps testing a regular expression before using it in some code.
+		There's not as many features as in professional tools, since it is intended only to quickly test a short regular expression.
+		Depending on your computer's capacities, the size of the subject to parse and the complexity of the regular expression,
+		it may take more or less of your microprocessor's time to process the expression.
+		Be sure to use reasonably-sized expressions and reasonable amounts of text.
+		</p>
+	</div>
+
+	<div><a name="notations"></a>
+
+		<h2>Notations used in this document</h2>
+
+		<ul>
+			<li><span class="regex">A regular expression</span>
+			<li><span class="outdated">Outdated / not accurate content</span>
+			<li><span class="url">A URL</span>
+			<li><span class="var">Any kind of variable / named parameter</span>
+		</ul>
+
+	</div>
+
+	<div><a name="requirements"></a>
+		<h2>Browser requirements / specifications</h2>
+
+		<ul>
+			<li>The regular expressions flavour is the one of Javascript 1.2, which is similar to Perl's one.<br>
+			<li>Javascript 1.5 is needed (because of exception handling).
+			<li>DOM Level 2 support
+			<li>CSS 2 compatible
+			<li>
+				A fast computer, since there are some intensive calculations.<br>
+				For instance, I have found Konqueror requiring several explicit confirmations to continue executing the script
+				because it was too slow (heavy load) on a Pentium III 450 MHz with 128 MB SDRAM. Of course, there was a large amount of data.
+				I will probably set up some kind of benchmark to have a better idea of the power needed.
+		</ul>
+
+		<p>Some successful platforms :
+		<ul>
+			<li>Windows XP
+				<ul>
+					<li>Internet Explorer 6 SP2
+					<li>Firefox 1.0.1
+					<li>Mozilla 1.7.3
+					<li>Opera 7.54
+				</ul>
+			<li>Windows 2000
+				<ul>
+					<li>Internet Explorer 6 SP1
+					<li>Netscape 7.2
+					<li>Firefox 0.9.1
+					<li>Opera 7.54
+				</ul>
+			<li>GNU/Linux 2.6 (Mandrake 10.0)
+				<ul>
+					<li>Konqueror 3.2.0
+					<li>Mozilla 1.6
+				</ul>
+		</ul>
+	</div>
+
+	<div><a name="bugs"></a>
+		<h2>Known bugs and limitations</h2>
+
+		<ul>
+			<li>The Javascript RegExp class has some limitations as stated in the following article : <a href="http://www.webreference.com/js/column5/modifiers.html">http://www.webreference.com/js/column5/modifiers.html</a>
+			<li>Needs to be tested with other browsers, especially Safari.
+			<li>Behaviour of the menu's buttons depends greatly on the context of the tool : is it in the sidebar, the main window or a separate window ?
+		</ul>
+	</div>
+
+	<div><a name="quickstart"></a>
+
+		<h2>Quick start</h2>
+
+		<p>
+			<a href="javascript:void(open('regexpresso.html','_search'));" title="Bookmark this link to open it in Internet Explorer's sidebar"><img src="IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a>
+			<a href="javascript:netscape_addPanel('Regular expressions evaluator','http://regexpresso.berlios.de/regexpresso.html');" title="Add to Netscape/Mozilla sidebar"><img src="NS-sidebar.png" alt="Add to Netscape/Mozilla sidebar"></a>
+			<a href="regexpresso.html" rel="sidebar" title="RegExpBar"><img src="Opera-sidebar.png" alt="Add to Opera sidebar" title="Add to Opera sidebar"></a>
+			<a href="javascript:void(open('regexpresso.html','_blank','width=240,height=640,scrollbars=yes,resizable=yes'));" title="Test this tool online"><img src="new-47x50.png" width="48px"></a>
+		</p>
+
+		<ol>
+			<li>Open the tool's web page or add it to your browser's sidebar by clicking on one of the above links / pictures
+			<li>Paste the text to parse in the top text area
+			<li>Type a regular expression in the middle field
+			<li>Validate by either clicking on the button or typing Enter
+			<li>The matches are shown in the bottom of the page
+			<li>For instance : copy and paste this page's content into the text field, and type the following pattern : <span class="regex">/\be\w*\b/i</span> to match all word beginning with a 'e' or a 'E'
+
+		</ol>
+
+	</div>
+
+	<div><a name="syntax"></a>
+
+		<h2>Regular expressions syntax</h2>
+
+		<p>The regular expression you are awaited to type in the middle field follows Perl's regular expressions syntax.
+		That means : <span class="regex">command/options/modifiers</span>. Only two commands are supported : "match" and "replace".
+			<ul>
+				<li>To obtain the matches of a regular expression, type : <span class="regex">m/pattern/modifiers</span> or <span class="regex">/pattern/modifiers</span>,
+				<li>To obtain the result of a substitution, type : <span class="regex">s/pattern/replace/modifiers</span>.
+			</ul>
+		where :
+			<ul>
+				<li><span class="var">pattern</span> is <a href="http://www.regular-expressions.info/">the regular expression pattern</a>
+				<li><span class="var">modifiers</span> is <a href="http://www.webreference.com/js/column5/modifiers.html">a sequence of characters in {'g','i'}</a>
+				<li><span class="var">replace</span> is <a href="http://www.webreference.com/js/column5/substitute.html">a substitution pattern</a>
+			</ul>
+		</p>
+
+	</div>
+
+	<div><a name="menu"></a>
+	
+		<h2>Menu</h2>
+
+		<p><img src="menu.png"></p>
+
+		<p>There is an auto-hiding menu at the top of the window, that proposes different ways to open RegExpresso's window.</p>
+
+		<ul>
+			<li><img src="IE-22x22.png"> : Opens RegExpresso in Internet Explorer's search bar.
+				If you bookmark this link, it will open in the search bar every time you call it.
+			<li><img src="Moz-22x22.png"> : Adds RegExpresso as a new panel to the sidebar of Netscape/Mozilla familly browsers.
+			<li><img src="Opera-22x22.png"> : Adds RegExpresso as a new panel to the sidebar of Opera. This also works with Firefox.
+			<li><img src="new-22x22.png"> : Opens a new RegExpresso window, sized like a toolbar. The current content of the fields is lost.
+			<li><img src="main-22x22.png"> : Opens the current RegExpresso (keeps the fields values) in the "_main" target.
+				With Netscape/Mozilla and Internet Explorer, the "_main" target corresponds to the current browser's window.
+				With other browsers, this should be a new blank window, except if there is already a frame/window named "_main".
+				This is intended to be used only from the sidebar.
+				Since this is a standard link, and since it is updated every time the form is validated,
+				one can bookmark it, or open it using the contextual menus provided by the browser, which may bring more control.
+		</ul>
+
+	</div>
+
+	<div><a name="params"></a>
+		<h2>Parameters</h2>
+
+		<p>RegExpresso uses two kind of parameters :
+		<ul>
+			<li>standard form fields
+			<li>URL parameters
+		</ul>
+		While the formers can be altered by the user simply by typing some text in the web page,
+		the latters require the user to add them directly to the URL used to call the tool.
+		Indeed, those parameters are not frequently used, and it would have been a waste of space to include them in the form.
+		Additionally, the form parameters can be passed in the URL the same way, so one can bookmark the full URL with parameters
+		to retrieve a given configuration of the tool.
+		</p>
+
+		<p>In the following tables, the "short name" is the name to use in the URL for this parameter.
+		For instance : <span class="url">http://regexpresso.berlios.de/regexpresso.html?highlight=on&amp;stylesheet=http://toto.com/mystyle.css</span>
+		would lead to an instance of the tool with "highlight" checked and a custom stylesheet located at <span class="url">http://toto.com/mystyle.css</span>.
+		</p>
+
+		<p><table>
+			<caption>Parameters accessed via the web form.<br></caption>
+			<thead>
+				<tr><th>Short name</th><th>Description</th><th>Examples / values</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><span class="var">subject</span></td>
+					<td>A text area where to put the text the regular expression will parse.</td>
+					<td>Any text will do it.</td>
+				</tr>
+				<tr>
+					<td><span class="var">regex</span></td>
+					<td>The regular expression, using the Perl syntax (<a href="http://www.webreference.com/js/column5/modifiers.html">Javascript restrictions</a> applied).</td>
+					<td><span class="regex">/\b\w*(e)/i</span> will match all words ending with 'e' or 'E'</td>
+				</tr>
+				<tr>
+					<td><span class="var">highlight</span></td>
+					<td>Switch the 'highlight' mode, where matches are highligthed and printed at their normal place in the subject,
+					so we don't loose the surrounding context.
+					In normal mode (highlight is unchecked), the matches are displayed one after another, line by line.
+					</td>
+					<td>checked/"on" = highlight mode ; unchecked/""(empty) = normal mode</td>
+				</tr>
+				<tr>
+					<td><span class="var">backref</span></td>
+					<td>When using capturing parentheses in the regular expression,
+					there may be one or more "sub-matches" for every match.
+					This option tells whether or not to show them.
+					</td>
+					<td>checked/"on" = show back references ; unchecked/""(empty) = don't show</td>
+				</tr>
+			</tbody>
+		</table></p>
+
+		<p><table>
+			<caption>Parameters given in the URL only</caption>
+			<thead>
+				<tr><th>Short name</th><th>Description</th><th>Examples / values</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><span class="var">stylesheet</span></td>
+					<td>An URL to a stylesheet of type "text/css" to add to the tool.
+						Since this is CSS, this stylesheet can override the style attributes already defined in the default one embedded in RegExpresso.
+						</td>
+					<td>Any valid URL to a CSS stylesheet will do it.</td>
+				</tr>
+				<tr>
+					<td><span class="var">empty</span></td>
+					<td>In highlight mode, empty matches are replaced by the "empty set" character :
+						<span class="unicode">&empty;</span> (may not be correctly rendered here).
+						This parameter can be set to change this default character.
+						</td>
+					<td>Any character or string (preferably encoded in UTF-8).</td>
+				</tr>
+			</tbody>
+		</table></p>
+
+	</div>
+
+	<div><a name="license"></a>
+
+		<h2>Copyright and source</h2>
+
+		<p><div class="license">Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!<br>
+		See <a href="http://developer.berlios.de/register/publicdomain.txt">http://developer.berlios.de/register/publicdomain.txt</a> for more info on this license.</div>
+		</p>
+
+		<p>Basically, that means you can copy, modify and distribute this tool without any restrictions.
+		By the way, I would be happy to hear of any usage of RegExpresso :).
+		Any comment should be directed to the address located at the top of this page.<br>
+		The online RegExpresso page has most of its comments stripped, in order to reduce its size by some kilo-octets for faster loading.
+		You can have a look at the full original code as well as the whole project at <a href="http://developer.berlios.de/projects/regexpresso">http://developer.berlios.de/projects/regexpresso</a>.
+		</p>
+
+	</div>
+
+	<div><a name="tips"></a>
+
+		<h2>Tips</h2>
+
+		<h3>How to remove the empty matches from the view ?</h3>
+
+		<p>The short answer : call this URL : <a href="http://regexpresso.berlios.de/regexpresso.html?empty=&stylesheet=http://regexpresso.berlios.de/noempty.css">http://regexpresso.berlios.de/regexpresso.html?empty=&amp;stylesheet=http://regexpresso.berlios.de/noempty.css</a>.
+		</p>
+		<p>Now, the explanation.
+			<ul>
+			<li>You must first empty the filler string by setting it to an empty string in the URL calling RegExpresso.
+		Here is a sample URL : <span class="url">http://regexpresso.berlios.de/regexpresso.html?empty=</span>.<br>
+		<li>With most browsers, you will still have the borders printed at the place of the empty match.
+		To remove them as well, you must provide RegExpresso a custom stylesheet with borders removed for the empty matches.
+		Once again, this is done by using the a parameter of the URL, like : <span class="url">http://regexpresso.berlios.de/regexpresso.html?stylesheet=http://myhost/my.css</span>.
+		You can find such a stylesheet at <a href="http://regexpresso.berlios.de/noempty.css">http://regexpresso.berlios.de/noempty.css</a>.</ul>
+		</p>
+
+		<h3>RegExpresso executes when loading if both <span class="var">regex</span> and <span class="var">subject</span> are given in the URL.</h3>
+
+		<p>So you can use such URLs to remember or show the result of a regular expression.
+		</p>
+
+		<div class="outdated"><a name="local"></a>
+
+			<h3>Local installation</h3>
+
+			<p>You can download the files for local use, but there are limits :
+				<ul>
+					<li>Opera : buttons "open in main window" and "open a new window" won't work because the URL contains parameters ("?param1=...&amp;param2=...")
+					that Opera cannot understand on local files ("file://" protocol).
+					<li>Firefox : button "open a new window" won't work from the sidebar because it is loaded from the context of the main window,
+					which will not permit to open local files due to security reasons.
+					<li>With some other browser that may use relative URL in the case of local files,
+					there may be security locks that prohibit opening such an URL from the sidebar, depending on the context of the current main window.
+				</ul>
+			</p>
+		</div>
+	</div>
+
+	<div><a name="links"></a>
+
+		<h2>Other links</h2>
+
+		<a href="http://www.regular-expressions.info/javascript.html">An introduction to regular expressions</a><br>
+		<a href="http://www.webreference.com/js/column5/index.html">A comprehensive article Javascript regular expressions</a><br>
+	</div>
+
+
+	<br><br><br><hr>last update : 20050302
+
+</body>
+
+</html>

@@ -1,0 +1,765 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="Content-Language" content="en">
+		<meta name="author" content="cbonar@users.berlios.de">
+		<meta name="date" content="20050227">
+		<meta name="copyright" content="Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy! See http://www.sourceforge.net/register/publicdomain.txt for more info on this license.">
+		<meta name="robots" content="noindex,nofollow">
+		<meta name="description" content="A quick regular expressions tester">
+		<meta name="keywords" content="regexpresso regular expressions expression sidebar javavascript tester evaluator">
+
+		<title>RegExpresso</title>
+
+
+
+		<!--
+			Embedded, default, standalone style
+		-->
+		<style type="text/css">
+		<!--
+			/* generic style */
+			body { background-color:#EEEEEE; }
+			div { margin-top:4px; margin-bottom:4px; }
+			table { empty-cells:show; }
+			/* the title */
+			.title { font-family:arial,verdana,courier; font-size:larger; font-weight:bold; }
+			.presto { font-style:italic; color:red; }
+			/* important messages */
+			.error { color:red; }
+			.warning { background-color:red; color:white; font-weight:bold; padding:2pt; }
+			/* form fields */
+			#subject, #regex, #output { width:100%; }
+			.button { width:auto; text-align:center; }
+			.options { font-size:small; }
+			/* generic style for a match */
+			.match, .match_empty { border:solid red 1px; background-color:#ffffe1; }
+			/* backreference shown as a unique element */
+			.backref, .backref_empty { border:solid gray 1px; background-color:#FFFFE1; }
+			/* alternate appearance of the description fields */
+			.desc_again { font-style:italic; }
+			/* how to style a regular expression */
+			.regex { background:#FFFFE1; font-weight:bold; padding-left:.2em; padding-right:.2em; border:dotted #000000 1px; }
+			/* the menu */
+			span.menu { position:fixed; top:-15px; left:0; }
+			span.menu:hover, span.menu#hover { top:0; }
+			img.menu { border:none; border-bottom:solid gray 1px; border-top:solid white 1px; }
+			img.menu:hover, img.menu#hover { cursor:pointer; }
+			/* documentation / external resources */
+			a.doc { text-decoration:none; }
+			/* highlight mode */
+			.highlight { background-color:#DBFF00; border:dotted #999999 1px; }
+			.highlight_empty { background-color:yellow; border:dotted #999999 1px; }
+			/** Unfortunately (I'm starting to believe it's not due to misfortune),
+				IE messes up the ".highlight>.highlight" CSS 2 notation,
+				so we must use a separate class to render highlights inside highlights.
+				Don't even think about having :before and :after working with IE, either. */
+			.highlight_backref { background-color:white; border:none; border-left:dotted #999999 1px; }
+			.highlight_backref:before { content:"("; }
+			.highlight_backref:after { content:")"; }
+			/* empty matches : for those browsers that just cannot guess the right font by themselves ; tested on WinXP only */
+			.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:xx-small; }
+		-->
+		</style>
+		<!-- IE specific style -->
+		<!--[if IE]>
+			<style type="text/css">
+				/* no support for 'position:fixed;' however 'absolute' is not far */
+	     			span.menu { position:absolute; top:expression(document.body.scrollTop-15); }
+	     			/* no ':hover' selector : the element under the cursor has its id changed to 'hover' by script */
+				span.menu#hover { top:expression(document.body.scrollTop); }
+	     		</style>
+		<![endif]-->
+
+
+		<!--
+			Compatibility section.
+			Maybe should we check at the beginning of every function...
+			I personally prefer not to restrict the user... after all he has been warned.
+			However, this could become necessary if not all functions require the same compatibility level.
+		-->
+		<noscript type="text/javascript">
+			<div class="warning">
+			WARNING : Your browser does not support Javascript or it is disabled.
+			You need it to be enabled to use this tool.
+			</div>
+		</noscript>
+		<script type="text/javascript">
+		<!--
+			// indicates whether or not all tests were successfull
+			var is_compatible = true;
+			if ( ! window.RegExp )
+			{
+				is_compatible = false;
+				document.write("\
+					<div class='warning'>\
+					WARNING : It seems that your browser does not support Javascript 1.5 regular expressions.\
+					You won't be able to run this tool.\
+					</div>\
+					");
+			}
+
+
+			/**
+				@returnval the version of IE
+				@returnval 0 if not an IE browser
+				@author http://support.microsoft.com/default.aspx?scid=kb;fr;468730
+					First time ever I find accurate documentation on msdn :)
+			*/
+			function ie_version()
+			{
+				var ua = window.navigator.userAgent
+
+				// Pour Internet Explorer, renvoie le numéro de version
+				// Dans le cas d'un autre navigateur, renvoie 0
+				var msie = ua.indexOf ( "MSIE " )
+				if ( msie > 0 )
+					return parseInt (ua.substring (msie+5, ua.indexOf (".", msie )));
+				else
+					return 0;
+			}
+
+
+			/**
+				Adds a page to the Netscape sidebar.
+				@author devedge.netscape.com (but wait... this author is dead ! :)
+				@param sbTitle::String
+					The default title of the panel
+				@param sbLoc::String
+					The URL of the page to load
+			*/
+			function netscape_addPanel(sbTitle,sbLoc)
+			{
+				// hack: bc 2002-01-04 work around http://bugzilla.mozilla.org/show_bug.cgi?id=99808
+				// @todo : what if an error happens after the user called this method ? Is this handler registered globally or only inside this function ?
+				window.onerror = function()
+					{ alert("An error has occured during the sidebar installation. Please make sure your sidebar panel is open and then retry."); };
+
+				if ((typeof window.sidebar == "object") && (typeof window.sidebar.addPanel == "function"))
+					// this does not work if sbLoc is a local or relative URL. shit.
+					window.sidebar.addPanel (sbTitle,sbLoc,"");
+				else
+					alert('This link is intended to work only with Netscape Gecko-based browsers such as Netscape 7.x.');
+			}
+		// -->
+		</script>
+
+
+
+		<!-- Generic functions, embedded in this script to make it "self-contained" -->
+		<script type="text/javascript">
+		<!--
+			function myEscape( text )
+			{
+				return escape(text).replace(/\+/g,"%2B");
+			}
+
+			/**
+				A simple iterator on an array, looping forever.
+				@param values::Array
+			*/
+			function Loop( values )
+			{
+				this.index = 0;
+				this.values = values;
+				this.next = function() { return this.values[ (this.index++) % this.values.length ]; }
+			}
+
+
+			/**
+				@return a TR as a DOM Node, containing a single cell
+				@param cell
+					The cell to add to this row
+			*/
+			function createSimpleRow( cell )
+			{
+				var tr = document.createElement("tr");
+				tr.appendChild(cell);
+				return tr;
+			}
+
+
+			/**
+				@return a DOM Node and set some properties ; null parameters are ignored
+				@param dom_type::String
+					The type of the DOM Node
+				@param css_class::String
+					The CSS class
+				@param dom_child::DOMElement
+					The DOM Node to insert into the node
+			*/
+			function createSimpleElement( dom_type, css_class, dom_child )
+			{
+				//alert("createSimpleElement("+dom_type+","+text+","+css_class+")");
+
+				var el = document.createElement(dom_type);
+				if ( css_class != null )
+				{
+					el.setAttribute("class",css_class);
+					el.setAttribute("className",css_class);	// see DOM2 : this attribute has been renamed
+				}
+				if ( dom_child != null )
+					el.appendChild(dom_child);
+				return el;
+			}
+
+
+			/**
+				@returnval the value of an argument of the URL
+				@returnval null if not found or no regex support
+				@returnval "" if the param was found but empty
+				@param name
+					the (case insensitive) name of the param
+			*/
+			function getParam( name )
+			{
+				if ( window.RegExp )
+				{
+					var result = new RegExp("\\??"+name+"=([^&]*)&?","i").exec(window.location.search);
+					if ( result != null && result[1] != null )
+						// should work 100% with text/urlencoded only
+						// with text/plain, the '+' signs will be converted to spaces, even if they were real '+'
+						return unescape(result[1].replace(/\+/g," "));
+					else
+						return null;
+				}
+				else
+					return null;
+			}
+				
+		// -->
+		</script>
+
+
+
+		<!-- user stylesheet -->
+		<script type="text/javascript">
+		<!--
+			var alt_style = getParam("stylesheet");
+			if ( alt_style != null && alt_style != "" )
+				document.write("<link rel='stylesheet' type='text/css' title='user style' href='"+alt_style+"'>");
+		// -->
+		</script>
+
+
+
+		<!-- Functions specific to this tool -->
+		<script type="text/javascript">
+		<!--
+			/**
+				An email link with an error message, as a DOM anchor.
+
+				@param text::String
+					The text to be surrounded with the anchor
+			*/
+			function createReportLink( text )
+			{
+				var url = "mailto:cbonar@users.berlios.de";
+				url += "?subject=" + myEscape("regexpresso error");
+				url += "&body=regex=" + myEscape(document.form.regex);
+				url += "%0D%0Asubject=" + myEscape(document.form.subject);
+				url += "%0D%0Ahighlight=" + document.form.highlight;
+				url += "%0D%0Abackref=" + document.form.backref;
+				url += "%0D%0Aempty=" + myEscape(document.form.empty);
+				url += "%0D%0Astylesheet=" + myEscape(document.form.stylesheet);
+				url += "%0D%0Auser-agent=" + myEscape(navigator.userAgent);
+
+				var anchor = createSimpleElement("a","error",document.createTextNode(text));
+				anchor.setAttribute("href",url);
+
+				return anchor;
+			}
+
+
+
+			function createReport( subject, user_entry )
+			{
+				var div = createSimpleElement("div","error",document.createTextNode("Unattended error. You can send a "));
+				div.appendChild( createReportLink("mail report") );
+				return div;
+			}
+
+
+
+			// once of two, we alternate the style in order to show something has been done
+			// even if the result is exactly the same
+			var desc_again = new Loop(["desc","desc_again"]);
+
+
+
+			/**
+				Writes the results of a match.
+				I guess this would be clearer with a recursive algorithm...
+
+				@param output
+					the DOMElement where to insert the results
+				@param subject
+					the text to evaluate
+				@param regexp
+					the RegExp to match
+				@param highlight::Boolean
+					if true, the results will be shown as a lone block,
+					whithin which the matches will be highlighted
+				@param backref::Boolean
+					if true, the matches captured by the parentheses will be shown
+				@param empty::String
+					the content to insert in empty matches
+			*/
+			function match( output, subject, regexp, highlight, backref, empty )
+			{
+				//alert("match("+output+",\""+subject+"\","+regexp+","+highlight+","+backref+")");
+
+				// computes the matches
+				var results = regexp.exec(subject);
+
+				var desc_class = desc_again.next();
+
+				// first, a message indicating whether the subject has been matched or not
+				if ( results == null )
+					output.appendChild( createSimpleElement("div",desc_class,document.createTextNode("No match.")) );
+
+				// then, creates the container for the results
+				else if ( highlight )
+				{
+					output.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Result :")) );
+					var dom_results = output.appendChild( createSimpleElement("div","match",null) );
+				}
+				else
+					var dom_results = output.appendChild( createSimpleElement("div","results",null) );
+
+				// finally, iterate over the results and inserts them into the node
+				// match_index is the index of the match of the original subject
+				for ( match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; )
+				{
+					// updates the index to the start of the match
+					match_index += results.index;
+
+					// the first element is the full match
+					if ( highlight )
+					{
+						var text_before = subject.substring(text_before_index,match_index);
+						if ( text_before.length > 0 )
+							dom_results.appendChild( document.createTextNode(text_before) );
+						// var dom_highlight is used later to insert the backrefs into in highlight mode
+						if ( results[0].length > 0 )
+							var dom_highlight = createSimpleElement( "span", "highlight", document.createTextNode(results[0]) );
+						else
+							// we show the empty cells by filling their content with the "empty set" symbol (here in UTF-8)
+							// again, due to IE, we must declare a separate CSS class
+							var dom_highlight = createSimpleElement( "span", "highlight_empty", document.createTextNode(empty) );
+						dom_results.appendChild(dom_highlight);
+					}
+					else
+					{
+						dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Matched at char. "+match_index+" :")) );
+
+						var dom_match = createSimpleElement( "span", "match", document.createTextNode(results[0]) );
+						// adds a tooltip describing the context
+						// @todo visual tooltips are limited in length, if the match is too big, cut it
+						var index_context_before = Math.max(0,match_index-10);
+						var index_context_after = Math.min(match_index+results[0].length+10,subject.length);
+						var context_before = subject.substring(index_context_before,match_index);	// what's before
+						var context_after = subject.substring(Math.min(match_index+results[0].length,subject.length),index_context_after);	// what's after
+						var tooltip = "char. " + match_index + " : ";
+						if ( index_context_before > 0 )
+							tooltip += "...";
+						tooltip += context_before + "*" + results[0] + "*" + context_after;
+						if ( index_context_after < subject.length-1 )
+							tooltip += "...";
+						dom_match.setAttribute("title",tooltip);
+
+						dom_results.appendChild(dom_match);
+					}
+
+					// the remaining elements are the matches captured by the parentheses
+					if ( backref && results.length>1 )
+					{
+						if ( ! highlight )
+							dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Backreferences :")) );
+
+						for ( r=1 ; r<results.length ; r++ )
+						{
+							//alert("match:["+results[r]+"]");
+							var patched_result = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
+							if ( highlight )
+								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(patched_result)) );
+							else
+							{
+								dom_results.appendChild( createSimpleElement("span","backref",document.createTextNode(patched_result)) );
+								dom_results.appendChild( document.createElement("br") );
+							}
+						}
+					}
+
+					// prepares match_index for the next loop
+					text_before_index = match_index + results[0].length;
+					if ( results[0].length > 0 )
+						match_index += results[0].length;
+					else
+						match_index++;
+					results = regexp.exec( subject.substring(match_index,subject.length) );	// continue on the remaining part of the subject
+
+					// don't forget the trailing text in highlight mode
+					if ( highlight && results == null )
+					{
+						var text_after = subject.substring(match_index,subject.length);
+						if ( text_after.length > 0 )
+							dom_results.appendChild(document.createTextNode(text_after));
+					}
+				}
+			}
+
+
+
+			/**
+				@return a string that is not in another one
+					This string is also not an HTML special sequence,
+					nor a regular expression special sequence,
+					and is of a random length
+				@returnval null
+					If all attempts failed to find such a bound
+				@param string
+					The string that must not contain the returned bound
+				@param max_length
+					The maximum length of the bound to return
+			*/
+			function genHTMLBound( string, max_length )
+			{
+				// The characters must not be HTML nor regular expression special chars
+				var chars = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+				if ( max_length == undefined )
+					max_length = 20;
+
+				// we allow a limited but reasonnable number of tries
+				for( tries=0 ; tries<16 ; tries++ )
+				{
+					var size = 4 + Math.round(Math.random()*(max_length-4)); // the bound's length also is randomized every new try
+					var bound = "";
+					for ( c=0 ; c<size ; c++ )
+						bound += chars[Math.round(Math.random()*(chars.length-1))];	// add a random character to the bound
+					if ( string.indexOf(bound) < 0 )
+					{
+						//alert("genHTMLBound(...)="+bound+" at try "+tries);
+						return bound;
+					}
+				}
+				return null;	// failed
+			}
+
+
+
+			/**
+				@return an HTML tag-free text, so that it can be printed in an HTML page as plain text
+				@param string
+					A text that may contain HTML tags
+			*/
+			function escapeHTML( string )
+			{
+				// Hope this will be sufficient...
+				var char_ent = [
+					["\\&","&amp;"],
+					["\\\"","&quot;"],
+					["\\ ","&nbsp;"],
+					["\\<","&lt;"],
+					["\\>","&gt;"],
+					["\\'","&#39;"]
+					];
+
+				var escaped = string;
+				for ( e=0 ; e<char_ent.length ; e++ )
+					escaped = escaped.replace( new RegExp(char_ent[e][0],"g"), char_ent[e][1] );
+				return escaped;
+         		}
+
+
+
+			/**
+				I have done all I could to use the built-in replace method, in order to reduce the chance to produce side effects.
+				Unfortunately, this ended up in a heavy routine for the highlight mode : 5 successive calls to replace !
+				@return the output as a DOMElement
+			*/
+			function replace( output, subject, regexp, replace_string, highlight )
+			{
+				//alert("replace(\""+subject+"\","+regexp+",\""+replace_string+"\")");
+
+				output.appendChild( createSimpleElement( "div", createSimpleElement("td","results",document.createTextNode("Result :",desc_again.next()))) );
+
+				// computes the result
+				// it will be use without modification if not in highlight mode
+				var results = subject.replace(regexp,replace_string);
+
+				// some more operations are needed to highlight
+				if ( highlight )
+				{
+					// 1. finds keys that are not already in the resulting string
+					// this is why we need to know what's inside the previously computed result
+					var start = genHTMLBound(results,6);
+					var end = genHTMLBound(start+results,6);
+					if ( start != null && end != null )
+					{
+						// 2. marks the string with the bounds
+						results = subject.replace(regexp,start+replace_string+end);
+						// 3. escape the text to HTML (the bounds are not)
+						results = escapeHTML(results);
+						// 4. finally, replaces the bounds by their HTML code
+						results = results.replace(new RegExp(start,"g"),"<span class='highlight'>");
+						results = results.replace(new RegExp(end,"g"),"</span>");
+						// 5. results is now safe to insert into HTML
+						var dom_results = output.appendChild( createSimpleElement("div","match",null) );
+						dom_results.innerHTML = results;
+					}
+					else
+					{
+						alert("Could not find a bounding string to highlight.\nYou could retry, but this is probably due to a too big amount of data.\nYou should better not use highlighting.");
+						output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );	// falling back to not-highlighted
+					}
+				}
+				else
+					output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );
+			}
+
+
+
+			/**
+				Retrieve the URL's parameters if any to fill the form's fields with.
+				That enables us for instance to deal with a full URL to show the result of a match.
+				This is also used to open a new window with the same fields values as the current one.
+			*/
+			function parseURL()
+			{
+				var param_subject = getParam("subject");
+				if ( param_subject != null )
+					document.form.subject.value = param_subject;
+
+				var param_regex = getParam("regex");
+				if ( param_regex != null )
+					document.form.regex.value = param_regex;
+
+				var param_highlight = getParam("highlight");
+				if ( param_highlight != null )
+					document.form.highlight.checked = param_highlight == "on";
+
+				var param_backref = getParam("backref");
+				if ( param_backref != null )
+					document.form.backref.checked = param_backref == "on";
+
+				var param_empty = getParam("empty");
+				if ( param_empty != null )
+					document.form.empty.value = param_empty;
+
+				var param_stylesheet = getParam("stylesheet");
+				if ( param_stylesheet != null )
+					document.form.stylesheet.value = param_stylesheet;
+
+				if ( getParam("subject") != null && getParam("regex") != null )
+					go(form.subject.value,form.regex.value,"output");
+			}
+
+
+
+			/**
+				@return a URL that represents this page with the current fields' values as parameters
+				Remember : the checkboxes '.value' attribute does not reflect their state, but their initial value.
+				The right attribute to monitor is '.checked'.
+			*/
+			function newLocation()
+			{
+				// the use of document.getElementById is necessary because the page could be located in a sidebar
+				// and this property revealed to be the one of the main window (at least with Firefox).
+				/// @todo is it really true, now that I have new clues ?
+				if ( !!document.getElementById )
+				{
+					var param_subject = myEscape(document.getElementById('subject').value);
+					var param_regex = myEscape(document.getElementById('regex').value);
+					var param_highlight = document.getElementById('highlight').checked ? "on" : "";
+					var param_backref = document.getElementById('backref').checked ? "on" : "";
+					var param_empty = myEscape(document.getElementById("empty").value);
+					var param_stylesheet = myEscape(document.getElementById("stylesheet").value);
+					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+				}
+				/// @todo (maybe) else try with the standard document.form.subject, etc.
+				else
+					var url = document.location.href;
+
+				// finally
+				return url;
+			}
+
+
+
+			/**
+				@param subject
+					The subject to which to apply the regular expression
+				@param perl_regex
+					The regex, Perl style
+				@param output
+					The unique ID of the HTML element where to write the output
+			*/
+			function go( subject, perl_regex, output )
+			{
+				//alert("go("+subject+","+perl_regex+","+dom_output_id+")");
+
+				// every time a new result is displayed, the url to the new window is updated
+				// this does not work well if local, but no problem if remote
+				// Opera can't open local files with parameters
+				document.getElementById("toMain").setAttribute("href",newLocation());
+
+				// cleans the output zone by removing all its children
+				var dom_output = document.getElementById(output);
+				while ( dom_output.childNodes.length > 0 )
+					dom_output.removeChild(dom_output.firstChild);
+
+				// using Perl syntax
+				var slashes = perl_regex.replace(/\\\\/g,"").replace(/\\\//,"").split("/").length-1;
+				//alert(slashes+" slashes");
+				// the user can omit the first slash
+				if ( slashes == 1 && perl_regex.charAt(0) != "/" )
+					perl_regex = "/" + perl_regex;
+				// the user can enter no slash : he then gives only the subject to match
+				else if ( slashes < 2 )
+					perl_regex = "/" + perl_regex + "/";
+				// we also allow the form : "s/search/replace" with no final slash
+				else if ( new RegExp("s/.*/[^/]*","i").test(perl_regex) && slashes < 3 )
+					perl_regex = perl_regex + "/";
+
+				// prints the full regex
+				var full_regex = dom_output.appendChild( createSimpleElement("span","regex",document.createTextNode(perl_regex)) );
+				full_regex.setAttribute("title","The full regular expression");
+
+				try
+				{
+					var action = perl_regex.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes
+					switch( action )
+					{
+						case "s":
+							var user_pattern = new RegExp("s/(.*)/(.*)/([^/]*)","i").exec(perl_regex);
+							if ( user_pattern != null )
+							{
+								var pattern = user_pattern[1];
+								var replace_string = user_pattern[2];
+								var modifiers = user_pattern[3];
+
+								//alert("s: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
+								var regex = new RegExp(pattern,modifiers);
+								replace( dom_output, subject, regex, replace_string, document.form.highlight.checked );
+							}
+							else
+								dom_output.appendChild( createReport() );
+							break;
+
+						case "m":
+						case "":
+							var user_pattern = new RegExp("m?/(.*)/([^/]*)","i").exec(perl_regex);
+							if ( user_pattern != null )
+							{
+								var pattern = user_pattern[1];
+								var modifiers = user_pattern[2];
+
+								//alert("m: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
+								var regex = new RegExp(pattern,modifiers);
+								match( dom_output, subject, regex, document.form.highlight.checked, document.form.backref.checked, document.form.empty.value );
+							}
+							else
+								dom_output.appendChild( createReport() );
+							break;
+					}
+				}
+				catch ( e )
+				{
+					//alert("e.message="+e.message+"\n"+"e.description="+e.description);
+
+					// IE doesn't throw a SyntaxError here.
+					// Since we don't want to catch all errors, we've defined the following heuristic
+					// works with IE6@WinXP
+					if ( ie_version() > 0 && (e.number & 0xFFFF)==5017 )
+						dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.description)) );
+					else if ( e instanceof SyntaxError )
+						dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.message)) );
+					else
+						throw e;
+				}
+
+				return false;
+			}
+		// -->
+		</script>
+	</head>
+
+
+
+	<body onLoad="javascript:parseURL();">
+		<!--
+			Top menu with links to open this page in different ways.
+
+			This is a shame to be forced to add the boundary pictures in the HTML because of the non-CSS aware browsers, but I had no real choice :[
+			More : IE just pops up the 'alt' attribute of the <img/> rather than the 'title' of <a/> (although it supports it).
+			Please tell me why it's so vital to IE to display the 'alt' attribute of a picture when it is already displayed !!!?
+			There is a fucking 'longdesc' URL attribute for that purpose ! Don't tell me it's because 'title' is not W3C, that would make me laugh.
+			Well, now I think I'll have to consider using Javascript or another CSS method to display a popup menu... }:|
+
+			Also, I had to concatenate the elements without any blanks between because there is no simple way (or I haven't found)
+			to ignores the non-significative blanks between the tags.
+			The biggest issue for me is that I cannot include HTML comments within the block :{
+
+			The netscape_addPanel function does not work from the sidebar (at least with Firefox),
+			but *hopefully* this does not make sense to use it from the sidebar.
+
+			There are links to add this page to the sidebar of different browsers in the more convenient way I could afford.
+			There is also a link that opens this page with the current fields values in a new window.
+			Finally, there is a link that opens the results in the main (bigger) window, while in sidebar mode.
+		-->
+		<span class="menu" onMouseOver="this.id='hover'" onMouseOut="this.id=''"
+			><img src="menu-left.png" alt="left boundary"
+			><a href="javascript:void(open(document.location.href,'_search'));"
+				><img class="menu" src="IE-22x22.png" alt="Internet Explorer logo" title="Open in Internet Explorer's search bar (bookmark this link)"
+			></a><img class="menu" src="Moz-22x22.png" alt="Mozilla logo" title="Add to Netscape/Mozilla sidebar"
+				onMouseOver="this.id='hover'" onMouseOut="this.id=''"
+				onClick="javascript:netscape_addPanel('Regular expressions evaluator',document.location.href);"
+			><a href="regexpresso.html" rel="sidebar"
+				><img class="menu" src="Opera-22x22.png" alt="Opera logo" title="Add to Opera sidebar"
+			></a><img class="menu" src="new-22x22.png" alt="'new window' icon" title="Open a new window"
+				onMouseOver="this.id='hover'" onMouseOut="this.id=''"
+				onClick="javascript:window.open(document.location.pathname,'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"
+			><a id="toMain" target="_main" href="regexpresso.html"
+				><img class="menu" src="main-22x22.png" alt="'to Main window' icon" title="Open the results in the main window"
+			></a
+		><img src="menu-right.png" alt="right boundary"></span>
+
+		<!-- the tool's view -->
+
+		<!-- title -->
+		<div class="title">RegEx<span class="presto">presso</span></div>
+
+		<!-- user's input -->
+		<form name="form" id="form" onSubmit="javascript:return go(this.subject.value,this.regex.value,'output');" enctype="UTF-8">
+			<input type="hidden" id="empty" name="empty" value="&empty;">
+			<input type="hidden" id="stylesheet" name="stylesheet" value="">
+			<div class="input"><textarea name="subject" id="subject" rows="10" cols="20" onFocus="javascript:this.select();" title="The text ('subject') to evaluate">[Paste here the text to evaluate]</textarea></div>
+			<div class="input"><input type="text" name="regex" id="regex" value="/\b\w*(e)/i" onFocus="javascript:this.select();" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"></div>
+			<table class="options">
+				<tr title="Highlight matches inside the subject"><td onClick="javascript:document.form.highlight.click();">Highlight matches :</td><td><input align="right" type="checkbox" id="highlight" name="highlight" title="Highlight matches inside the subject"></td></tr>
+				<tr><td onClick="javascript:document.form.backref.click();">Show backreferences :</td><td><input align="right" type="checkbox" id="backref" name="backref" title="Show backreferences captured by the parentheses" checked></td><tr>
+			</table>
+			<div class="submit"><input name="submit" id="submit" type="submit" value="EVALUATE"></div>
+		</form>
+
+		<!-- script's output (dynamic content) -->
+		<div class="output" name="output" id="output">
+		</div>
+
+		<!-- Some external resources -->
+		<hr>
+		<div class="doc" title="External resources">
+			<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
+			[<a class="doc" target="_main" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a>]<br>
+			[<a class="doc" target="_main" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a>]<br>
+			[<a class="doc" target="_main" href="http://regexpresso.berlios.de/">About this tool</a>]<br>
+			<br>
+			<a align="right" target="_main" href="http://developer.berlios.de"><img src="http://developer.berlios.de/bslogo.php?group_id=3235&type=1" width="124" height="32" border="0" alt="BerliOS Logo"></a><br>
+		</div>
+</body>
+
+</html>
+	
