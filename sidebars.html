@@ -39,7 +39,7 @@
 
 	<div class="articleinfo">
 		<div class="author"><a href="mailto:cbonar@users.berlios.de" class="author">cbonar@users.berlios.de</a></div>
-		<div class="date">Last update : 20050304</div>
+		<div class="date">Last update : 20050307</div>
 		<div class="warning">DRAFT DOCUMENT</div>
 	</div>
 
@@ -118,25 +118,25 @@
 				<li>Although the <var>document</var> object references the sidebar itself in the Javascript code,
 				when it is used in "global" calls like <code>onClick</code> events,
 				it references the <var>document</var> object of the current context (i.e. the current main window).
-				So beware with the following code : <code>open(document.href,"target","width=240,height=240");</code>.
+				So beware with the following code : <code>open(document.location.href,"target","width=240,height=240");</code>.
 				If placed in an <code>onClick</code> event, for instance, it will open a new window with the main window's location,
 				not the sidebar's one.
 				
 			</ul>
 		</p>
 
-		<p>Although this was the first sidebar mechanism as far as I know, it ends with the most tricky method beyond modern browsers.
-		Note that Firefox' current behaviour (and maybe Netscape 8) is to create a bookmark that will open in the sidebar.
+		<p>Although this was the first sidebar mechanism as far as I know, it ends up with the most tricky method among modern browsers.
+		Note that Firefox' current behaviour is to create a bookmark that will open in the sidebar.
 		<p>
 
-		<span class="listtitle">Works with</span>
+		<h3 class="listtitle">Works with</h3>
 		<ul class="compatible">
 			<li>Netscape
 			<li>Mozilla
 			<li>Firefox
 		</ul>
 
-		<span class="listtitle">Related links</span>
+		<h3 class="listtitle">Related links</h3>
 		<ul class="links">
 			<li><a href="http://www.mozilla.org/status/2003-08-10.html">Mozilla Firebird status update 08/10/2003</a>
 			<li><a href="http://regexpresso.berlios.de/NS-sidebar.js">Javascript code to add a panel</a>
@@ -151,35 +151,51 @@
 
 		<h2>Internet Explorer's search pane</h2>
 
-		<p>Internet Explorer has a lateral search bar that one can use to display a custom document.
-		It is simply accessed with the <var>_main</var> target from a HTML document.
-		So the simplest way to open a web page in this sidebar is to use an anchor with "_search" as the target.
-<div class="code">
-<pre>&lt;a href="mysidebar.html" target="_search"&gt;Drag this link to your bookmarks bar.
-You can then click on this it to open mysidebar in the search pane.&lt/a&gt;</pre>
-</div>
-		Note that by clicking on such a link, the user will only open it in its search bar, not add it to its bookmarks.
-		This must be done by the user himself (like for any ordinary link).
-		From the search bar, one can access the main window using the <var>_main</var> target.
-		This also works with Firefox when used in an anchor (not a call to the Javascript <code>window.open</code> method).
-		With Firefox, don't use the <code>rel="sidebar"</code> attribute (see <a href="#rel">this section<a>).
+		<h3>Open once</h3>
+
+		<p>Internet Explorer has a lateral search pane that one can use to display a custom document.
+		It is simply accessed with the <var>_search</var> target from a HTML document.
+		From this search pane, the programmer can access the main window using the <var>_main</var> target.
+		The simplest way to open a web page in this search pane is to use an anchor with <var>_search</var> as the target.
+		<div class="code"><pre>&lt;a href="mysidebar.html" target="_search"&gt;Click on this link to open the page in your search pane.&lt/a&gt;</pre></div>
+		As a matter of fact, this method also works with Firefox (at the difference of the Javascript method described below).
+		With Firefox however, don't use both <code>target="_search"'</code> and <code>rel="sidebar"</code> (see <a href="#rel">this section</a>).
 		</p>
+
+		<h3>Bookmark it</h3>
+
+		<p>Note that by clicking on a link as described previously, the user will only open it in its search bar, not add it to its bookmarks.
+		For that, you cannot use a standard link, because the bookmarks don't store the <var>target</var> attribute.
+		You must provide the user a "Javascript link" :
+		<div class="code">
+<pre>&lt;a href="javascript:void(open('http://myhost/mysidebar.html','_search'));" &gt;Drag this link to your bookmarks.
+You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
+</div>
+		This time, the anchor must <strong>not</strong> have its <var>target</var> attribute set to <var>_search</var>.
+		The <code>void()</code> function prevents the browser from loading a new window.<br>
+		Once you've provided users such a link, they must still bookmark it themselves, like for any ordinary link.
+		</p>
+
+		<h3>The savage method</h3>
 
 		<p>There is also another way : by linking to a custom <tt>.reg</tt> file.
-		I've tried it and it worked fine, but the user can't easily remove the bar then.
+		I've tried it and it worked fine, but the user can't easily remove the bar then : you must provide another <tt>.reg</tt> file to uninstall it.
+		<br>
+		<span class="warning">TODO</span>
 		</p>
 
-		<span class="listtitle">Works with</span>
+		<h3 class="listtitle">Works with</h3>
 		<ul class="compatible">
 			<li>Internet Explorer
 			<li>Firefox
 		</ul>
 
-		<span class="listtitle">Related links</span>
+		<h3 class="listtitle">Related links</h3>
 		<ul class="links">
 			<li><a href="http://www.mozilla.org/status/2003-08-10.html">Mozilla Firebird status update 08/10/2003</a>
 			<li><a href="http://msdn.microsoft.com/workshop/author/dhtml/reference/properties/target.asp">The "target" attribute in Internet Explorer</a>
 			<li><span class="warning">Missing link to the <tt>.reg</tt> method</span>
+			<li><a href="http://gaida.dyndns.org/sitebar/">Sitebar, a tool using many sidebars</a>
 		</ul>
 
 	</div>
@@ -190,19 +206,19 @@ You can then click on this it to open mysidebar in the search pane.&lt/a&gt;</pr
 
 		<h2>Opera : the "rel" attribute</h2>
 
-		<p>Opera also proposed a very simple way to add a page to its sidebar : simply add <code>rel="sidebar"</code> to an anchor.
+		<p>Opera also proposes a very straight way to add a page to its sidebar : by simply adding <code>rel="sidebar"</code> to an anchor.
 		The <var>href</var> attribute of the anchor is the page to load as a new panel into the sidebar.
 		The <var>title</var> attribute is the default title of the panel.
 		This also works with Firefox (not Mozilla).
 		</p>
 
-		<span class="listtitle">Works with</span>
+		<h3 class="listtitle">Works with</h3>
 		<ul class="compatible">
 			<li>Opera
 			<li>Firefox
 		</ul>
 
-		<span class="listtitle">Related links</span>
+		<h3 class="listtitle">Related links</h3>
 		<ul class="links">
 			<li><a href="http://www.mozilla.org/status/2003-08-10.html">Mozilla Firebird status update 08/10/2003</a>
 		</ul>
@@ -252,8 +268,84 @@ You can then click on this it to open mysidebar in the search pane.&lt/a&gt;</pr
 
 		<p>As you can see, not a single line is matched by all browsers :(<br>
 		And make no mistake : Netscape, Mozilla and Firefox are so close
-		that they are most of the time taken as the same "family" of browsers,
+		they are most of the time taken as the same generic browser,
 		so the <code>window.sidebar.addPanel</code> method is not the most used, in fact.
+		</p>
+
+		<p>I've ended up giving users one link for each browser to add the page to their sidebar,
+		plus a two-parts button to open it directly in the search pane or in a popup window.
+		</p>
+
+		<h3>Sample button to open a page only once in the sidebar</h3>
+
+		<p>
+			Click here --&gt;
+				<a href="http://cbonar.free.fr/colorselector/sidebar.html" target="_search"
+					><img src="http://regexpresso.berlios.de/docfiles/color.png"
+						alt="[color|"
+						title="Open in the search bar (Internet Explorer and Firefox only)"
+						border="0"
+						onMouseOver="javascript:this.src='http://regexpresso.berlios.de/docfiles/color-down.png';"
+						onMouseOut="javascript:this.src='http://regexpresso.berlios.de/docfiles/color.png';"
+				></a><input type="image" src="http://regexpresso.berlios.de/docfiles/selector.png"
+					alt="|selector]"
+					title="Open in a popup Window (Any Javascript enabled browser)"
+					onMouseOver="javascript:this.src='http://regexpresso.berlios.de/docfiles/selector-down.png';"
+					onMouseOut="javascript:this.src='http://regexpresso.berlios.de/docfiles/selector.png';"
+					onClick="javascript:open('http://cbonar.free.fr/colorselector/sidebar.html','colorselector','width=160,height=480');">
+			&lt;-- or here
+
+<div class="code">
+<pre>Click here --&amp;gt;
+	&lt;a href="sidebar.html" target="_search"
+		&gt;&lt;img src="color.png"
+			alt="[color|"
+			title="Open in the search bar (Internet Explorer and Firefox only)"
+			onMouseOver="javascript:this.src='color-down.png';"
+			onMouseOut="javascript:this.src='color.png';"
+			border="0"
+	&gt;&lt;/a&gt;&lt;input type="image" src="selector.png"
+		alt="|selector]"
+		title="Open in a popup Window (Any Javascript enabled browser)"
+		onMouseOver="javascript:this.src='selector-down.png';"
+		onMouseOut="javascript:this.src='selector.png';"
+		onClick="javascript:open('sidebar.html','colorselector','width=160,height=480');"&gt;
+&amp;lt;-- or here</pre>
+</div>
+		</p>
+
+		<h3>Sample buttons to add a page permanently to the sidebar</h3>
+
+		<p><a href="javascript:void(open('http://cbonar.free.fr/colorselector/sidebar.html','_search'));" title="Bookmark this link to open it in Internet Explorer's search pane"><img border="0" src="http://regexpresso.berlios.de/docfiles/IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a>
+		<a href="javascript:netscape_addPanel('Yet another color selector','http://cbonar.free.fr/colorselector/sidebar.html');" title="Add to Netscape/Mozilla sidebar"><img src="http://regexpresso.berlios.de/docfiles/NS-sidebar.png" border="0" alt="Add to Netscape/Mozilla sidebar"></a>
+		<a href="http://cbonar.free.fr/colorselector/sidebar.html" rel="sidebar" title="colorselector"><img src="http://regexpresso.berlios.de/docfiles/Opera-sidebar.png" border="0" alt="Add to Opera sidebar" title="Add to Opera sidebar"></a>
+
+<div class="code">
+<pre>&lt;a href="javascript:void(open('http://cbonar.free.fr/colorselector/sidebar.html','_search'));"
+	title="Bookmark this link to open it in Internet Explorer's search pane"&gt;
+	&lt;img
+		src="IE-sidebar.png"
+		alt="Internet Explorer sidebar"
+		title="Bookmark this link to open it in Internet Explorer's sidebar"&gt;
+		border="0"
+&lt;/a&gt;
+&lt;a href="javascript:netscape_addPanel('Yet another color selector','http://cbonar.free.fr/colorselector/sidebar.html');"
+	title="Add to Netscape/Mozilla sidebar"&gt;
+	&lt;img
+		src="NS-sidebar.png"
+		alt="Add to Netscape/Mozilla sidebar"&gt;
+		border="0"
+&lt;/a&gt;
+&lt;a href="http://cbonar.free.fr/colorselector/sidebar.html"
+	rel="sidebar"
+	title="colorselector"&gt;
+	&lt;img
+		src="Opera-sidebar.png"
+		alt="Add to Opera sidebar"
+		title="Add to Opera sidebar"&gt;
+		border="0"
+&lt;/a&gt;</pre>
+</div>
 		</p>
 
 	</div>

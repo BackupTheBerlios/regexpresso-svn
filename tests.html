@@ -3,13 +3,14 @@
 		<title>Unit tests for regexpresso</title>
 
 		<style type="text/css">
-			table { empty-cells:show; }
-			.param { border:solid black 1px; background-color:#BBFF88; text-align:left; }
-			.fixture { background-color:#BBBBBB; }
-			.match { background-color:white; border:solid red 1px; background-color:white; }
-			.backref { background-color:#E0E0E0; border:solid red 1px; }
-			.highlight { background-color:yellow; margin:1px; }
+			.fixture { background-color:#B6DBFF; border:solid #00006D 1px; margin:20px; }
+			.param { border:solid black 1px; background-color:#E0E0E0; text-align:left; }
+			.results { background-color:white; border:solid red 1px; background-color:white; }
+			.highlight { background-color:cyan; margin:1px; }
+			.match { background-color:#DBFF00; border:none; border-top:solid black 1px; border-bottom:solid black 1px; }
+			.backref { background-color:#FDFF00; border:none; border-top:solid gray 1px; border-bottom:solid gray 1px; }
 			.error { color:red; }
+			body { background-color:white; }
 		</style>
 
 		<!-- misc functions -->
@@ -40,13 +41,12 @@
 						true,
 						"&empty;",
 						"",
-						[
-							"http://cbonar.free.fr/regexpresso/regexpresso.html",
-							"http",
-							"cbonar.free.fr",
-							"",
-							"/regexpresso/regexpresso.html"
-						]
+						"Matches and backreferences as follow :\n\n"
+						+"<span class='match'>http://cbonar.free.fr/regexpresso/regexpresso.html</span>\n"
+						+"<span class='backref'>http</span>\n"
+						+"<span class='backref'>cbonar.free.fr</span>\n"
+						+"<span class='backref'>&empty;</span>\n"
+						+"<span class='backref'>/regexpresso/regexpresso.html</span>"
 					],
 					[	"One Two Three",
 						"s/^([^ ]+) +([^ ]+)/$2 $1",
@@ -54,7 +54,7 @@
 						false,
 						"&empty;",
 						"",
-						["<span class='highlight'>Two One</span> Three","(Swaps the first two words)"]
+						"Swaps the first two words : <span class='highlight'>Two One</span> Three"
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/",
@@ -62,7 +62,7 @@
 						true,
 						"&empty;",
 						"",
-						[""]
+						""
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/g",
@@ -70,7 +70,7 @@
 						true,
 						"&empty;",
 						"",
-						[""]
+						""
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/i",
@@ -78,7 +78,7 @@
 						true,
 						"&empty;",
 						"",
-						[""]
+						""
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/gi",
@@ -86,7 +86,7 @@
 						true,
 						"&empty;",
 						"",
-						[""]
+						""
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/ig",
@@ -94,7 +94,7 @@
 						true,
 						"&empty;",
 						"",
-						[""]
+						""
 					],
 					[	"START http://cbonar.free.fr/regexpresso/regexpresso.html END",
 						"",
@@ -102,7 +102,7 @@
 						true,
 						"&empty;",
 						"",
-						["A match between every character"]
+						"A match between every character"
 					],
 					[
 						"START http://cbonar.free.fr/regexpresso/regexpresso.html END",
@@ -111,7 +111,7 @@
 						true,
 						"&empty;",
 						"",
-						["No match"]
+						"No match"
 					],
 					[
 						"Any subject",
@@ -120,7 +120,7 @@
 						false,
 						"&empty;",
 						"",
-						["<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"]
+						"<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"
 					],
 					[
 						"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; FunWebProducts-MyWay; .NET CLR 1.1.4322)",
@@ -129,7 +129,25 @@
 						false,
 						"&empty;",
 						"",
-						["<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"]
+						"<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"
+					],
+					[
+						"Bart",
+						"/t*/",
+						false,
+						false,
+						"&empty;",
+						"",
+						"Empty matches at char 0,1,2. <span class='match'>t</span> matches at char 3."
+					],
+					[
+						"Bart",
+						"/^Bart/",
+						false,
+						false,
+						"&empty;",
+						"",
+						"<span class='match'>Bart</span>"
 					]
 				];
 
@@ -170,6 +188,7 @@
 
 			function checkReport( form )
 			{
+				updateReportForms(document.config);
 				if ( form.tester.value == "" )
 				{
 					alert("The 'tester' field is empty.");
@@ -181,13 +200,18 @@
 	</head>
 	<body>
 
+		<h1>Tests for RegExpresso</h1>
+
 		<div>
 			<h2>Notation :</h2>
-			<span class="fixture">fixture</span><br>
-			<span class="match">match</span><br>
-			<span class="backref">backreference</span><br>
-			<span class="highlight">highlight</span><br>
-			<span class="error">error</span><br>
+			<span class="fixture">a test fixture</span><br>
+			<span class="param">parameter of the test</span><br>
+			<span class="results">results of the tests</span><br>
+			<span class="match">a match</span><br>
+			<span class="backref">a backreference</span><br>
+			<span class="highlight">highlighted text</span><br>
+			<span class="error">an error</span><br>
+			
 		</div>
 
 		<div>
@@ -221,8 +245,6 @@
 					// launches the test
 					document.write("<form onSubmit='javascript:return test(fixtures["+f+"]);'>");
 
-						document.write("<input type='submit' value='TEST'>");
-
 						document.write("<table>");
 							document.write("<tr><th class='param'>"+fixtures[f][0]+"</th></tr>");
 							document.write("<tr><th class='param'>"+fixtures[f][1]+"</th></tr>");
@@ -231,10 +253,10 @@
 							document.write("<tr><th class='param'>empty="+fixtures[f][4]+"</th></tr>");
 							document.write("<tr><th class='param'>stylesheets="+fixtures[f][5]+"</th></tr>");
 							var results = fixtures[f][fixtures[f].length-1];
-							document.write("<tr><td class='match'>"+results[0]+"</td></tr>");
-							for ( r=1 ; r<results.length ; r++ )
-								document.write("<tr><td class='backref'>"+results[r]+"</td></tr>");
+							document.write("<tr><td class='results'><pre>"+results+"</pre></td></tr>");
 						document.write("</table>");
+
+						document.write("<input type='submit' value='TEST'>");
 
 					document.write("</form>");
 

@@ -128,7 +128,7 @@
 		<h2>Quick start</h2>
 
 		<p>
-			<a href="regexpresso.html" target="_search" title="Bookmark this link to open it in Internet Explorer's search pane"><img src="IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a>
+			<a href="javascript:void(open('http://regexpresso.berlios.de/regexpresso.html','_search'));" title="Bookmark this link to open it in Internet Explorer's search pane"><img src="IE-sidebar.png" alt="Internet Explorer sidebar" title="Bookmark this link to open it in Internet Explorer's sidebar"></a>
 			<a href="javascript:netscape_addPanel('Regular expressions evaluator','http://regexpresso.berlios.de/regexpresso.html');" title="Add to Netscape/Mozilla sidebar"><img src="NS-sidebar.png" alt="Add to Netscape/Mozilla sidebar"></a>
 			<a href="regexpresso.html" rel="sidebar" title="RegExpBar"><img src="Opera-sidebar.png" alt="Add to Opera sidebar" title="Add to Opera sidebar"></a>
 			<a href="javascript:void(open('regexpresso.html','_blank','width=240,height=640,scrollbars=yes,resizable=yes'));" title="Test this tool online"><img src="new-47x50.png" width="48px"></a>
@@ -151,7 +151,7 @@
 		<h2>Regular expressions syntax</h2>
 
 		<p>The regular expression you are awaited to type in the middle field follows Perl's regular expressions syntax.
-		That means : <span class="regex">command/options/modifiers</span>. Only two commands are supported : "match" and "replace".
+		That means : <span class="regex">command/options/modifiers</span>. Two commands are supported : "match" (<code>m//</code> operator) and "replace" (<code>s///</code> operator).
 			<ul>
 				<li>To obtain the matches of a regular expression, type : <span class="regex">m/pattern/modifiers</span> or <span class="regex">/pattern/modifiers</span>,
 				<li>To obtain the result of a substitution, type : <span class="regex">s/pattern/replace/modifiers</span>.
