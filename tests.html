@@ -4,14 +4,18 @@
 
 		<style type="text/css">
 			table { empty-cells:show; }
-			th { border:solid black 1px; background-color:#BBFF88; text-align:left; }
-			td { border:solid red 1px; background-color:white; }
+			.param { border:solid black 1px; background-color:#BBFF88; text-align:left; }
 			.fixture { background-color:#BBBBBB; }
-			.match { background-color:white; }
-			.backref { background-color:#E0E0E0; }
+			.match { background-color:white; border:solid red 1px; background-color:white; }
+			.backref { background-color:#E0E0E0; border:solid red 1px; }
 			.highlight { background-color:yellow; margin:1px; }
 			.error { color:red; }
 		</style>
+
+		<!-- misc functions -->
+		<script type="text/javascript" src="cbonar_http.js"></script>
+
+		<!--script type="text/javascript" src="report.php?action=fixtures.js"></script-->
 
 		<script type="text/javascript">
 
@@ -20,9 +24,9 @@
 						subject::String,
 						regex::String,
 						highlight::Boolean,
-						parentheses::Boolean [,
+						backref::Boolean [,
 							match::String [,
-								match_parenthese::String,
+								match_backref::String,
 								...
 								]
 							]
@@ -34,6 +38,8 @@
 						"/(\\w+):\\/\\/([^\\/:]+)(:\\d*)?([^# ]*)/",
 						false,
 						true,
+						"&empty;",
+						"",
 						[
 							"http://cbonar.free.fr/regexpresso/regexpresso.html",
 							"http",
@@ -46,37 +52,56 @@
 						"s/^([^ ]+) +([^ ]+)/$2 $1",
 						true,
 						false,
-						["<span class='highlight'>Two One</span> Three"]
+						"&empty;",
+						"",
+						["<span class='highlight'>Two One</span> Three","(Swaps the first two words)"]
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/",
 						true,
-						true
+						true,
+						"&empty;",
+						"",
+						[""]
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/g",
 						true,
-						true
+						true,
+						"&empty;",
+						"",
+						[""]
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/i",
 						true,
-						true
+						true,
+						"&empty;",
+						"",
+						[""]
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/gi",
 						true,
-						true
+						true,
+						"&empty;",
+						"",
+						[""]
 					],
 					[	"[Paste here the text to Evaluate]",
 						"/e/ig",
 						true,
-						true
+						true,
+						"&empty;",
+						"",
+						[""]
 					],
 					[	"START http://cbonar.free.fr/regexpresso/regexpresso.html END",
 						"",
 						true,
 						true,
+						"&empty;",
+						"",
 						["A match between every character"]
 					],
 					[
@@ -84,6 +109,8 @@
 						"/toto",
 						false,
 						true,
+						"&empty;",
+						"",
 						["No match"]
 					],
 					[
@@ -91,13 +118,24 @@
 						"<([A-Z][A-Z0-9]*)[^>]*>(.*?)</\1>",
 						false,
 						false,
-						["<span class='error'>A syntax exception is thrown.</span>"]
+						"&empty;",
+						"",
+						["<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"]
+					],
+					[
+						"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; FunWebProducts-MyWay; .NET CLR 1.1.4322)",
+						"/MSIE\s([0-9]\.[0-9]/",
+						false,
+						false,
+						"&empty;",
+						"",
+						["<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"]
 					]
 				];
 
 			/**
-				Open a window with the results of a fixture.
-				This function is able to escape correctly '+' signs.
+				Opens a window with the results of a fixture.
+				This function is able to escape almost correctly '+' signs.
 
 				@param fixture
 					One entry of the 'fixtures' array
@@ -110,68 +148,126 @@
 				if ( fixture[2] )
 					url += "&highlight=on";
 				if ( fixture[3] )
-					url += "&parentheses=on";
+					url += "&backref=on";
 				open(url,"test");
 				return false;
+			}
+
+			function updateReportForms( form )
+			{
+				for ( f=0 ; f<document.forms.length ; f++ )
+				{
+					if ( document.forms[f] == document.config )
+						continue;
+					if ( document.forms[f].tester != undefined )
+						document.forms[f].tester.value = form.tester.value;
+					if ( document.forms[f].username != undefined )
+						document.forms[f].username.value = form.username.value;
+					if ( document.forms[f].password != undefined )
+						document.forms[f].password.value = form.password.value;
+				}
+			}
+
+			function checkReport( form )
+			{
+				if ( form.tester.value == "" )
+				{
+					alert("The 'tester' field is empty.");
+					return false;
+				}
+				return true;
 			}
 		</script>
 	</head>
 	<body>
-		<script type="text/javascript">
 
-			document.write("<span>"+navigator.userAgent+"</span>");
+		<div>
+			<h2>Notation :</h2>
+			<span class="fixture">fixture</span><br>
+			<span class="match">match</span><br>
+			<span class="backref">backreference</span><br>
+			<span class="highlight">highlight</span><br>
+			<span class="error">error</span><br>
+		</div>
 
-			for ( f=0 ; f<fixtures.length ; f++ )
-			{
-				document.write("<div class='fixture'>");
+		<div>
+			<script type="text/javascript">
 
-				/////////
-				// The following don't work because we cannot distinguish between spaces escaped into '+'
-				// and original '+' once in the destination page
-				// Instead we forge the URL and call a "window.open" on it.
-				/////////
-				//document.write("<form action='regexpresso.html' target='test' method='get'>");
-				//	//document.write("<input type='hidden' name='highlight' value='on'>");
-				//	document.write("<input type='hidden' name='parentheses' value='on'>");
-				//	document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
-				//	document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
-				/////////
+				document.write("<h2>Configuration :</h2><form name='config' onSubmit='javascript:updateReportForms(this);'>");
+				document.write("Tester : <input type='text' name='tester' value='"+cbonar_http_getParam(window.location,"tester","")+"'><br>");
+				document.write("<span>Navigator : "+navigator.userAgent+"</span><br>");
+				document.write("Database username : <input type='text' name='username' value='"+cbonar_http_getParam(window.location,"username","")+"'><br>");
+				document.write("Database password : <input type='text' name='password' value='"+cbonar_http_getParam(window.location,"password","")+"'><br>");
+				document.write("</form>");
 
-				// launches the test
-				document.write("<form onSubmit='javascript:return test(fixtures["+f+"]);'>");
+				document.write("<h2>Tests :</h2>");
 
-					document.write("<input type='submit' value='TEST'>");
+				for ( f=0 ; f<fixtures.length ; f++ )
+				{
+					document.write("<div class='fixture'>");
 
-					document.write("<table>");
-						document.write("<tr><th>"+fixtures[f][0]+"</th></tr>");
-						document.write("<tr><th>"+fixtures[f][1]+"</th></tr>");
-						document.write("<tr><th>highlight="+fixtures[f][2]+"</th></tr>");
-						document.write("<tr><th>parentheses="+fixtures[f][3]+"</th></tr>");
-						var results = fixtures[f][fixtures[f].length-1];
-						if ( results[0] != undefined )
-						{
+					/////////
+					// The following doesn't work because we cannot distinguish between spaces escaped into '+'
+					// and original '+' once in the destination page
+					// Instead we forge the URL and call a "window.open" on it.
+					/////////
+					//document.write("<form action='regexpresso.html' target='test' method='get'>");
+					//	//document.write("<input type='hidden' name='highlight' value='on'>");
+					//	document.write("<input type='hidden' name='backref' value='on'>");
+					//	document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
+					//	document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
+					/////////
+
+					// launches the test
+					document.write("<form onSubmit='javascript:return test(fixtures["+f+"]);'>");
+
+						document.write("<input type='submit' value='TEST'>");
+
+						document.write("<table>");
+							document.write("<tr><th class='param'>"+fixtures[f][0]+"</th></tr>");
+							document.write("<tr><th class='param'>"+fixtures[f][1]+"</th></tr>");
+							document.write("<tr><th class='param'>highlight="+fixtures[f][2]+"</th></tr>");
+							document.write("<tr><th class='param'>backref="+fixtures[f][3]+"</th></tr>");
+							document.write("<tr><th class='param'>empty="+fixtures[f][4]+"</th></tr>");
+							document.write("<tr><th class='param'>stylesheets="+fixtures[f][5]+"</th></tr>");
+							var results = fixtures[f][fixtures[f].length-1];
 							document.write("<tr><td class='match'>"+results[0]+"</td></tr>");
 							for ( r=1 ; r<results.length ; r++ )
 								document.write("<tr><td class='backref'>"+results[r]+"</td></tr>");
-						}
-					document.write("</table>");
+						document.write("</table>");
 
-				document.write("</form>");
+					document.write("</form>");
 
-				// report form
-				document.write("<form action=''>");
-					document.write("<input type='hidden' name='user-agent' value=\""+navigator.userAgent+"\">");
-					document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
-					document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
-					document.write("<input type='hidden' name='highlight' value='"+fixtures[f][2]+"'>");
-					document.write("<input type='hidden' name='parentheses' value='"+fixtures[f][3]+"'>");
-					document.write("Success : <input type='checkbox' name='success'>");
-					document.write("Comment : <textarea name='comment' rows='2' cols='20' style='width:100%;'></textarea>");
-				document.write("</form>");
+					// report form
+					document.write("<form action='http://regexpresso.berlios.de/report.php' target='report' onSubmit='javascript:return checkReport(this);'>");
+						document.write("<input type='hidden' name='action' value='submit'>");
+						document.write("<input type='hidden' name='useragent' value=\""+navigator.userAgent+"\">");
+						document.write("<input type='hidden' name='tester' value='"+document.config.tester.value+"'>");
+						document.write("<input type='hidden' name='username' value='"+document.config.username.value+"'>");
+						document.write("<input type='hidden' name='password' value='"+document.config.password.value+"'>");
+						document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
+						document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
+						document.write("<input type='hidden' name='highlight' value='"+fixtures[f][2]+"'>");
+						document.write("<input type='hidden' name='backref' value='"+fixtures[f][3]+"'>");
+						document.write("<input type='hidden' name='empty' value='"+fixtures[f][4]+"'>");
+						document.write("<input type='hidden' name='stylesheets' value='"+fixtures[f][5]+"'>");
+						document.write("<table width='100%'><tr>");
+						document.write("<td><table>");
+						document.write("<tr><td>Success :</td><td><input type='radio' name='success' value='true'></td></tr>");
+						document.write("<tr><td>Failure :</td><td><input type='radio' name='success' value='false'></td></tr>");
+						document.write("<tr><td colspan='2'><input type='submit' value='SUBMIT REPORT'></td></tr>");
+						document.write("</table></td>");
+						document.write("<td width='100%'><table width='100%'>");
+						document.write("<tr><td>Comment :</td></tr><tr><td width='100%'><textarea name='comment' rows='2' cols='20' style='width:100%; height:100%'></textarea></td></tr>");
+						document.write("</table></td>");
+						document.write("</tr></table>");
+					document.write("</form>");
 
-				document.write("</div>");
-			}
+					document.write("</div>");
+				}
 
-		</script>
+			</script>
+		</div>
+
 	</body>
 </html>
