@@ -668,13 +668,25 @@
 				}
 				catch ( e )
 				{
-					//alert("e.message="+e.message+"\n"+"e.description="+e.description);
+					//alert("e.number=["+(e.number&0xFFFF)+"]\ne.message=["+e.message+"]\ne.description=["+e.description+"]");
 
-					// IE doesn't throw a SyntaxError here.
-					// Since we don't want to catch all errors, we've defined the following heuristic
-					// works with IE6@WinXP
-					if ( ie_version() > 0 && (e.number & 0xFFFF)==5017 )
-						dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.description)) );
+					// @see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/script56/html/js56jslrfJScriptErrorsTOC.asp
+					if ( ie_version() > 0 )
+					{
+						switch ( e.number & 0xFFFF )
+						{
+							case 5017:	// Syntax error in regular expression
+							case 5018:	// Unexpected quantifier
+							case 5019:	// Expected ']' in regular expression
+							case 5020:	// Expected ')' in regular expression
+							case 5021:	// Invalid range in character set
+								dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.description)) );
+								break;
+							default:
+								throw e;
+								break;
+						}
+					}
 					else if ( e instanceof SyntaxError )
 						dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.message)) );
 					else
