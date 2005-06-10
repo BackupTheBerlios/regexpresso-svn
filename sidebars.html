@@ -10,7 +10,7 @@
 
 	<!-- embedded style since it's intended to be uploaded to BerliOS's doc manager -->
 	<style type="text/css">
-		/* */
+		body { background-color:white; }
 		.articleinfo {}
 		.date {}
 		/* author reference */
@@ -30,6 +30,7 @@
 		.yes { background-color:#92B692; }
 		.no { background-color:#DB9292; }
 		.dontknown { background-color:#DBDB92; }
+		h2 {color:#24006D}
 	</style>
 
 	<title>Sidebars in multiple browsers</title>
@@ -39,7 +40,7 @@
 
 	<div class="articleinfo">
 		<div class="author"><a href="mailto:cbonar@users.berlios.de" class="author">cbonar@users.berlios.de</a></div>
-		<div class="date">Last update : 20050307</div>
+		<div class="date">Last update : 20050309</div>
 		<div class="warning">DRAFT DOCUMENT</div>
 	</div>
 
@@ -53,9 +54,11 @@
 		<h2>Index</h2>
 
 		<ul>
-			<li><a href="#introduction">Introduction</a>
+			<li><a href="#abstract">Abstract</a>
+			<li><a href="#intro">The need for a sidebar</a>
 			<li><a href="#gecko">Gecko browsers' sidebar</a>
 			<li><a href="#_search">Internet Explorer's search pane</a>
+			<li><a href="#pageholder">Internet Explorer for Mac's Page Holder</a>
 			<li><a href="#rel">Opera : the "rel" attribute</a>
 			<li><a href="#summary">Summary</a>
 			<li><a href="#links">Other links</a>
@@ -64,15 +67,38 @@
 
 
 
-	<div><a name="introduction"></a>
+	<div><a name="abstract"></a>
 
-		<h2>Introduction</h2>
+		<h2>Abstract</h2>
 
 		<p>This is a summary of the techniques I've found to deal with some browsers' sidebars,
 		while working on <acronym>RegExpresso</acronym>.
 		Knowing that those lateral bars have all the same general features
 		(loading a standard page, beeing bookmarked, easily shown and hidden, ...), this document
 		concentrates on the different ways to add a page to those sidebars.
+		</p>
+
+	</div>
+
+	<div><a name="intro"></a>
+
+		<h2>The need for a sidebar</h2>
+
+		<p>Now, let me explain why I count so much on sidebars.<br>
+		The World Wide Web is made of multiple documents (HTML pages but also other types), interlinked via hyperlinks.
+		And this is it. Although there are many websites entirely done with flash, applets or whatever, this is the main, original way the web is structured.
+		This is very important to remember because all web clients rely on this structure to correctly render the content to their user.
+		Think about aural clients, text clients, and in a general way think accessibility.<br>
+		This is why HTML frames have almost been banned from the web : they just format the display, usually by bringing the user a menu on the top or on the side of its window.
+		But how does this render when you don't have a display ? It renders like a mess. In fact, frames should not be considered as a document at all.
+		The job done with frames should be done by the browser itself, which is in charge of the rendering.<br>
+		Enter sidebars. Sidebars solve this problem by proposing an area out of the browsing window, but still in the web client,
+		where one could load a menu with links that change the current browsed page.
+		The best example in my opinion of this way to browse is <a href="#pageholder">Internet Explorer for Mac's Page Holder</a>.<br>
+		However, I've observed many browsers where the sidebar is closely related to the bookmarks.
+		In my opinion, this is not convenient because it's a longer process : there is a step where the user must provide a name for the bookmark, the place where it goes, etc.
+		I think we've come to this because the sidebar is viewed as a way for websites makers to "enter" in the user's favorites, which is of course very interesting when you have something to sell.
+		Surprisingly, Internet Explorer is the one browser that permit to load a page directly and temporarily in its Search Pane (or Page Holder for Mac)...
 		</p>
 
 	</div>
@@ -159,7 +185,8 @@
 		The simplest way to open a web page in this search pane is to use an anchor with <var>_search</var> as the target.
 		<div class="code"><pre>&lt;a href="mysidebar.html" target="_search"&gt;Click on this link to open the page in your search pane.&lt/a&gt;</pre></div>
 		As a matter of fact, this method also works with Firefox (at the difference of the Javascript method described below).
-		With Firefox however, don't use both <code>target="_search"'</code> and <code>rel="sidebar"</code> (see <a href="#rel">this section</a>).
+		With Firefox however, don't use both <code>target="_search"</code> and <code>rel="sidebar"</code> (see <a href="#rel">this section</a>).
+		Also, with Firefox you don't need to use <code>target="_main"</code> ; this is the default target.
 		</p>
 
 		<h3>Bookmark it</h3>
@@ -202,6 +229,48 @@ You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
 
 
 
+	<div><a name="pageholder"></a>
+
+		<h2>Internet Explorer for Mac's Page Holder</h2>
+
+		<p>Although they share the same name, <acronym>Microsoft Internet Explorer for Windows</acronym> and <acronym>Microsoft Internet Explorer for Mac</acronym> are really two <strong>different</strong> browsers.
+		Not only they have a different user interface, but also they don't support the same standards, and they don't even share the same extra features !
+		In our case, IE mac doesn't support the <var>_search</var> target, but instead has a <acronym>Page Holder</acronym> which is very similar to a Netscape panel.
+		As far as I know, the difference is that it can really only hold one page at a time, and cannot load bookmarks.<br>
+		This is in fact a very cool feature that allows the user to easily keep an index page in front of him while surfing other parts of the website.
+		<br>
+		<span class="warning">TODO : gather some infos on this and see what can be done with it.</span>
+		</p>
+
+		<p>The use of the Page Holder has not to be automated, since it's intended to be under the user's control,
+		but I find it handy to remind him this page would fit well in there.<br>
+		<br>
+		<a href="http://cbonar.free.fr/colorselector/sidebar.html" title="Grab this and drop it onto the Page Holder"><img border="0" src="http://regexpresso.berlios.de/docfiles/IEmac-pageholder.png" alt="Internet Explorer for Mac Page Holder" title="Grab this and drop it onto the Page Holder"></a>
+<div class="code">
+<pre>&lt;a href="sidebar.html"
+	title="Grab this and drop it onto the Page Holder"&gt;
+	&lt;img src="IEmac-pageholder.png"
+		alt="Internet Explorer for Mac Page Holder"
+		title="Grab this and drop it onto the Page Holder"
+		border="0"&gt;
+&lt;/a&gt;</pre>
+</div>
+		</p>
+
+		<h3 class="listtitle">Works with</h3>
+		<ul class="compatible">
+			<li>Internet Explorer for Mac
+		</ul>
+
+		<h3 class="listtitle">Related links</h3>
+		<ul class="links">
+			<li><span class="warning">None</span>
+		</ul>
+
+	</div>
+
+
+
 	<div><a name="rel"></a>
 
 		<h2>Opera : the "rel" attribute</h2>
@@ -235,18 +304,11 @@ You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
 			<tr>
 				<th></th>
 				<th>Internet Explorer</th>
+				<th>Internet Explorer<br>for Mac</th>
 				<th>Opera</th>
 				<th>Netscape</th>
 				<th>Mozilla</th>
 				<th>Firefox</th>
-			</tr>
-			<tr>
-				<th>window.sidebar.addPanel</th>
-				<td class="no">NO</td>
-				<td class="no">NO</td>
-				<td class="yes">YES</td>
-				<td class="yes">YES</td>
-				<td class="yes">YES</td>
 			</tr>
 			<tr>
 				<th>_search target</th>
@@ -254,14 +316,34 @@ You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
 				<td class="no">NO</td>
 				<td class="no">NO</td>
 				<td class="no">NO</td>
+				<td class="no">NO</td>
 				<td class="yes">YES, in &lt;a/&gt;</td>
 			</tr>
 			<tr>
-				<th>rel="sidebar"</th>
+				<th>Page Holder</th>
 				<td class="no">NO</td>
 				<td class="yes">YES</td>
 				<td class="no">NO</td>
 				<td class="no">NO</td>
+				<td class="no">NO</td>
+				<td class="no">NO</td>
+			</tr>
+			<tr>
+				<th>rel="sidebar"</th>
+				<td class="no">NO</td>
+				<td class="no">NO</td>
+				<td class="yes">YES</td>
+				<td class="no">NO</td>
+				<td class="no">NO</td>
+				<td class="yes">YES</td>
+			</tr>
+			<tr>
+				<th>window.sidebar.addPanel</th>
+				<td class="no">NO</td>
+				<td class="no">NO</td>
+				<td class="no">NO</td>
+				<td class="yes">YES</td>
+				<td class="yes">YES</td>
 				<td class="yes">YES</td>
 			</tr>
 		</table>
@@ -272,7 +354,7 @@ You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
 		so the <code>window.sidebar.addPanel</code> method is not the most used, in fact.
 		</p>
 
-		<p>I've ended up giving users one link for each browser to add the page to their sidebar,
+		<p>I've personally ended up giving users one link for each browser to add the page to their sidebar,
 		plus a two-parts button to open it directly in the search pane or in a popup window.
 		</p>
 
@@ -323,27 +405,24 @@ You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
 <div class="code">
 <pre>&lt;a href="javascript:void(open('http://cbonar.free.fr/colorselector/sidebar.html','_search'));"
 	title="Bookmark this link to open it in Internet Explorer's search pane"&gt;
-	&lt;img
-		src="IE-sidebar.png"
+	&lt;img src="IE-sidebar.png"
 		alt="Internet Explorer sidebar"
-		title="Bookmark this link to open it in Internet Explorer's sidebar"&gt;
-		border="0"
+		title="Bookmark this link to open it in Internet Explorer's sidebar"
+		border="0"&gt;
 &lt;/a&gt;
 &lt;a href="javascript:netscape_addPanel('Yet another color selector','http://cbonar.free.fr/colorselector/sidebar.html');"
 	title="Add to Netscape/Mozilla sidebar"&gt;
-	&lt;img
-		src="NS-sidebar.png"
-		alt="Add to Netscape/Mozilla sidebar"&gt;
-		border="0"
+	&lt;img src="NS-sidebar.png"
+		alt="Add to Netscape/Mozilla sidebar"
+		border="0"&gt;
 &lt;/a&gt;
 &lt;a href="http://cbonar.free.fr/colorselector/sidebar.html"
 	rel="sidebar"
 	title="colorselector"&gt;
-	&lt;img
-		src="Opera-sidebar.png"
+	&lt;img src="Opera-sidebar.png"
 		alt="Add to Opera sidebar"
-		title="Add to Opera sidebar"&gt;
-		border="0"
+		title="Add to Opera sidebar"
+		border="0"&gt;
 &lt;/a&gt;</pre>
 </div>
 		</p>
@@ -360,6 +439,7 @@ You can then click on it to open mysidebar in the search pane.&lt/a&gt;</pre>
 			<li><a href="http://tntluoma.com/sidebars/">A cool page with good links, mostly for Opera</a>
 			<li><a href="http://regexpresso.berlios.de">RegExpresso, a sidebar based on this document</a>
 			<li><a href="http://home.arcor.de/xbo/sidebar-cross-browser/">Cross-browser sidebar links</a>
+			<li><a href="http://cvs.sourceforge.net/viewcvs.py/barde/cbonar/pix/">The pictures of the buttons of this page</a> (look for the Gimp files ; web browsers logos are copyrighted by their respective owner)
 			<li><span class="warning">Missing links</span>
 		</ul>
 	</div>
