@@ -18,3 +18,4 @@ img { border:none; }
 .unicode { font-family:"Lucida sans Unicode"; }
 .license { background-color:#E0E0E0; }
 code { background-color:#E0E0E0; }
+#index { padding:10px; background-color:#F0F0F0; border:solid #999999 1px; }
