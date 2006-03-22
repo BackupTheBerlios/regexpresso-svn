@@ -1,7 +1,0 @@
-/*
-	Hide empty matches.
-	The older way was to remove the content by setting a parameter on the URL and to use border:none.
-	visibility:hidden was another solution but still affects the layout so we still had to remove the content by another way.
-	Finally, the solution to move the matches outside of the view is not very refined, but works fine.
-*/
-.match_empty, .backref_empty, .highlight_empty { position:absolute; top:-50px; }

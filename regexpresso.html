@@ -13,7 +13,6 @@
 		<title>RegExpresso</title>
 
 
-
 		<!--
 			Embedded, default, standalone style
 		-->
@@ -34,7 +33,7 @@
 			.button { width:auto; text-align:center; }
 			.options { font-size:small; }
 			/* generic style for a match */
-			.match, .match_empty { border:solid red 1px; background-color:#ffffe1; }
+			.match, .match_empty { border:solid red 1px; background-color:#FFFFE1; }
 			/* backreference shown as a unique element */
 			.backref, .backref_empty { border:solid gray 1px; background-color:#FFFFE1; }
 			/* alternate appearance of the description fields */
@@ -56,8 +55,10 @@
 				so we must use a separate class to render highlights inside highlights.
 				Don't even think about having :before and :after working with IE, either. */
 			.highlight_backref { background-color:white; border:none; border-left:dotted #999999 1px; }
+			.highlight_backref:before, .highlight_backref:after { color:#999999; }
 			.highlight_backref:before { content:"("; }
 			.highlight_backref:after { content:")"; }
+			.highlight_index { background:black; color:white; font-weight:bold; font-family:courier; border:none; }
 			/* empty matches : for those browsers that just cannot guess the right font by themselves ; tested on WinXP only */
 			.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:xx-small; }
 		-->
@@ -216,7 +217,7 @@
 			{
 				if ( window.RegExp )
 				{
-					var result = new RegExp("\\??"+name+"=([^&]*)&?","i").exec(window.location.search);
+					var result = new RegExp("[\\?&]"+name+"=([^&]*)&?","i").exec(window.location.search);
 					if ( result != null && result[1] != null )
 						// should work 100% with text/urlencoded only
 						// with text/plain, the '+' signs will be converted to spaces, even if they were real '+'
@@ -247,6 +248,33 @@
 		<!-- Functions specific to this tool -->
 		<script type="text/javascript">
 		<!--
+
+			/* Manages the validity of the checked options (not all can be enabled at the same time) */
+			function onOptionChange( option )
+			{
+				switch ( option )
+				{
+					// those options are not compatible with 'plaintext'
+					case document.form.highlight:
+						document.form.showempty.disabled = ! document.form.highlight.checked;
+						document.form.showindex.disabled = ! document.form.highlight.checked;
+						document.form.plaintext.disabled = document.form.highlight.checked || document.form.backref.checked;
+						break;
+					case document.form.backref:
+						document.form.plaintext.disabled = document.form.highlight.checked || document.form.backref.checked;
+						break;
+					// this option is not compatible with 'highlight' and 'backref'
+					case document.form.plaintext:
+						document.form.highlight.disabled = option.checked;
+						document.form.backref.disabled = option.checked;
+						break;
+				}
+				// re-evaluate the whole expression to keep the view up-to-date with the options
+				document.form.submit.click();
+		}
+
+
+
 			/**
 				An email link with an error message, as a DOM anchor.
 
@@ -260,7 +288,10 @@
 				url += "&body=regex=" + myEscape(document.form.regex);
 				url += "%0D%0Asubject=" + myEscape(document.form.subject);
 				url += "%0D%0Ahighlight=" + document.form.highlight;
+				url += "%0D%0Ashowempty=" + myEscape(document.form.showempty);
+				url += "%0D%0Ashowindex=" + myEscape(document.form.showindex);
 				url += "%0D%0Abackref=" + document.form.backref;
+				url += "%0D%0Aplaintext=" + document.form.plaintext;
 				url += "%0D%0Aempty=" + myEscape(document.form.empty);
 				url += "%0D%0Astylesheet=" + myEscape(document.form.stylesheet);
 				url += "%0D%0Auser-agent=" + myEscape(navigator.userAgent);
@@ -303,37 +334,41 @@
 					whithin which the matches will be highlighted
 				@param backref::Boolean
 					if true, the matches captured by the parentheses will be shown
+				@param plaintext::Boolean
+					if true, outputs the result as text/plain
 				@param empty::String
 					the content to insert in empty matches
 			*/
-			function match( output, subject, regexp, highlight, backref, empty )
+			function match( output, subject, regexp, highlight, showempty, showindex, backref, plaintext, empty )
 			{
-				//alert("match("+output+",\""+subject+"\","+regexp+","+highlight+","+backref+")");
+				//alert("match("+output+",\""+subject+"\","+regexp+","+highlight+","+showempty+","+showindex+","+backref+","+plaintext+","+empty+")");
 
 				// computes the matches
 				var results = regexp.exec(subject);
 
 				var desc_class = desc_again.next();
 
+				var info = createSimpleElement("div",desc_class,null);
+				output.appendChild(info);
+
 				// first, a message indicating whether the subject has been matched or not
 				if ( results == null )
-					output.appendChild( createSimpleElement("div",desc_class,document.createTextNode("No match.")) );
+					info.innerHTML = "No match.";
 
 				// then, creates the container for the results
-				else if ( highlight )
-				{
-					output.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Result :")) );
+				else if ( highlight || plaintext )
 					var dom_results = output.appendChild( createSimpleElement("div","match",null) );
-				}
 				else
 					var dom_results = output.appendChild( createSimpleElement("div","results",null) );
 
 				// finally, iterate over the results and inserts them into the node
 				// match_index is the index of the match of the original subject
-				for ( match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; )
+				for ( howmany=1, match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; howmany++ )
 				{
 					// updates the index to the start of the match
 					match_index += results.index;
+
+					info.innerHTML = howmany + (howmany>1 ? " matches :" : " match :");
 
 					// the first element is the full match
 					if ( highlight )
@@ -343,12 +378,24 @@
 							dom_results.appendChild( document.createTextNode(text_before) );
 						// var dom_highlight is used later to insert the backrefs into in highlight mode
 						if ( results[0].length > 0 )
+						{
+							if ( showindex )
+								dom_results.appendChild( createSimpleElement("span","highlight_index",document.createTextNode(howmany)) );
 							var dom_highlight = createSimpleElement( "span", "highlight", document.createTextNode(results[0]) );
-						else
+							dom_results.appendChild(dom_highlight);
+						}
+						else if ( showempty )
+						{
 							// we show the empty cells by filling their content with the "empty set" symbol (here in UTF-8)
 							// again, due to IE, we must declare a separate CSS class
-							var dom_highlight = createSimpleElement( "span", "highlight_empty", document.createTextNode(empty) );
-						dom_results.appendChild(dom_highlight);
+							var dom_highlight = createSimpleElement( "span", "highlight_empty", null );
+							dom_highlight.innerHTML = empty;
+							dom_results.appendChild(dom_highlight);
+						}
+					}
+					else if ( plaintext )
+					{
+						dom_results.appendChild( document.createTextNode(results[0]) );
 					}
 					else
 					{
@@ -359,7 +406,7 @@
 						// @todo visual tooltips are limited in length, if the match is too big, cut it
 						var index_context_before = Math.max(0,match_index-10);
 						var index_context_after = Math.min(match_index+results[0].length+10,subject.length);
-						var context_before = subject.substring(index_context_before,match_index);	// what's before
+						var context_before = subject.substring(index_context_before,match_index);		// what's before
 						var context_after = subject.substring(Math.min(match_index+results[0].length,subject.length),index_context_after);	// what's after
 						var tooltip = "char. " + match_index + " : ";
 						if ( index_context_before > 0 )
@@ -376,7 +423,7 @@
 					if ( backref && results.length>1 )
 					{
 						if ( ! highlight )
-							dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Backreferences :")) );
+							dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Captured groups :")) );
 
 						for ( r=1 ; r<results.length ; r++ )
 						{
@@ -479,9 +526,9 @@
 				Unfortunately, this ended up in a heavy routine for the highlight mode : 5 successive calls to replace !
 				@return the output as a DOMElement
 			*/
-			function replace( output, subject, regexp, replace_string, highlight )
+			function replace( output, subject, regexp, replace_string, highlight, plaintext )
 			{
-				//alert("replace(\""+subject+"\","+regexp+",\""+replace_string+"\")");
+				//alert("replace(\""+subject+"\","+regexp+",\""+replace_string+"\""+","+highlight+","+plaintext+")");
 
 				output.appendChild( createSimpleElement( "div", createSimpleElement("td","results",document.createTextNode("Result :",desc_again.next()))) );
 
@@ -515,6 +562,8 @@
 						output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );	// falling back to not-highlighted
 					}
 				}
+				else if ( plaintext )
+					output.appendChild( createSimpleElement("pre","match",document.createTextNode(results)) );
 				else
 					output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );
 			}
@@ -539,10 +588,27 @@
 				var param_highlight = getParam("highlight");
 				if ( param_highlight != null )
 					document.form.highlight.checked = param_highlight == "on";
+				onOptionChange(document.form.highlight);
+
+				var param_showempty = getParam("showempty");
+				if ( param_showempty != null )
+					document.form.showempty.checked = param_showempty == "on";
+				onOptionChange(document.form.showempty);
+
+				var param_showindex = getParam("showindex");
+				if ( param_showindex != null )
+					document.form.showindex.checked = param_showindex == "on";
+				onOptionChange(document.form.showindex);
 
 				var param_backref = getParam("backref");
 				if ( param_backref != null )
 					document.form.backref.checked = param_backref == "on";
+				onOptionChange(document.form.backref);
+
+				var param_plaintext = getParam("plaintext");
+				if ( param_plaintext != null )
+					document.form.plaintext.checked = param_plaintext == "on";
+				onOptionChange(document.form.plaintext);
 
 				var param_empty = getParam("empty");
 				if ( param_empty != null )
@@ -573,11 +639,14 @@
 					var param_subject = myEscape(document.getElementById('subject').value);
 					var param_regex = myEscape(document.getElementById('regex').value);
 					var param_highlight = document.getElementById('highlight').checked ? "on" : "";
+					var param_showempty = document.getElementById('showempty').checked ? "on" : "";
+					var param_showindex = document.getElementById('showindex').checked ? "on" : "";
 					var param_backref = document.getElementById('backref').checked ? "on" : "";
+					var param_plaintext = document.getElementById('plaintext').checked ? "on" : "";
 					var param_empty = myEscape(document.getElementById("empty").value);
 					var param_stylesheet = myEscape(document.getElementById("stylesheet").value);
-					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
-					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&plaintext="+param_plaintext+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&plaintext="+param_plaintext+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
 				}
 				/// @todo (maybe) else try with the standard document.form.subject, etc.
 				else
@@ -643,7 +712,7 @@
 
 								//alert("s: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
 								var regex = new RegExp(pattern,modifiers);
-								replace( dom_output, subject, regex, replace_string, document.form.highlight.checked );
+								replace( dom_output, subject, regex, replace_string, document.form.highlight.checked, document.form.plaintext.checked );
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -659,7 +728,7 @@
 
 								//alert("m: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
 								var regex = new RegExp(pattern,modifiers);
-								match( dom_output, subject, regex, document.form.highlight.checked, document.form.backref.checked, document.form.empty.value );
+								match( dom_output, subject, regex, document.form.highlight.checked, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.plaintext.checked, document.form.empty.value );
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -707,8 +776,6 @@
 
 			This is a shame to be forced to add the boundary pictures in the HTML because of the non-CSS aware browsers, but I had no real choice :[
 			More : IE just pops up the 'alt' attribute of the <img/> rather than the 'title' of <a/> (although it supports it).
-			Please tell me why it's so vital to IE to display the 'alt' attribute of a picture when it is already displayed !!!?
-			There is a fucking 'longdesc' URL attribute for that purpose ! Don't tell me it's because 'title' is not W3C, that would make me laugh.
 			Well, now I think I'll have to consider using Javascript or another CSS method to display a popup menu... }:|
 
 			Also, I had to concatenate the elements without any blanks between because there is no simple way (or I haven't found)
@@ -751,8 +818,12 @@
 			<div class="input"><textarea name="subject" id="subject" rows="10" cols="20" onFocus="javascript:this.select();" title="The text ('subject') to evaluate">[Paste here the text to evaluate]</textarea></div>
 			<div class="input"><input type="text" name="regex" id="regex" value="/\b\w*(e)/i" onFocus="javascript:this.select();" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"></div>
 			<table class="options">
-				<tr title="Highlight matches inside the subject"><td onClick="javascript:document.form.highlight.click();">Highlight matches :</td><td><input align="right" type="checkbox" id="highlight" name="highlight" title="Highlight matches inside the subject"></td></tr>
-				<tr><td onClick="javascript:document.form.backref.click();">Show backreferences :</td><td><input align="right" type="checkbox" id="backref" name="backref" title="Show backreferences captured by the parentheses" checked></td><tr>
+				<!-- NOTE : the onclick's below were added because of a behaviour observed in IE6 : the 'onchange' is not called after a 'onclick' => see what's the matter -->
+				<tr title="Highlight matches inside the subject"><td onClick="javascript:document.form.highlight.click();">Highlight matches :</td><td><input align="right" type="checkbox" id="highlight" name="highlight" title="Highlight matches inside the subject" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td></tr>
+				<tr><td onClick="javascript:document.form.showempty.click();">Show empty matches :</td><td><input align="right" type="checkbox" id="showempty" name="showempty" title="Show or hide empty matches in the result" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td><tr>
+				<tr><td onClick="javascript:document.form.showindex.click();">Show indexes :</td><td><input align="right" type="checkbox" id="showindex" name="showindex" title="Show or hide the index for each match" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td><tr>
+				<tr><td onClick="javascript:document.form.backref.click();">Show groups :</td><td><input align="right" type="checkbox" id="backref" name="backref" title="Show groups captured by the parentheses" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td><tr>
+				<tr><td onClick="javascript:document.form.plaintext.click();">Output as plain text :</td><td><input align="right" type="checkbox" id="plaintext" name="plaintext" title="Show the result as text (no HTML)" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td><tr>
 			</table>
 			<div class="submit"><input name="submit" id="submit" type="submit" value="EVALUATE"></div>
 		</form>

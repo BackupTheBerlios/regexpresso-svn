@@ -28,14 +28,13 @@
 			<li><a href="#requirements">Browser requirements / specifications</a>
 			<li><a href="#bugs">Known bugs and limitations</a>
 			<li><a href="#quickstart">Quick start</a>
-			<li><a href="#syntax">Regular expressions syntax</a>
+			<li><a href="#syntax" class="outdated">Regular expressions syntax</a>
 			<li><a href="#menu">Menu</a>
 			<li><a href="#params">Parameters</a>
 			<li><a href="#local" class="outdated">Local installation</a>
 			<li><a href="#license">Copyright and source</a>
 			<li><a href="#tips">Tips
 				<ul>
-					<li>How to remove the empty matches from the view ?
 					<li>RegExpresso executes when loading if both <var>regex</var> and <var>subject</var> are given in the URL.
 					<li>Local installation
 				</ul></a>
@@ -203,7 +202,7 @@
 		would lead to an instance of the tool with "highlight" checked and a custom stylesheet located at <span class="url">http://toto.com/mystyle.css</span>.
 		</p>
 
-		<p><table>
+		<p class="outdated"><table class="outdated">
 			<caption>Parameters accessed via the web form.<br></caption>
 			<thead>
 				<tr><th>Short name</th><th>Description</th><th>Examples / values</th></tr>
@@ -238,7 +237,7 @@
 			</tbody>
 		</table></p>
 
-		<p><table>
+		<p class="outdated"><table class="outdated">
 			<caption>Parameters given in the URL only</caption>
 			<thead>
 				<tr><th>Short name</th><th>Description</th><th>Examples / values</th></tr>
@@ -284,20 +283,6 @@
 	<div><a name="tips"></a>
 
 		<h2>Tips</h2>
-
-		<h3>How to remove all empty matches from the view ?</h3>
-
-		<p>The short answer : call this URL : <a href="http://regexpresso.berlios.de/regexpresso.html?empty=&stylesheet=http://regexpresso.berlios.de/noempty.css">http://regexpresso.berlios.de/regexpresso.html?empty=&amp;stylesheet=http://regexpresso.berlios.de/noempty.css</a>.
-		</p>
-		<p>Now, the explanation.
-			<ul>
-			<li>You must first empty the "empty matches" filler string by setting it to an empty string in the URL calling RegExpresso.
-		Here is a sample URL : <span class="url">http://regexpresso.berlios.de/regexpresso.html?empty=</span>.<br>
-		<li>With most browsers, you will still have the borders printed at the place of the empty match.
-		To remove them as well, you must provide RegExpresso a custom stylesheet with borders removed for the empty matches.
-		Once again, this is done by using the a parameter of the URL, like : <span class="url">http://regexpresso.berlios.de/regexpresso.html?stylesheet=http://myhost/my.css</span>.
-		You can find such a stylesheet at <a href="http://regexpresso.berlios.de/noempty.css">http://regexpresso.berlios.de/noempty.css</a>.</ul>
-		</p>
 
 		<h3>RegExpresso executes the regular expression once loaded if both <var>regex</var> and <var>subject</var> are given in the URL.</h3>
 

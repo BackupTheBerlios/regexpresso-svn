@@ -12,7 +12,7 @@ span.author:before { content:"<"; }
 span.author:after { content:">"; }
 table { border-collapse:collapse; }
 .regex { background-color:#DBFF00; border:none; border-top:solid black 1px; border-bottom:solid black 1px; }
-.outdated { margin-top:20pt; background-color:#DBB6B6; }
+.outdated, .outdated > * { margin-top:20pt; background-color:#DBB6B6; }
 .outdated:before { font-weight:bold; color:#DBB6B6; background-color:black; content:"OUTDATED" }
 img { border:none; }
 .unicode { font-family:"Lucida sans Unicode"; }

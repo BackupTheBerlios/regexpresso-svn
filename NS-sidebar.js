@@ -13,7 +13,7 @@ function netscape_addPanel( sbTitle, sbLoc )
 	//alert("netscape_addPanel("+sbTitle+","+sbLoc+")");
 
 	// hack: bc 2002-01-04 work around http://bugzilla.mozilla.org/show_bug.cgi?id=99808
-	// @todo : what if an error happens after the user called this method ? Is this handler registered globally or only inside this function ?
+	// @FIXME : what if an error happens after the user called this method ? Is this handler registered globally or only inside this function ?
 	window.onerror = function()
 		{ alert("An error has occured during the sidebar installation. Please make sure your sidebar panel is open and then retry."); };
 

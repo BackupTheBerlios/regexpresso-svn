@@ -17,7 +17,7 @@ function cbonar_http_getParam( location, name, notfound )
 {
 	if ( window.RegExp )
 	{
-		var result = new RegExp("\\??"+name+"=([^&]*)&?","i").exec(location.search);
+		var result = new RegExp("[\\?&]"+name+"=([^&]*)&?","i").exec(location.search);
 		if ( result != null && result[1] != null )
 			// should work 100% with text/urlencoded only
 			// with text/plain, the '+' signs will be converted to spaces, even if they were real '+'
@@ -28,3 +28,5 @@ function cbonar_http_getParam( location, name, notfound )
 	else
 		return notfound;
 }
+
+
