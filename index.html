@@ -28,16 +28,12 @@
 			<li><a href="#requirements">Browser requirements / specifications</a>
 			<li><a href="#bugs">Known bugs and limitations</a>
 			<li><a href="#quickstart">Quick start</a>
-			<li><a href="#syntax" class="outdated">Regular expressions syntax</a>
+			<li><a href="#syntax">Regular expressions syntax</a>
 			<li><a href="#menu">Menu</a>
 			<li><a href="#params">Parameters</a>
-			<li><a href="#local" class="outdated">Local installation</a>
+			<li><a href="#local">Local installation</a>
 			<li><a href="#license">Copyright and source</a>
-			<li><a href="#tips">Tips
-				<ul>
-					<li>RegExpresso executes when loading if both <var>regex</var> and <var>subject</var> are given in the URL.
-					<li>Local installation
-				</ul></a>
+			<li><a href="#tips">Tips</a>
 			<li><a href="#links">Links</a>
 		</ul>
 	</div>
@@ -45,11 +41,10 @@
 	<div><a name="introduction"></a>
 		<h2>Introduction</h2>
 
-		<p>This tool is mainly for programmers. It helps testing a regular expression before using it in some code.
-		There's not as many features as in professional tools, since it is intended only to quickly test a short regular expression.
-		Depending on your computer's capacities, the size of the subject to parse and the complexity of the regular expression,
-		it may take more or less of your microprocessor's time to process the expression.
-		Be sure to use reasonably-sized expressions and reasonable amounts of text.
+		<p>This tool is made for programmers. It aims to help to test a regular expression prior to using it in some code.
+		It has not as many features as in professional tools, since it is only designed for "quick and dirty" tests.
+		Depending on your computer's capacities, the size of the subject to parse and the complexity of the regular expression, it may take more or less time to process the expression.
+		Be sure to use decently sized expressions and decent amounts of text.
 		</p>
 	</div>
 
@@ -110,8 +105,9 @@
 
 		<ul>
 			<li>The Javascript RegExp class has some limitations as stated in the following article : <a href="http://www.webreference.com/js/column5/modifiers.html">http://www.webreference.com/js/column5/modifiers.html</a>
-			<li>Needs to be tested with other browsers, especially Safari.
-			<li>Behaviour of the menu's buttons depends greatly on the context of the tool : is it in the sidebar, the main window or a separate window ?
+			<li>Dubious reliability with browsers other than IE and Firefox ; lacks testing on that area.
+			<li>The behaviour of the menu's buttons greatly depends on the context of the tool : in the sidebar, the main window or a separate window, and using which browser.
+			<li><a href="http://developer.berlios.de/bugs/index.php?group_id=3235&set=custom&_assigned_to=0&_status=100&_category=100&_bug_group=100&_summary_keyword=&SUBMIT=Browse" alt="More bugs" title="More bugs">More bugs at berlios.de</a>
 		</ul>
 	</div>
 
@@ -130,11 +126,11 @@
 			<li>Open the tool's web page or add it to your browser's sidebar by clicking on one of the above links / pictures
 			<li>Paste the text to parse in the top text area
 			<li>Type a regular expression in the middle field
-			<li>Validate by either clicking on the button or typing Enter
+			<li>Validate by clicking on the button
 			<li>The matches are shown in the bottom of the page
-			<li>For instance : copy and paste this page's content into the text field, and type the following pattern : <span class="regex">/\be\w*\b/i</span> to match all word beginning with a 'e' or a 'E'
-
 		</ol>
+
+		For instance : copy and paste this page's content into the text field, and type the following pattern : <span class="regex">/\be\w*\b/i</span> to match all word beginning with a 'e' or a 'E'.
 
 	</div>
 
@@ -142,10 +138,10 @@
 
 		<h2>Regular expressions syntax</h2>
 
-		<p>The regular expression you are awaited to type in the middle field follows Perl's regular expressions syntax.
-		That means : <span class="regex">command/options/modifiers</span>. Two commands are supported : "match" (<code>m//</code> operator) and "replace" (<code>s///</code> operator).
+		<p>The regular expression you are supposed to type in the middle field follows the following syntax : <span class="regex">command/options/modifiers</span>.<br />
+		Two commands are supported : "match" (<code>m//</code> operator) and "replace" (<code>s///</code> operator).
 			<ul>
-				<li>To obtain the matches of a regular expression, type : <span class="regex">m/pattern/modifiers</span> or <span class="regex">/pattern/modifiers</span>,
+				<li>To obtain all matches for a regular expression test, type : <span class="regex">m/pattern/modifiers</span> or <span class="regex">/pattern/modifiers</span>,
 				<li>To obtain the result of a substitution, type : <span class="regex">s/pattern/replace/modifiers</span>.
 			</ul>
 		where :
@@ -154,6 +150,9 @@
 				<li><var>modifiers</var> is <a href="http://www.webreference.com/js/column5/modifiers.html">a sequence of characters in {'g','i'}</a>
 				<li><var>replace</var> is <a href="http://www.webreference.com/js/column5/substitute.html">a substitution pattern</a>
 			</ul>
+
+		Don't forget the syntax depends on the accuracy of the browser's implementation of the Javascript's RegExp object.<br />
+		I've found <a href="http://www.webreference.com/js/column5/define.html">this page</a> and the following to be good advice for Javascript-specific rules about regular expressions.
 		</p>
 
 	</div>
@@ -187,14 +186,10 @@
 
 		<p>RegExpresso uses two kind of parameters :
 		<ul>
-			<li>standard form fields
-			<li>URL parameters
+			<li>standard form fields, that are entered by the user by typing some text in RegExpresso's form
+			<li>parameters passed on the URL
 		</ul>
-		While the formers can be altered by the user simply by typing some text in the web page,
-		the latters require the user to add them directly to the URL used to call the tool.
-		Indeed, those parameters are not frequently used, and it would have been wasting space to include them in the form.
-		Additionally, the form parameters can be passed in the URL the same way, so one can bookmark the full URL with parameters
-		to retrieve a given configuration of the tool.
+		Additionally, the form parameters can be passed in the URL the same way, so one can bookmark the full URL with parameters to retrieve a given configuration of the tool.
 		</p>
 
 		<p>In the following tables, the "short name" is the name to use in the URL for this parameter.
@@ -202,7 +197,7 @@
 		would lead to an instance of the tool with "highlight" checked and a custom stylesheet located at <span class="url">http://toto.com/mystyle.css</span>.
 		</p>
 
-		<p class="outdated"><table class="outdated">
+		<p><table>
 			<caption>Parameters accessed via the web form.<br></caption>
 			<thead>
 				<tr><th>Short name</th><th>Description</th><th>Examples / values</th></tr>
@@ -227,6 +222,18 @@
 					<td>checked/"on" = highlight mode ; unchecked/""(empty) = normal mode</td>
 				</tr>
 				<tr>
+					<td><var>showempty</var></td>
+					<td>
+					</td>
+					<td>checked/"on" = highlight mode ; unchecked/""(empty) = normal mode</td>
+				</tr>
+				<tr>
+					<td><var>showindex</var></td>
+					<td>
+					</td>
+					<td>checked/"on" = highlight mode ; unchecked/""(empty) = normal mode</td>
+				</tr>
+				<tr>
 					<td><var>backref</var></td>
 					<td>When using capturing parentheses in the regular expression,
 					there may be one or more "sub-matches" for every match.
@@ -234,10 +241,16 @@
 					</td>
 					<td>checked/"on" = show back references ; unchecked/""(empty) = don't show</td>
 				</tr>
+				<tr>
+					<td><var>plaintext</var></td>
+					<td>
+					</td>
+					<td>checked/"on" = highlight mode ; unchecked/""(empty) = normal mode</td>
+				</tr>
 			</tbody>
 		</table></p>
 
-		<p class="outdated"><table class="outdated">
+		<p><table>
 			<caption>Parameters given in the URL only</caption>
 			<thead>
 				<tr><th>Short name</th><th>Description</th><th>Examples / values</th></tr>
@@ -310,12 +323,19 @@
 
 		<h2>Links</h2>
 
-		<a href="http://www.regular-expressions.info/javascript.html">An introduction to regular expressions</a><br>
-		<a href="http://www.webreference.com/js/column5/index.html">A comprehensive article about Javascript regular expressions</a><br>
-		<a href="http://developer.berlios.de/projects/regexpresso">The project at BerliOS</a><br>
-		<a href="http://developer.berlios.de/docman/display_doc.php?docid=758&group_id=3235">More on sidebars in multiple browsers</a><br>
-		<a href="http://www.pcre.org/">PCRE "Perl Compatible Regular Expressions", used by KDE and Safari</a><br>
-		<a href="http://developer.apple.com/darwin/projects/webcore/">WebCore, the Safari framework</a><br>
+		<a href="http://developer.berlios.de/projects/regexpresso">The source of this project at BerliOS</a><br>
+
+			<h3>Regular expressions :</h3>
+				<a href="http://www.regular-expressions.info/javascript.html">An introduction to regular expressions</a><br>
+				<a href="http://www.webreference.com/js/column5/index.html">A comprehensive article about Javascript regular expressions</a><br>
+
+			<h3>Browsers :</h3>
+				<a href="http://developer.berlios.de/docman/display_doc.php?docid=758&group_id=3235">More on sidebars in multiple browsers</a><br>
+				<a href="http://www.pcre.org/">PCRE "Perl Compatible Regular Expressions", used by KDE and Safari</a><br>
+				<a href="http://developer.apple.com/darwin/projects/webcore/">WebCore, the Safari framework</a><br>
+
+			<h3>Similar tools :</h3>
+				<a href="http://www.ultrapico.com/Expresso.htm">Expresso (only here because of the name ; I was not aware of its existence before I choose RegExpresso as the name of this project)</a><br>
 	</div>
 
 
