@@ -17,7 +17,6 @@
 			Embedded, default, standalone style
 		-->
 		<style type="text/css">
-		<!--
 			/* generic style */
 			body { background-color:#EEEEEE; margin:0; padding:8px; }
 			div { margin-top:4px; margin-bottom:4px; }
@@ -32,9 +31,6 @@
 			form { margin:0; }
 			#subject, #regex, #output { width:100%; }
 			.button { width:auto; text-align:center; }
-			#options { font-size:small; background-color:#E1E1FF; border:solid #0000E1 1px; }
-			/* options are initialy hidden */
-			#options { display:none; }
 			/* generic style for a match */
 			.match, .match_empty { border:solid red 1px; background-color:#FFFFE1; }
 			/* backreference shown as a unique element */
@@ -50,7 +46,7 @@
 			img.menu:hover, img.menu#hover { cursor:pointer; }
 			/* documentation / external resources */
 			a.doc { text-decoration:none; }
-			/* highlight mode */
+			/* text mode */
 			.highlight { background-color:#DBFF00; border:dotted #999999 1px; }
 			.highlight_empty { background-color:yellow; border:dotted #999999 1px; }
 			/** Unfortunately (I'm starting to believe it's not due to misfortune),
@@ -65,7 +61,25 @@
 			/* empty matches : for those browsers that just cannot guess the right font by themselves ; tested on WinXP only */
 			.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:xx-small; }
 			.googlead { padding:0; margin:0; border:none; position:relative; left:-5px; }
-		-->
+			/* info div used to display context help */
+			.info { font-weight:bold; color:blue; background:yellow; border:solid #808000 1px; padding:0; padding-left:2px; padding-right:2px; }
+			.info a { text-decoration:none; }
+			.info:hover { cursor:pointer; }
+			/* input class highlights the tag as beeing an input zone */
+			.input { border:solid #2449DB 1px; }												/* normal input style */
+			.input:hover { border: solid orange 1px; }											/* on hover */
+			input[type=text]:focus, textarea:focus { background-color:#FFFFBB; }		/* on focus for editable inputs */
+			#options { font-size:small; background-color:#E1E1FF; }
+			#options { display:none; }		/* options are initialy hidden */
+			/* context ~= text not matched */
+			.context_info {}
+			.context_before, .context_after, .context_match { background-color:#BBBBBB; }
+			.context_match { font-weight:bold; color:red; }
+			/* same as input */
+			.output { border: solid red 1px; border-collapse:collapse; background-color:white; }
+			table.output thead tr th { background-color:red; color:white; font-weight:bold; font-size:80%; text-align:left; }
+			.output tr:hover { background-color:#DBFF00; }
+
 		</style>
 		<!-- IE specific style -->
 		<!--[if IE]>
@@ -248,7 +262,30 @@
 				else
 					return null;
 			}
-				
+
+
+
+			/**
+				I haven't found better yet to get the logical value of a group of radio buttons.
+			*/
+			function getRadioButtonsValue( radioname )
+			{
+				//alert("getRadioButtonsValue("+radioname+")");
+				var radios = document.getElementsByName(radioname);
+				for ( var r=0 ; r<radios.length ; r++ )
+				{
+					if ( radios[r].checked )
+					{
+						//alert("getRadioButtonsValue("+radioname+")="+radios[r].value);
+						return radios[r].value;
+						}
+				}
+				//alert("getRadioButtonsValue("+radioname+")=undefineD");
+				return undefined;
+			}
+
+
+
 		// -->
 		</script>
 
@@ -271,7 +308,8 @@
 
 			// temporary var used to remember what was the content of the regex field before keypress
 			var buffer_regex;
-
+			// last matches
+			var matches = undefined;
 
 
 			function showHideOptions()
@@ -286,11 +324,13 @@
 			/* Manages the validity of the checked options (not all can be enabled at the same time) */
 			function checkOption( option )
 			{
+				//alert("checkOption("+option+")");
 				switch ( option )
 				{
-					case document.form.highlight:
-						document.form.showempty.disabled = ! document.form.highlight.checked;
-						document.form.showindex.disabled = ! document.form.highlight.checked;
+					case document.getElementById("mode_text"):
+					case document.getElementById("mode_table"):
+						document.form.showempty.disabled = ! document.getElementById("mode_text").checked;
+						document.form.showindex.disabled = ! document.getElementById("mode_text").checked;
 						break;
 				}
 			}
@@ -320,7 +360,7 @@
 				url += "?subject=" + myEscape("regexpresso error");
 				url += "&body=regex=" + myEscape(document.form.regex);
 				url += "%0D%0Asubject=" + myEscape(document.form.subject);
-				url += "%0D%0Ahighlight=" + document.form.highlight;
+				url += "%0D%0Amode=" + getRadioButtonsValue("mode");
 				url += "%0D%0Ashowempty=" + myEscape(document.form.showempty);
 				url += "%0D%0Ashowindex=" + myEscape(document.form.showindex);
 				url += "%0D%0Abackref=" + document.form.backref;
@@ -352,118 +392,43 @@
 
 
 			/**
-				Writes the results of a match.
-				I guess this would be clearer with a recursive algorithm...
-
-				@param output
-					the DOMElement where to insert the results
-				@param subject
-					the text to evaluate
-				@param regexp
-					the RegExp to match
-				@param highlight::Boolean
-					if true, the results will be shown as a lone block,
-					whithin which the matches will be highlighted
-				@param backref::Boolean
-					if true, the matches captured by the parentheses will be shown
-				@param empty::String
-					the content to insert in empty matches
+				Parses the match and stores the results in a table of matches with each the following fields :
+					before = what was not matched between the last match (or the start) and this match
+					match = the matched text
+					index = the index of the first char of the match
+					groups = a table containing the matched groups
+					context = formatted text showing the match in an extract of text
+					after = the text that was not matched after
 			*/
-			function match( output, subject, regexp, highlight, showempty, showindex, backref, empty )
+			function match( subject, regexp )
 			{
-				//alert("match("+output+",\""+subject+"\","+regexp+","+highlight+","+showempty+","+showindex+","+backref+","+empty+")");
+				var matches = new Array();
+				matches.tail = "";
 
 				// computes the matches
 				var results = regexp.exec(subject);
 
-				var desc_class = desc_again.next();
-
-				var info = createSimpleElement("div",desc_class,null);
-				output.appendChild(info);
-
-				// first, a message indicating whether the subject has been matched or not
-				if ( results == null )
-					info.innerHTML = "No match.";
-
-				// then, creates the container for the results
-				else if ( highlight )
-					var dom_results = output.appendChild( createSimpleElement("pre","match",null) );
-				else
-					var dom_results = output.appendChild( createSimpleElement("div","results",null) );
-
-				// finally, iterate over the results and inserts them into the node
 				// match_index is the index of the match of the original subject
-				for ( howmany=1, match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; howmany++ )
+				for ( m=0, match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; m++ )
 				{
+					matches[m] = new Object();
+
 					// updates the index to the start of the match
 					match_index += results.index;
 
-					info.innerHTML = howmany + (howmany>1 ? " matches :" : " match :");
+					// saves the text not matched before this match
+					matches[m].before = subject.substring(text_before_index,match_index);
 
-					// the first element is the full match
-					if ( highlight )
-					{
-						var text_before = subject.substring(text_before_index,match_index);
-						if ( text_before.length > 0 )
-							dom_results.appendChild( document.createTextNode(text_before) );
-						// var dom_highlight is used later to insert the backrefs into in highlight mode
-						if ( results[0].length > 0 )
-						{
-							if ( showindex )
-								dom_results.appendChild( createSimpleElement("span","highlight_index",document.createTextNode(howmany)) );
-							var dom_highlight = createSimpleElement( "span", "highlight", document.createTextNode(results[0]) );
-							dom_results.appendChild(dom_highlight);
-						}
-						else if ( showempty )
-						{
-							// we show the empty cells by filling their content with the "empty set" symbol (here in UTF-8)
-							// again, due to IE, we must declare a separate CSS class
-							var dom_highlight = createSimpleElement( "span", "highlight_empty", null );
-							dom_highlight.innerHTML = empty;
-							dom_results.appendChild(dom_highlight);
-						}
-					}
-					else
-					{
-						dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Matched at char. "+match_index+" :")) );
+					// saves the index
+					matches[m].index = match_index;
 
-						var dom_match = createSimpleElement( "span", "match", document.createTextNode(results[0]) );
-						// adds a tooltip describing the context
-						// @todo visual tooltips are limited in length, if the match is too big, cut it
-						var index_context_before = Math.max(0,match_index-10);
-						var index_context_after = Math.min(match_index+results[0].length+10,subject.length);
-						var context_before = subject.substring(index_context_before,match_index);		// what's before
-						var context_after = subject.substring(Math.min(match_index+results[0].length,subject.length),index_context_after);	// what's after
-						var tooltip = "char. " + match_index + " : ";
-						if ( index_context_before > 0 )
-							tooltip += "...";
-						tooltip += context_before + "*" + results[0] + "*" + context_after;
-						if ( index_context_after < subject.length-1 )
-							tooltip += "...";
-						dom_match.setAttribute("title",tooltip);
+					// saves the match
+					matches[m].match = results[0];
 
-						dom_results.appendChild(dom_match);
-					}
-
-					// the remaining elements are the matches captured by the parentheses
-					if ( backref && results.length>1 )
-					{
-						if ( ! highlight )
-							dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Captured groups :")) );
-
-						for ( r=1 ; r<results.length ; r++ )
-						{
-							//alert("match:["+results[r]+"]");
-							var patched_result = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
-							if ( highlight )
-								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(patched_result)) );
-							else
-							{
-								dom_results.appendChild( createSimpleElement("span","backref",document.createTextNode(patched_result)) );
-								dom_results.appendChild( document.createElement("br") );
-							}
-						}
-					}
+					// saves the groups
+					matches[m].groups = new Array();
+					for ( r=1 ; r<results.length ; r++ )
+						matches[m].groups[r-1] = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
 
 					// prepares match_index for the next loop
 					text_before_index = match_index + results[0].length;
@@ -473,130 +438,163 @@
 						match_index++;
 					results = regexp.exec( subject.substring(match_index,subject.length) );	// continue on the remaining part of the subject
 
-					// don't forget the trailing text in highlight mode
-					if ( highlight && results == null )
-					{
-						var text_after = subject.substring(match_index,subject.length);
-						if ( text_after.length > 0 )
-							dom_results.appendChild(document.createTextNode(text_after));
-					}
+					// saves the trailing text, if existing
+					if ( results == null )
+						matches.tail = subject.substring(match_index,subject.length);
 				}
+
+				return matches;
 			}
 
 
 
-			/**
-				@return a string that is not in another one
-					This string is also not an HTML special sequence,
-					nor a regular expression special sequence,
-					and is of a random length
-				@returnval null
-					If all attempts failed to find such a bound
-				@param string
-					The string that must not contain the returned bound
-				@param max_length
-					The maximum length of the bound to return
-			*/
-			function genHTMLBound( string, max_length )
+			function formatContext( matches, index, subject, mode )
 			{
-				// The characters must not be HTML nor regular expression special chars
-				var chars = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-				if ( max_length == undefined )
-					max_length = 20;
+				var match = matches[index].match;
+				var match_index = matches[index].index
+				var index_context_before = Math.max(0,match_index-10);
+				var index_context_after = Math.min(match_index+match.length+10,subject.length);
+				var context_before = subject.substring(index_context_before,match_index);		// what's before
+				var context_after = subject.substring(Math.min(match_index+match.length,subject.length),index_context_after);	// what's after
+				if ( index_context_before > 0 )
+					context_before = context_before + "...";
+				if ( index_context_after < subject.length-1 )
+					context_after += "...";
 
-				// we allow a limited but reasonnable number of tries
-				for( tries=0 ; tries<16 ; tries++ )
+				switch ( mode )
 				{
-					var size = 4 + Math.round(Math.random()*(max_length-4)); // the bound's length also is randomized every new try
-					var bound = "";
-					for ( c=0 ; c<size ; c++ )
-						bound += chars[Math.round(Math.random()*(chars.length-1))];	// add a random character to the bound
-					if ( string.indexOf(bound) < 0 )
-					{
-						//alert("genHTMLBound(...)="+bound+" at try "+tries);
-						return bound;
-					}
+					// returns a result as a simple text node
+					case "text":
+						return document.createTextNode( "char. " + match_index + " : " + context_before + "*" + match + "*" + context_after );
+					// returns the result as a styled span section
+					default:
+						var context = document.createElement("span");
+						context.appendChild( createSimpleElement("span","context_info",document.createTextNode("char. "+match_index+" : ")) );
+						context.appendChild( createSimpleElement("span","context_before",document.createTextNode(context_before)) );
+						context.appendChild( createSimpleElement("span","context_match",document.createTextNode(match)) );
+						context.appendChild( createSimpleElement("span","context_after",document.createTextNode(context_after)) );
+						return context;
 				}
-				return null;	// failed
 			}
 
 
 
 			/**
-				@return an HTML tag-free text, so that it can be printed in an HTML page as plain text
-				@param string
-					A text that may contain HTML tags
+				Writes the results of a match in a table.
+
+				@param output
+					the DOMElement where to insert the results
+				@param backref::Boolean
+					if true, the matches captured by the parentheses will be shown
+				@param empty::String
+					the content to insert in empty matches
 			*/
-			function escapeHTML( string )
+			function formatAsTable( output, matches, showempty, showindex, backref, empty, subject, mode )
 			{
-				// Hope this will be sufficient...
-				var char_ent = [
-					["\\&","&amp;"],
-					["\\\"","&quot;"],
-					["\\ ","&nbsp;"],
-					["\\<","&lt;"],
-					["\\>","&gt;"],
-					["\\'","&#39;"]
-					];
+				//alert("formatAsTable("+matches+","+output+","+showempty+","+showindex+","+backref+","+empty+")");
 
-				var escaped = string;
-				for ( e=0 ; e<char_ent.length ; e++ )
-					escaped = escaped.replace( new RegExp(char_ent[e][0],"g"), char_ent[e][1] );
-				return escaped;
-         		}
+				// initiates the output container by inserting the head elements
+				var dom_results = output.appendChild( createSimpleElement("table","output",null) );
+				var thead = dom_results.appendChild( document.createElement("thead") );
+				var table_header = thead.appendChild( document.createElement("tr") );
+				table_header.appendChild( document.createElement("th") );	// no content for the indexes, the meaning is obvious and the column would take too much room
+				table_header.appendChild( createSimpleElement("th",null,document.createTextNode("MATCHED")) );
+				table_header.appendChild( createSimpleElement("th",null,document.createTextNode("GROUPS")) );
+				table_header.appendChild( createSimpleElement("th",null,document.createTextNode("CONTEXT")) );
 
+				var tbody = dom_results.appendChild( document.createElement("tbody") );
 
-
-			/**
-				I have done all I could to use the built-in replace method, in order to reduce the chance to produce side effects.
-				Unfortunately, this ended up in a heavy routine for the highlight mode : 5 successive calls to replace !
-				@return the output as a DOMElement
-			*/
-			function replace_old( output, subject, regexp, replace_string, highlight )
-			{
-				//alert("replace(\""+subject+"\","+regexp+",\""+replace_string+"\""+","+highlight+",)");
-
-				output.appendChild( createSimpleElement( "div", createSimpleElement("td","results",document.createTextNode("Result :",desc_again.next()))) );
-
-				// computes the result
-				// it will be use without modification if not in highlight mode
-				var results = subject.replace(regexp,replace_string);
-
-				// some more operations are needed to highlight
-				/*if ( highlight )
+				for ( m=0 ; m<matches.length ; m++ )
 				{
-					// 1. finds keys that are not already in the resulting string
-					// this is why we need to know what's inside the previously computed result
-					var start = genHTMLBound(results,6);
-					var end = genHTMLBound(start+results,6);
-					if ( start != null && end != null )
+					// inserts one line for each match
+					var tr = tbody.appendChild( createSimpleElement("tr",m%2==0?"even":"odd",null) );
+					var td_index = tr.appendChild( createSimpleElement("td","col_index",null) );
+					var td_match = tr.appendChild( createSimpleElement("td","col_match",null) );
+					var td_groups = tr.appendChild( createSimpleElement("td","col_groups",null) );
+					var td_context = tr.appendChild( createSimpleElement("td","col_context",null) );
+
+					// row 1 : index of the match
+					td_index.appendChild( document.createTextNode(m) );
+
+					// row 2 : the raw match
+					td_match_text = document.createTextNode(matches[m].match);
+					td_match.appendChild( createSimpleElement( "span", "match", td_match_text ) );
+
+					// row 3 : the groups
+					for ( g=0 ; g<matches[m].groups.length ; g++ )
 					{
-						// 2. marks the string with the bounds
-						results = subject.replace(regexp,start+replace_string+end);
-						// 3. escape the text to HTML (the bounds are not)
-						results = escapeHTML(results);
-						// 4. finally, replaces the bounds by their HTML code
-						results = results.replace(new RegExp(start,"g"),"<span class='highlight'>");
-						results = results.replace(new RegExp(end,"g"),"</span>");
-						// 5. results is now safe to insert into HTML
-						var dom_results = output.appendChild( createSimpleElement("pre","match",null) );
-						dom_results.innerHTML = results;
+						td_groups_text = document.createTextNode(matches[m].groups[g]);
+						td_groups_div = createSimpleElement( "span", "backref", td_groups_text );
+						td_groups.appendChild( td_groups_div );
+						td_groups.appendChild( document.createTextNode(" ") );
 					}
-					else
-					{
-						alert("Could not find a bounding string to highlight.\nYou could retry, but this is probably due to a too big amount of data.\nYou should better not use highlighting.");
-						output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );	// falling back to not-highlighted
-					}
+
+					// row 4 : context of the match (text before and after)
+					td_context.appendChild( formatContext( matches, m, subject, mode ) );
 				}
-				else*/
-					output.appendChild( createSimpleElement("pre","match",document.createTextNode(results)) );
 			}
 
 
 
-			function replace( output, subject, regexp, replace_string, highlight )
+			/**
+				Writes the results of a match as plain text.
+				I guess this would be clearer with a recursive algorithm...
+
+				@param backref::Boolean
+					if true, the matches captured by the parentheses will be shown
+				@param empty::String
+					the content to insert in empty matches
+			*/
+			function formatAsText( output, matches, showempty, showindex, backref, empty, subject, mode )
+			{
+				var dom_results = output.appendChild( createSimpleElement("pre","match",null) );
+
+				for ( m=0 ; m<matches.length ; m++ )
+				{
+					// 1. text before
+					dom_results.appendChild( createSimpleElement("span",null,document.createTextNode(matches[m].before)) );
+
+					if ( matches[m].match.length > 0 )
+					{
+						// 2. index
+						if ( showindex )
+							dom_results.appendChild( createSimpleElement("span","highlight_index",document.createTextNode(m)) );
+
+						// 3. text that matched
+						var dom_highlight = createSimpleElement( "span", "highlight", document.createTextNode(matches[m].match) );
+						dom_results.appendChild(dom_highlight);
+
+						// 4. the remaining elements are the matches captured by the parentheses
+						if ( backref && matches[m].groups.length>1 )
+						{
+							for ( g=0 ; g<matches[m].groups.length ; g++ )
+								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(patched_result)) );
+						}
+					}
+					// 2bis. empty symbol if matched but empty
+					else if ( showempty )
+					{
+						// we show the empty cells by filling their content with the "empty set" symbol (here in UTF-8)
+						// again, due to IE, we must declare a separate CSS class
+						var dom_highlight = createSimpleElement( "span", "highlight_empty", null );
+						dom_highlight.innerHTML = empty;
+						dom_results.appendChild(dom_highlight);
+
+						// TODO ? 3bis : empty groups ?
+					}
+				}
+
+				// 5. don't forget the trailing text in text mode
+				dom_results.appendChild( document.createTextNode(matches.tail) );
+			}
+
+
+
+
+			function replace( output, subject, regexp, replace_string, mode )
 			{
 				// computes the matches
+				//alert(regexp+".replace("+subject+","+replace_string+")");
 				var results = regexp.replace(subject,replace_string);
 
 				var desc_class = desc_again.next();
@@ -609,7 +607,7 @@
 					info.innerHTML = "No match.";
 
 				// then, creates the container for the results
-				else if ( highlight )
+				else if ( mode == "text" )
 					var dom_results = output.appendChild( createSimpleElement("pre","match",null) );
 				else
 					var dom_results = output.appendChild( createSimpleElement("div","results",null) );
@@ -624,12 +622,12 @@
 					info.innerHTML = howmany + (howmany>1 ? " matches :" : " match :");
 
 					// the first element is the full match
-					if ( highlight )
+					if ( mode == "text" )
 					{
 						var text_before = subject.substring(text_before_index,match_index);
 						if ( text_before.length > 0 )
 							dom_results.appendChild( document.createTextNode(text_before) );
-						// var dom_highlight is used later to insert the backrefs into in highlight mode
+						// var dom_highlight is used later to insert the backrefs into in text mode
 						if ( results[0].length > 0 )
 						{
 							if ( showindex )
@@ -671,14 +669,14 @@
 					// the remaining elements are the matches captured by the parentheses
 					if ( backref && results.length>1 )
 					{
-						if ( ! highlight )
+						if ( mode != "text" )
 							dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Captured groups :")) );
 
 						for ( r=1 ; r<results.length ; r++ )
 						{
 							//alert("match:["+results[r]+"]");
 							var patched_result = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
-							if ( highlight )
+							if ( mode == "text" )
 								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(patched_result)) );
 							else
 							{
@@ -696,8 +694,8 @@
 						match_index++;
 					results = regexp.exec( subject.substring(match_index,subject.length) );	// continue on the remaining part of the subject
 
-					// don't forget the trailing text in highlight mode
-					if ( highlight && results == null )
+					// don't forget the trailing text in text mode
+					if ( mode == "text" && results == null )
 					{
 						var text_after = subject.substring(match_index,subject.length);
 						if ( text_after.length > 0 )
@@ -722,10 +720,12 @@
 				if ( param_regex != null )
 					document.form.regex.value = param_regex;
 
-				var param_highlight = getParam("highlight");
-				if ( param_highlight != null )
-					document.form.highlight.checked = param_highlight == "on";
-				checkOption(document.form.highlight);
+				var param_mode = getParam("mode");
+				if ( param_mode != null )
+				{
+					document.getElementById("mode_"+param_mode).checked = true;
+					checkOption(document.form.mode_text);
+				}
 
 				var param_showempty = getParam("showempty");
 				if ( param_showempty != null )
@@ -770,14 +770,14 @@
 				{
 					var param_subject = myEscape(document.getElementById('subject').value);
 					var param_regex = myEscape(document.getElementById('regex').value);
-					var param_highlight = document.getElementById('highlight').checked ? "on" : "";
+					var param_mode = getRadioButtonsValue("mode");
 					var param_showempty = document.getElementById('showempty').checked ? "on" : "";
 					var param_showindex = document.getElementById('showindex').checked ? "on" : "";
 					var param_backref = document.getElementById('backref').checked ? "on" : "";
 					var param_empty = myEscape(document.getElementById("empty").value);
 					var param_stylesheet = myEscape(document.getElementById("stylesheet").value);
-					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
-					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&highlight='+param_highlight+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&mode='+param_mode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&mode='+param_mode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
 				}
 				/// @todo (maybe) else try with the standard document.form.subject, etc.
 				else
@@ -813,7 +813,9 @@
 				// every time a new result is displayed, the url to the new window is updated
 				// this does not work well if local, but no problem if remote
 				// Opera can't open local files with parameters
-				document.getElementById("toMain").setAttribute("href",newLocation());
+				newloc = newLocation();
+				document.getElementById("toMain").setAttribute("href",newloc);
+				document.getElementById("toSidebar").setAttribute("href",newloc);
 
 				// cleans the output zone by removing all its children
 				var dom_output = document.getElementById(output);
@@ -852,7 +854,7 @@
 
 								//alert("s: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
 								var regex = new RegExp(pattern,modifiers);
-								replace( dom_output, subject, regex, replace_string, document.form.highlight.checked );
+								replace( dom_output, subject, regex, replace_string, getRadioButtonsValue("mode") );
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -866,9 +868,38 @@
 								var pattern = user_pattern[1];
 								var modifiers = user_pattern[2];
 
+								// computes the results
 								//alert("m: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
 								var regex = new RegExp(pattern,modifiers);
-								match( dom_output, subject, regex, document.form.highlight.checked, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.empty.value );
+								// using the global variable 'matches'
+								matches = match( subject, regex );
+
+								// display common informations
+								var info = dom_output.appendChild( createSimpleElement("div",desc_again.next(),null) );
+								if ( matches == null || matches.length == 0 )
+									info.innerHTML = "No match.";
+								else if ( matches.length == 1 )
+									info.innerHTML = "1 match :";
+								else
+									info.innerHTML = matches.length + " matches :";
+
+								// display according to the checked options
+								if ( matches != null && matches.length > 0 )
+								{
+									switch( getRadioButtonsValue("mode") )
+									{
+										case "text":
+											formatAsText( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.empty.value, subject, "text" );
+											break;
+										case "table":
+											formatAsTable( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.empty.value, subject, "table" );
+											break;
+										default:
+											// should never happen
+											alert(getRadioButtonsValue("mode")+" : unknown display mode !");
+											break;
+									}
+								}
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -916,14 +947,20 @@
 
 
 
-		function _export()
+		function exportResult( matches )
 		{
-			var win = document.open("blank.html","_blank","width=320,height=240,menu=yes,scrollbars=yes,resizable=yes");
-			win.document.write("<html><body><textarea style='width:100%; height:100%;' onFocus='javascript:this.select();'>");
+			var win = document.open("","_blank","width=320,height=240,menubar=1,scrollbars=1,resizable=1,toolbar=1");
 			// finds the node to copy
 			dom_output = document.getElementById('output');
-			win.document.write(dom_output.getElementsByTagName("pre")[0].textContent);
-			win.document.write("</textarea></body></html>");
+			for ( m=0 ; m<matches.length ; m++ )
+			{
+				win.document.write(m+"\t"+matches[m].match+"\t"+matches[m].index);
+				for ( g=0 ; g<matches[m].groups.length ; g++ )
+					win.document.write("\t"+matches[m].groups[g]);
+				win.document.writeln();
+			}
+			win.document.close();
+			return false;
 		}
 
 		// -->
@@ -940,10 +977,6 @@
 			More : IE just pops up the 'alt' attribute of the <img/> rather than the 'title' of <a/> (although it supports it).
 			Well, now I think I'll have to consider using Javascript or another CSS method to display a popup menu... }:|
 
-			Also, I had to concatenate the elements without any blanks between because there is no simple way (or I haven't found)
-			to ignores the non-significative blanks between the tags.
-			The biggest issue for me is that I cannot include HTML comments within the block :{
-
 			The netscape_addPanel function does not work from the sidebar (at least with Firefox),
 			but *hopefully* this does not make sense to use it from the sidebar.
 
@@ -951,24 +984,24 @@
 			There is also a link that opens this page with the current fields values in a new window.
 			Finally, there is a link that opens the results in the main (bigger) window, while in sidebar mode.
 		-->
-		<span class="menu" onMouseOver="this.id='hover'" onMouseOut="this.id=''"
-			><img src="menu-down-left.png" alt="left boundary"
-			><a href="javascript:void(open(document.location.href,'_search'));"
-				><img class="menu" src="IE-22x22.png" alt="Internet Explorer logo" title="Open in Internet Explorer's search pane (bookmark this link)"
-			></a><img class="menu" src="Moz-22x22.png" alt="Mozilla logo" title="Add to Netscape/Mozilla sidebar"
-				onMouseOver="this.id='hover'" onMouseOut="this.id=''"
-				onClick="javascript:netscape_addPanel('Regular expressions evaluator',document.location.href);"
-			><a href="regexpresso.html" rel="sidebar"
-				><img class="menu" src="Opera-22x22.png" alt="Opera logo" title="Add to Opera sidebar"
-			></a><img class="menu" src="new-22x22.png" alt="'new window' icon" title="Open a new window"
-				onMouseOver="this.id='hover'" onMouseOut="this.id=''"
-				onClick="javascript:window.open(document.location.pathname,'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"
-			><a id="toMain" target="_main" href="regexpresso.html"
-				><img class="menu" src="main-22x22.png" alt="'to Main window' icon" title="Open the results in the main window"
-			></a><img class="menu" src="dropper-22x22.png" alt="'export the result' icon" title="Export the result"
-				onMouseOver="this.id='hover'" onMouseOut="this.id=''"
-				onClick="javascript:_export();"
-		><img src="menu-down-right.png" alt="right boundary"></span>
+		<span class="menu" onMouseOver="this.id='hover'" onMouseOut="this.id=''" nowrap><!--
+				Left (start) boundary
+			--><img src="menu-down-left.png"><!--
+				To the sidebar (only for IE and Firefox)
+			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
+				--><img class="menu" src="sidebar-22x22.png" alt="[sidebar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
+			--></a><!--
+				In a new window
+			--><img class="menu" src="new-22x22.png" alt="[pop-out]" title="Open result in a new window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
+				Reopen in the current window
+			--><a id="toMain" target="_main" href="regexpresso.html"><!--
+				--><img class="menu" src="main-22x22.png" alt="[=&gt;]" title="Open result in the main window"><!--
+			--></a><!--
+				Export in a different format
+			--><img class="menu" src="dropper-22x22.png" alt="[export]" title="Export the result" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);"><!--
+				Right (end) boundary
+			--><img src="menu-down-right.png"><!--
+		--></span>
 
 		<!-- the tool's view -->
 
@@ -979,26 +1012,51 @@
 		<form name="form" id="form" onSubmit="javascript:prepare();go(this.subject.value,this.regex.value,'output');finish();return false;" enctype="UTF-8">
 			<input type="hidden" id="empty" name="empty" value="&empty;">
 			<input type="hidden" id="stylesheet" name="stylesheet" value="">
-			<div class="input"><textarea name="subject" id="subject" rows="10" cols="20" onFocus="javascript:this.select();" title="The text ('subject') to evaluate">[Paste here the text to evaluate]</textarea></div>
-			<div class="input"><input type="text" name="regex" id="regex" value="/\b\w*(e)/i" onFocus="javascript:this.select();" onkeydown="javascript:buffer_regex=this.value;" onkeyup="javascript:if(document.form.autorefresh.checked && this.value!=buffer_regex)document.form.submit.click();" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"></div>
+			<div><textarea name="subject" id="subject" class="input" rows="10" cols="20" onFocus="javascript:this.select();" title="The text ('subject') to evaluate">[Paste here the text to evaluate]</textarea></div>
+			<div><input type="text" name="regex" id="regex" class="input" value="/\b\w*(e)/i" onFocus="javascript:this.select();" onkeydown="javascript:buffer_regex=this.value;" onkeyup="javascript:if(document.form.autorefresh.checked && this.value!=buffer_regex)document.form.submit.click();" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"></div>
 			<div>
-				<input name="submit" id="submit" type="submit" value="EVALUATE">
-				<input type="button" id="options.caption" onclick="javascript:showHideOptions();" value="OPTIONS"/>
+				<input name="submit" id="submit" type="submit" class="input" value="EVALUATE">
+				<input type="button" id="options.caption" class="input" onclick="javascript:showHideOptions();" value="OPTIONS">
 			</div>
-			<div class="options" id="options">
+			<div id="options" class="input">
 				<table>
 						<!-- NOTE : the onclick's below were added because of a behaviour observed in IE6 : the 'onchange' is not called after a 'onclick' => see what's the matter -->
-						<tr title="Input change triggers evaluation"><td onClick="javascript:document.form.autorefresh.click();">Evaluate on the fly :</td><td><input align="right" type="checkbox" id="autorefresh" name="autorefresh" onchange="onOptionChange(this);" onclick="onOptionChange(this);" checked></td></tr>
-						<tr title="Highlight matches inside the subject"><td onClick="javascript:document.form.highlight.click();">Highlight matches :</td><td><input align="right" type="checkbox" id="highlight" name="highlight" title="Highlight matches inside the subject" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td></tr>
-						<tr title="Show or hide empty matches in the result"><td onClick="javascript:document.form.showempty.click();">Show empty matches :</td><td><input align="right" type="checkbox" id="showempty" name="showempty" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td><tr>
-						<tr title="Show or hide the index for each match"><td onClick="javascript:document.form.showindex.click();">Show indexes :</td><td><input align="right" type="checkbox" id="showindex" name="showindex" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td><tr>
-						<tr title="Show groups captured by the parentheses"><td onClick="javascript:document.form.backref.click();">Show groups :</td><td><input align="right" type="checkbox" id="backref" name="backref" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td><tr>
+						<tr title="Input change triggers evaluation">
+							<td onClick="javascript:document.form.autorefresh.click();">Evaluate on the fly :</td>
+							<td><input align="right" type="checkbox" id="autorefresh" name="autorefresh" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td><label class="info" onclick="alert('AUTOREFRESH :\nCheck this box if you want the results to be updated whenever the regular expression or one of the option changes (not the text).');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						</tr>
+						<tr title="Highlight matches inside the subject">
+							<td onClick="javascript:document.getElementById('mode_text').click();">Display mode : <em>text</em></td>
+							<td><input align="right" type="radio" id="mode_text" name="mode" value="text" title="Highlight matches inside the subject" onchange="onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td><label class="info" onclick="alert('HIGHLIGHT MODE :\nCheck this box to display the result with the same layout as in the parsed text and highlight matched parts.');return false;" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						</tr>
+						<tr title="Display results in a table">
+							<td onClick="javascript:document.getElementById('mode_table').click();">Display mode : <em>table</em></td>
+							<td><input align="right" type="radio" id="mode_table" name="mode" value="table" title="Display results in a table" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td><label class="info" onclick="alert('TABLE MODE :\nCheck this box to display the results in a table.');return false;" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						</tr>
+						<tr title="Show or hide empty matches in the result">
+							<td onClick="javascript:document.form.showempty.click();">Show empty matches :</td>
+							<td><input align="right" type="checkbox" id="showempty" name="showempty" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td><label class="info" onclick="alert('EMPTY MATCHES :\nCheck this box if you want the empty matches (those of length 0) do be displayed as a special character.\nThe default character is the \'Null\' symbol.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						<tr>
+						<tr title="Show or hide the index for each match">
+							<td onClick="javascript:document.form.showindex.click();">Show indexes :</td>
+							<td><input align="right" type="checkbox" id="showindex" name="showindex" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td><label class="info" onclick="alert('SHOW INDEXES :\nCheck this box if you want to identify every match by its index in the result field (the first one will be marked \'1\', etc.). Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''">?</label></td>
+						<tr>
+						<tr title="Show groups captured by the parentheses">
+							<td onClick="javascript:document.form.backref.click();"><label>Show groups :</label></td>
+							<td><input align="right" type="checkbox" id="backref" name="backref" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td><label class="info" onclick="alert('SHOW GROUPS :\nCheck this box if you want to display the groups captured by the expression after every match. Groups are also known as \'back references\'. Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						<tr>
 				</table>
 			</div>
 		</form>
 
 		<!-- script's output (dynamic content) -->
-		<span class="output" name="output" id="output">
+		<span id="output">
 		</span>
 
 		<!-- Some external resources -->
@@ -1007,9 +1065,9 @@
 			<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
 			[<a class="doc" target="_main" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a>]<br>
 			[<a class="doc" target="_main" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a>]<br>
-			[<a class="doc" target="_main" href="http://regexpresso.berlios.de/">About this tool</a>]<br>
+			[<a class="doc" target="_main" href="http://regexpresso.berlios.de/readme.html">About this tool</a>]<br>
 			<br>
-			<a align="right" target="_main" href="http://developer.berlios.de"><img src="http://developer.berlios.de/bslogo.php?group_id=3235&type=1" width="124" height="32" border="0" alt="BerliOS Logo"></a><br>
+			<a align="right" target="_main" href="http://developer.berlios.de"><img src="http://developer.berlios.de/bslogo.php?group_id=3235&type=1" width="124" height="32" border="0" alt="[BerliOS Logo]"></a><br>
 			<br>
 			<div class="googlead"><script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script></div>
 		</div>
