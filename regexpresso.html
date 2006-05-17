@@ -18,18 +18,19 @@
 		-->
 		<style type="text/css">
 			/* generic style */
-			body { background-color:#EEEEEE; margin:0; padding:8px; }
+			body { background-color:#EEEEEE; margin:0; padding:8px; font-family:arial,verdana; }
 			div { margin-top:4px; margin-bottom:4px; }
 			table { empty-cells:show; }
 			/* the title */
-			.title { font-family:arial,verdana,courier; font-size:larger; font-weight:bold; }
+			.title { font-family:arial,verdana,courier; font-size:13pt; font-weight:bold; }
 			.presto { font-style:italic; color:red; }
 			/* important messages */
 			.error { color:red; }
 			.warning { background-color:red; color:white; font-weight:bold; padding:2pt; }
 			/* form fields */
 			form { margin:0; }
-			#subject, #regex, #output { width:100%; }
+			#subject, #output, .search { width:100%; }
+			/*#output pre#match { overflow:scroll; }*/ /* scrolls the output zone when the text is too big ; if disabled it's the whole window that scrolls (better IMHO) */
 			.button { width:auto; text-align:center; }
 			/* generic style for a match */
 			.match, .match_empty { border:solid red 1px; background-color:#FFFFE1; }
@@ -69,17 +70,26 @@
 			.input { border:solid #2449DB 1px; }												/* normal input style */
 			.input:hover { border: solid orange 1px; }											/* on hover */
 			input[type=text]:focus, textarea:focus { background-color:#FFFFBB; }		/* on focus for editable inputs */
+			input[type=button], input[type=submit] { font-family:arial, verdana; font-size:9pt; }
 			#options { font-size:small; background-color:#E1E1FF; }
 			#options { display:none; }		/* options are initialy hidden */
-			/* context ~= text not matched */
+			/* context is a concatenation of the following elements : info_text, text_before_match, match, text_after_match */
 			.context_info {}
 			.context_before, .context_after, .context_match { background-color:#BBBBBB; }
 			.context_match { font-weight:bold; color:red; }
 			/* same as input */
 			.output { border: solid red 1px; border-collapse:collapse; background-color:white; }
-			table.output thead tr th { background-color:red; color:white; font-weight:bold; font-size:80%; text-align:left; }
-			.output tr:hover { background-color:#DBFF00; }
-
+			table.output thead tr th { background:red; color:white; font-weight:bold; font-size:90%; text-align:center; }
+			.output tr.even { background:#DBFFBB; }
+			.output tr:hover, .output tr:hover td * { background:#DBFF00; }		/* highlights the line under the cursor */
+			/* table mode : column specific */
+			.output thead tr > th:first-child { border-left:none; }			/* the left <th> must never show a different border */
+			th.col_index {}
+			th.col_match, th.col_groups, th.col_context { border-left:solid white 1px; }
+			th.col_match, th.col_groups { text-align:left; }
+			.tab_off, .tab_on { text-decoration:none; color:black; font-size:8pt; border-left:solid #a1a6a9 1px; border-right:solid #a1a6a9 1px; }
+			.tab_off { background:#a1a6a9; }
+			.tab_on { font-weight:bold; color:black; background:yellow; border-top:solid #a1a6a9 1px; border-bottom:solid #a1a6a9 1px; }
 		</style>
 		<!-- IE specific style -->
 		<!--[if IE]>
@@ -214,6 +224,7 @@
 			}
 
 
+
 			/**
 				@return a DOM Node and set some properties ; null parameters are ignored
 				@param dom_type::String
@@ -229,10 +240,7 @@
 
 				var el = document.createElement(dom_type);
 				if ( css_class != null )
-				{
-					el.setAttribute("class",css_class);
-					el.setAttribute("className",css_class);	// see DOM2 : this attribute has been renamed
-				}
+					el.className = css_class;	// see DOM2 : this attribute has been renamed from 'class' to 'className' ; therefore, setAttribute is not reliable with Gecko browsers anymore
 				if ( dom_child != null )
 					el.appendChild(dom_child);
 				return el;
@@ -312,10 +320,10 @@
 			var matches = undefined;
 
 
+
 			function showHideOptions()
 			{
 				dom_node = document.getElementById("options");
-				options_button = document.getElementById("options.caption");
 				dom_node.style.display = dom_node.style.display != "block" ? "block" : "none";
 			}
 
@@ -325,13 +333,21 @@
 			function checkOption( option )
 			{
 				//alert("checkOption("+option+")");
-				switch ( option )
+				if ( document.getElementById("displaymode_text").checked )
 				{
-					case document.getElementById("mode_text"):
-					case document.getElementById("mode_table"):
-						document.form.showempty.disabled = ! document.getElementById("mode_text").checked;
-						document.form.showindex.disabled = ! document.getElementById("mode_text").checked;
-						break;
+					document.form.autorefresh.disabled = false;
+					document.form.showempty.disabled = false;
+					document.form.showindex.disabled = false;
+					document.form.backref.disabled = false;
+					document.form.showcontext.disabled = true;
+				}
+				else if ( document.getElementById("displaymode_table").checked )
+				{
+					document.form.autorefresh.disabled = false;
+					document.form.showempty.disabled = true;
+					document.form.showindex.disabled = false;
+					document.form.backref.disabled = false;
+					document.form.showcontext.disabled = false;
 				}
 			}
 
@@ -341,9 +357,9 @@
 			function onOptionChange( option )
 			{
 				checkOption(option);
-				// re-evaluate the whole expression to keep the view up-to-date with the options
-				if ( document.form.autorefresh.checked && option != document.form.autorefresh )
-					document.form.submit.click();
+				// redraws the result
+				document.form.submit.click();
+				//document.style.col_index.display = form.showindex.disabled ? "none" : "inherit";
 			}
 
 
@@ -360,10 +376,12 @@
 				url += "?subject=" + myEscape("regexpresso error");
 				url += "&body=regex=" + myEscape(document.form.regex);
 				url += "%0D%0Asubject=" + myEscape(document.form.subject);
-				url += "%0D%0Amode=" + getRadioButtonsValue("mode");
+				url += "%0D%0Adisplaymode=" + getRadioButtonsValue("displaymode");
+				url += "%0D%0Ainputmode=" + document.form.inputmode;
 				url += "%0D%0Ashowempty=" + myEscape(document.form.showempty);
 				url += "%0D%0Ashowindex=" + myEscape(document.form.showindex);
-				url += "%0D%0Abackref=" + document.form.backref;
+				url += "%0D%0Abackref=" + myEscape(document.form.backref);
+				url += "%0D%0Ashowcontext=" + myEscape(document.form.showcontext);
 				url += "%0D%0Aempty=" + myEscape(document.form.empty);
 				url += "%0D%0Astylesheet=" + myEscape(document.form.stylesheet);
 				url += "%0D%0Auser-agent=" + myEscape(navigator.userAgent);
@@ -456,8 +474,9 @@
 				var index_context_after = Math.min(match_index+match.length+10,subject.length);
 				var context_before = subject.substring(index_context_before,match_index);		// what's before
 				var context_after = subject.substring(Math.min(match_index+match.length,subject.length),index_context_after);	// what's after
+				// the following "..." mark if there is text even before or after
 				if ( index_context_before > 0 )
-					context_before = context_before + "...";
+					context_before = "..." + context_before;
 				if ( index_context_after < subject.length-1 )
 					context_after += "...";
 
@@ -489,18 +508,21 @@
 				@param empty::String
 					the content to insert in empty matches
 			*/
-			function formatAsTable( output, matches, showempty, showindex, backref, empty, subject, mode )
+			function formatAsTable( output, matches, showempty, showindex, backref, showcontext, empty, subject, mode )
 			{
-				//alert("formatAsTable("+matches+","+output+","+showempty+","+showindex+","+backref+","+empty+")");
+				//alert("formatAsTable("+output+","+matches+","+showempty+","+showindex+","+backref+","+empty+")");
 
 				// initiates the output container by inserting the head elements
 				var dom_results = output.appendChild( createSimpleElement("table","output",null) );
 				var thead = dom_results.appendChild( document.createElement("thead") );
 				var table_header = thead.appendChild( document.createElement("tr") );
-				table_header.appendChild( document.createElement("th") );	// no content for the indexes, the meaning is obvious and the column would take too much room
-				table_header.appendChild( createSimpleElement("th",null,document.createTextNode("MATCHED")) );
-				table_header.appendChild( createSimpleElement("th",null,document.createTextNode("GROUPS")) );
-				table_header.appendChild( createSimpleElement("th",null,document.createTextNode("CONTEXT")) );
+				if ( showindex )
+					table_header.appendChild( createSimpleElement("th","col_index",document.createTextNode("N°")) );
+				table_header.appendChild( createSimpleElement("th","col_match",document.createTextNode("MATCH")) );
+				if ( backref )
+					table_header.appendChild( createSimpleElement("th","col_groups",document.createTextNode("GROUPS")) );
+				if ( showcontext )
+					table_header.appendChild( createSimpleElement("th","col_context",document.createTextNode("CONTEXT")) );
 
 				var tbody = dom_results.appendChild( document.createElement("tbody") );
 
@@ -508,29 +530,38 @@
 				{
 					// inserts one line for each match
 					var tr = tbody.appendChild( createSimpleElement("tr",m%2==0?"even":"odd",null) );
-					var td_index = tr.appendChild( createSimpleElement("td","col_index",null) );
-					var td_match = tr.appendChild( createSimpleElement("td","col_match",null) );
-					var td_groups = tr.appendChild( createSimpleElement("td","col_groups",null) );
-					var td_context = tr.appendChild( createSimpleElement("td","col_context",null) );
 
 					// row 1 : index of the match
-					td_index.appendChild( document.createTextNode(m) );
+					if ( showindex )
+					{
+						var td_index = tr.appendChild( createSimpleElement("td","col_index",null) );
+						td_index.appendChild( document.createTextNode(m) );
+					}
 
 					// row 2 : the raw match
+					var td_match = tr.appendChild( createSimpleElement("td","col_match",null) );
 					td_match_text = document.createTextNode(matches[m].match);
 					td_match.appendChild( createSimpleElement( "span", "match", td_match_text ) );
 
 					// row 3 : the groups
-					for ( g=0 ; g<matches[m].groups.length ; g++ )
+					if ( backref )
 					{
-						td_groups_text = document.createTextNode(matches[m].groups[g]);
-						td_groups_div = createSimpleElement( "span", "backref", td_groups_text );
-						td_groups.appendChild( td_groups_div );
-						td_groups.appendChild( document.createTextNode(" ") );
+						var td_groups = tr.appendChild( createSimpleElement("td","col_groups",null) );
+						for ( g=0 ; g<matches[m].groups.length ; g++ )
+						{
+							td_groups_text = document.createTextNode(matches[m].groups[g]);
+							td_groups_div = createSimpleElement( "span", "backref", td_groups_text );
+							td_groups.appendChild( td_groups_div );
+							td_groups.appendChild( document.createTextNode(" ") );
+						}
 					}
 
 					// row 4 : context of the match (text before and after)
-					td_context.appendChild( formatContext( matches, m, subject, mode ) );
+					if ( showcontext )
+					{
+						var td_context = tr.appendChild( createSimpleElement("td","col_context",null) );
+						td_context.appendChild( formatContext( matches, m, subject, mode ) );
+					}
 				}
 			}
 
@@ -565,10 +596,10 @@
 						dom_results.appendChild(dom_highlight);
 
 						// 4. the remaining elements are the matches captured by the parentheses
-						if ( backref && matches[m].groups.length>1 )
+						if ( backref && matches[m].groups.length>0 )
 						{
 							for ( g=0 ; g<matches[m].groups.length ; g++ )
-								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(patched_result)) );
+								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(matches[m].groups[g])) );
 						}
 					}
 					// 2bis. empty symbol if matched but empty
@@ -705,6 +736,49 @@
 			}
 
 
+
+		/** Displays only the relevant input fields for the regex */
+		function switchInputMode( mode )
+		{
+			document.getElementById("inputmode").value = mode;
+
+			switch ( mode )
+			{
+				case "search":
+					document.getElementById("regex_purejs").style.display = "none";
+					document.getElementById("regex_search").style.display = "block";
+					document.getElementById("regex_replace").style.display = "none";
+					document.getElementById("regex_mod").style.display = "block";
+					document.getElementById("tab_purejs").className = "tab_off";
+					document.getElementById("tab_search").className = "tab_on";
+					document.getElementById("tab_replace").className = "tab_off";
+					break;
+				case "replace":
+					document.getElementById("regex_purejs").style.display = "none";
+					document.getElementById("regex_search").style.display = "none";
+					document.getElementById("regex_replace").style.display = "block";
+					document.getElementById("regex_mod").style.display = "block";
+					document.getElementById("tab_purejs").className = "tab_off";
+					document.getElementById("tab_search").className = "tab_off";
+					document.getElementById("tab_replace").className = "tab_on";
+					break;
+				default:
+					document.getElementById("regex_purejs").style.display = "block";
+					document.getElementById("regex_search").style.display = "none";
+					document.getElementById("regex_replace").style.display = "none";
+					document.getElementById("regex_mod").style.display = "none";
+					document.getElementById("tab_purejs").className = "tab_on";
+					document.getElementById("tab_search").className = "tab_off";
+					document.getElementById("tab_replace").className = "tab_off";
+					break;
+			}
+
+			// makes sure the regex' value is set according to the one currently displayed
+			updateRegex();
+		}
+
+
+
 			/**
 				Retrieve the URL's parameters if any to fill the form's fields with.
 				That enables us for instance to deal with a full URL to show the result of a match.
@@ -720,12 +794,16 @@
 				if ( param_regex != null )
 					document.form.regex.value = param_regex;
 
-				var param_mode = getParam("mode");
-				if ( param_mode != null )
+				var param_displaymode = getParam("displaymode");
+				if ( param_displaymode != null )
 				{
-					document.getElementById("mode_"+param_mode).checked = true;
-					checkOption(document.form.mode_text);
+					document.getElementById("displaymode_"+param_displaymode).checked = true;
+					checkOption(document.getElementById("displaymode_"+param_displaymode));
 				}
+
+				var param_inputmode = getParam("inputmode");
+				if ( param_inputmode != null )
+					switchInputMode(param_inputmode);
 
 				var param_showempty = getParam("showempty");
 				if ( param_showempty != null )
@@ -741,6 +819,11 @@
 				if ( param_backref != null )
 					document.form.backref.checked = param_backref == "on";
 				checkOption(document.form.backref);
+
+				var param_showcontext = getParam("showcontext");
+				if ( param_showcontext != null )
+					document.form.showcontext.checked = param_showcontext == "on";
+				checkOption(document.form.showcontext);
 
 				var param_empty = getParam("empty");
 				if ( param_empty != null )
@@ -770,14 +853,16 @@
 				{
 					var param_subject = myEscape(document.getElementById('subject').value);
 					var param_regex = myEscape(document.getElementById('regex').value);
-					var param_mode = getRadioButtonsValue("mode");
+					var param_displaymode = getRadioButtonsValue("displaymode");
+					var param_inputmode = document.getElementById("inputmode").value;
 					var param_showempty = document.getElementById('showempty').checked ? "on" : "";
 					var param_showindex = document.getElementById('showindex').checked ? "on" : "";
 					var param_backref = document.getElementById('backref').checked ? "on" : "";
+					var param_showcontext = document.getElementById('showcontext').checked ? "on" : "";
 					var param_empty = myEscape(document.getElementById("empty").value);
 					var param_stylesheet = myEscape(document.getElementById("stylesheet").value);
-					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&mode='+param_mode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
-					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&mode='+param_mode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&displaymode='+param_displaymode+'&inputmode='+param_inputmode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+'&showcontext='+param_showcontext+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&displaymode='+param_displaymode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
 				}
 				/// @todo (maybe) else try with the standard document.form.subject, etc.
 				else
@@ -813,7 +898,7 @@
 				// every time a new result is displayed, the url to the new window is updated
 				// this does not work well if local, but no problem if remote
 				// Opera can't open local files with parameters
-				newloc = newLocation();
+				var newloc = newLocation();
 				document.getElementById("toMain").setAttribute("href",newloc);
 				document.getElementById("toSidebar").setAttribute("href",newloc);
 
@@ -854,7 +939,7 @@
 
 								//alert("s: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
 								var regex = new RegExp(pattern,modifiers);
-								replace( dom_output, subject, regex, replace_string, getRadioButtonsValue("mode") );
+								replace( dom_output, subject, regex, replace_string, getRadioButtonsValue("displaymode") );
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -886,17 +971,17 @@
 								// display according to the checked options
 								if ( matches != null && matches.length > 0 )
 								{
-									switch( getRadioButtonsValue("mode") )
+									switch( getRadioButtonsValue("displaymode") )
 									{
 										case "text":
 											formatAsText( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.empty.value, subject, "text" );
 											break;
 										case "table":
-											formatAsTable( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.empty.value, subject, "table" );
+											formatAsTable( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.showcontext.checked, document.form.empty.value, subject, "table" );
 											break;
 										default:
 											// should never happen
-											alert(getRadioButtonsValue("mode")+" : unknown display mode !");
+											alert(getRadioButtonsValue("displaymode")+" : unknown display mode !");
 											break;
 									}
 								}
@@ -963,6 +1048,37 @@
 			return false;
 		}
 
+
+
+		function updateRegex()
+		{
+			var regex = document.getElementById("regex");
+			var oldval = regex.value;
+			var modifiers = ( document.form.mod_I.checked ? '' : 'i' ) + ( document.form.mod_g.checked ? 'g' : '' ) + (document.form.mod_m.checked ? 'm' : '' );
+
+			// 1. gets an active input field
+			// 2. and updates the regex with its value
+			switch( document.getElementById("inputmode").value )
+			{
+				case "search":
+					regex.value = "/" + document.getElementById("regex_search_a").value + "/" + modifiers;
+					break;
+
+				case "replace":
+					regex.value = "s/" + document.getElementById("regex_replace_a").value + "/" + document.getElementById("regex_replace_b").value + "/" + modifiers;
+					break;
+
+				default:
+					regex.value = document.getElementById("regex_purejs_a").value;
+					break;
+			}
+
+			// 3. updates the result if needed
+			if ( document.form.autorefresh.checked && regex.value != oldval )
+				document.form.submit.click();
+		}
+
+
 		// -->
 		</script>
 	</head>
@@ -998,7 +1114,9 @@
 				--><img class="menu" src="main-22x22.png" alt="[=&gt;]" title="Open result in the main window"><!--
 			--></a><!--
 				Export in a different format
-			--><img class="menu" src="dropper-22x22.png" alt="[export]" title="Export the result" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);"><!--
+			--><img class="menu" src="floppy-22x22.png" alt="[export]" title="Export the result" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);"><!--
+				Import from the main window
+			--><!--img class="menu" src="dropper-22x22.png" alt="[&lt=]" title="Import from the main window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:document.form.subject.value='TODO';"--><!--
 				Right (end) boundary
 			--><img src="menu-down-right.png"><!--
 		--></span>
@@ -1012,8 +1130,51 @@
 		<form name="form" id="form" onSubmit="javascript:prepare();go(this.subject.value,this.regex.value,'output');finish();return false;" enctype="UTF-8">
 			<input type="hidden" id="empty" name="empty" value="&empty;">
 			<input type="hidden" id="stylesheet" name="stylesheet" value="">
+			<input type="hidden" id="inputmode" name="inputmode" value="purejs">
 			<div><textarea name="subject" id="subject" class="input" rows="10" cols="20" onFocus="javascript:this.select();" title="The text ('subject') to evaluate">[Paste here the text to evaluate]</textarea></div>
-			<div><input type="text" name="regex" id="regex" class="input" value="/\b\w*(e)/i" onFocus="javascript:this.select();" onkeydown="javascript:buffer_regex=this.value;" onkeyup="javascript:if(document.form.autorefresh.checked && this.value!=buffer_regex)document.form.submit.click();" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"></div>
+
+			<!-- regex can be displayed using several modes -->
+			<!-- 1. the real, hidden field -->
+			<input type="hidden" name="regex" id="regex" value="/\b\w*(e)/i" style="width:100%; background:yellow;">
+			<!-- tabs to change from one input mode to another -->
+			<span><!--
+			--><a href="" id="tab_search" class="tab_off" onclick="javascript:switchInputMode('search');return false;" title="Easy search mode">&nbsp;&nbsp;search&nbsp;&nbsp;</a><!--
+			--><a href="" id="tab_replace" class="tab_off" onclick="javascript:switchInputMode('replace');return false;" title="Easy replace mode">&nbsp;&nbsp;replace&nbsp;&nbsp;</a><!--
+			--><a id="tab_purejs" href="" class="tab_on" onclick="javascript:switchInputMode('purejs');return false;" title="Expert mode">&nbsp;&nbsp;expert&nbsp;&nbsp;</a><!--
+		--></span>
+			<div>
+				<!-- 2. expert mode input field -->
+				<div id="regex_purejs">
+					<input type="text" id="regex_purejs_a" class="input search" value="/\b\w*(e)/i" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"
+						onFocus="javascript:this.select();"
+						onkeyup="javascript:updateRegex();">
+				</div>
+				<!-- 3. 'easy' search mode, initially not displayed -->
+				<div id="regex_search" style="display:none;">
+					<input type="text" id="regex_search_a" class="input search" value="\b\w*(e)" title="Type your search expression here"
+						onFocus="javascript:this.select();"
+						onchange="javascript:updateRegex();"
+						onkeyup="javascript:updateRegex();">
+				</div>
+				<!-- 4. 'easy' replace mode, initially not displayed -->
+				<div id="regex_replace" style="display:none;">
+					<input type="text" id="regex_replace_a" class="input" value="\b\w*(e)" title="Enter here the text you want to replace"
+						onFocus="javascript:this.select();"
+						onchange="javascript:updateRegex();"
+						onkeyup="javascript:updateRegex();">
+					<input type="text" id="regex_replace_b" class="input" value="[Replacement string]" title="Enter here the replacement string"
+						onFocus="javascript:this.select();"
+						onchange="javascript:updateRegex();"
+						onkeyup="javascript:updateRegex();">
+				</div>
+				<!-- 5. modifiers, for 'easy' modes -->
+				<div id="regex_mod" style="display:none;">
+					<span style="white-space:nowrap;"><input id="mod_I" type="checkbox" onclick="javascript:updateRegex();" checked>case-sens.</span>
+					<span style="white-space:nowrap;"><input id="mod_g" type="checkbox" onclick="javascript:updateRegex();">find all</span>
+					<span style="white-space:nowrap;"><input id="mod_m" type="checkbox" onclick="javascript:updateRegex();">multiline</span>
+				</div>
+			</div>
+
 			<div>
 				<input name="submit" id="submit" type="submit" class="input" value="EVALUATE">
 				<input type="button" id="options.caption" class="input" onclick="javascript:showHideOptions();" value="OPTIONS">
@@ -1027,18 +1188,18 @@
 							<td><label class="info" onclick="alert('AUTOREFRESH :\nCheck this box if you want the results to be updated whenever the regular expression or one of the option changes (not the text).');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Highlight matches inside the subject">
-							<td onClick="javascript:document.getElementById('mode_text').click();">Display mode : <em>text</em></td>
-							<td><input align="right" type="radio" id="mode_text" name="mode" value="text" title="Highlight matches inside the subject" onchange="onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td onClick="javascript:document.getElementById('displaymode_text').click();">Display mode : <em>text</em></td>
+							<td><input align="right" type="radio" id="displaymode_text" name="displaymode" value="text" title="Highlight matches inside the subject" onchange="onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
 							<td><label class="info" onclick="alert('HIGHLIGHT MODE :\nCheck this box to display the result with the same layout as in the parsed text and highlight matched parts.');return false;" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Display results in a table">
-							<td onClick="javascript:document.getElementById('mode_table').click();">Display mode : <em>table</em></td>
-							<td><input align="right" type="radio" id="mode_table" name="mode" value="table" title="Display results in a table" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td onClick="javascript:document.getElementById('displaymode_table').click();">Display mode : <em>table</em></td>
+							<td><input align="right" type="radio" id="displaymode_table" name="displaymode" value="table" title="Display results in a table" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td>
 							<td><label class="info" onclick="alert('TABLE MODE :\nCheck this box to display the results in a table.');return false;" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Show or hide empty matches in the result">
 							<td onClick="javascript:document.form.showempty.click();">Show empty matches :</td>
-							<td><input align="right" type="checkbox" id="showempty" name="showempty" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td><input align="right" type="checkbox" id="showempty" name="showempty" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked disabled></td>
 							<td><label class="info" onclick="alert('EMPTY MATCHES :\nCheck this box if you want the empty matches (those of length 0) do be displayed as a special character.\nThe default character is the \'Null\' symbol.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						<tr>
 						<tr title="Show or hide the index for each match">
@@ -1050,6 +1211,11 @@
 							<td onClick="javascript:document.form.backref.click();"><label>Show groups :</label></td>
 							<td><input align="right" type="checkbox" id="backref" name="backref" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td>
 							<td><label class="info" onclick="alert('SHOW GROUPS :\nCheck this box if you want to display the groups captured by the expression after every match. Groups are also known as \'back references\'. Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						<tr>
+						<tr title="Show match in the original context (text before and after)">
+							<td onClick="javascript:document.form.showcontext.click();"><label>Show context :</label></td>
+							<td><input align="right" type="checkbox" id="showcontext" name="showcontext" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked disabled></td>
+							<td><label class="info" onclick="alert('SHOW CONTEXT :\nExplain here. Works in \'table\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						<tr>
 				</table>
 			</div>
