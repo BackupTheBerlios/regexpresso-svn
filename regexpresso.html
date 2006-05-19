@@ -41,12 +41,12 @@
 			/* how to style a regular expression */
 			.regex { background:#FFFFE1; font-weight:bold; padding-left:.2em; padding-right:.2em; border:dotted #000000 1px; }
 			/* the menu */
-			span.menu { position:fixed; top:-15px; left:0; }
+			span.menu { position:fixed; top:-15px; left:0; white-space:nowrap; }
 			span.menu:hover, span.menu#hover { top:0; }
 			img.menu { border:none; border-bottom:solid gray 1px; border-top:solid white 1px; }
 			img.menu:hover, img.menu#hover { cursor:pointer; }
 			/* documentation / external resources */
-			a.doc { text-decoration:none; }
+			a.doc { font-size:10pt; text-decoration:none; }
 			/* text mode */
 			.highlight { background-color:#DBFF00; border:dotted #999999 1px; }
 			.highlight_empty { background-color:yellow; border:dotted #999999 1px; }
@@ -68,7 +68,7 @@
 			.info:hover { cursor:pointer; }
 			/* input class highlights the tag as beeing an input zone */
 			.input { border:solid #2449DB 1px; }												/* normal input style */
-			.input:hover { border: solid orange 1px; }											/* on hover */
+			.input:hover { border: solid #ffa500 1px; }											/* on hover */
 			input[type=text]:focus, textarea:focus { background-color:#FFFFBB; }		/* on focus for editable inputs */
 			input[type=button], input[type=submit] { font-family:arial, verdana; font-size:9pt; }
 			#options { font-size:small; background-color:#E1E1FF; }
@@ -89,7 +89,9 @@
 			th.col_match, th.col_groups { text-align:left; }
 			.tab_off, .tab_on { text-decoration:none; color:black; font-size:8pt; border-left:solid #a1a6a9 1px; border-right:solid #a1a6a9 1px; }
 			.tab_off { background:#a1a6a9; }
-			.tab_on { font-weight:bold; color:black; background:yellow; border-top:solid #a1a6a9 1px; border-bottom:solid #a1a6a9 1px; }
+			.tab_on { font-weight:bold; background:yellow; border-top:solid #a1a6a9 1px; border-bottom:solid #a1a6a9 1px; }
+			#regex_mod { font-size:8pt; }
+			.w3cvalid img { border:none; }
 		</style>
 		<!-- IE specific style -->
 		<!--[if IE]>
@@ -101,12 +103,16 @@
 	     		</style>
 		<![endif]-->
 
-		<script type="text/javascript"><!--
+		<script type="text/javascript">
+		<!--
 			google_ad_client = "pub-8221689042153078";
 			google_alternate_color = "EEEEEE";
 			google_ad_width = 234;
 			google_ad_height = 60;
 			google_ad_format = "234x60_as";
+			google_ad_width = 125;
+			google_ad_height = 125;
+			google_ad_format = "125x125_as";
 			google_ad_type = "text_image";
 			google_ad_channel ="";
 			google_color_border = "000000";
@@ -114,37 +120,15 @@
 			google_color_link = "0000FF";
 			google_color_url = "008000";
 			google_color_text = "000000";
-		//--></script>
+		//-->
+		</script>
 
 
 		<!--
-			Compatibility section.
-			Maybe should we check at the beginning of every function...
-			I personally prefer not to restrict the user... after all he has been warned.
-			However, this could become necessary if not all functions require the same compatibility level.
+			Web browsers specific section
 		-->
-		<noscript type="text/javascript">
-			<div class="warning">
-			WARNING : Your browser does not support Javascript or it is disabled.
-			You need it to be enabled to use this tool.
-			</div>
-		</noscript>
 		<script type="text/javascript">
 		<!--
-			// indicates whether or not all tests were successfull
-			var is_compatible = true;
-			if ( ! window.RegExp )
-			{
-				is_compatible = false;
-				document.write("\
-					<div class='warning'>\
-					WARNING : It seems that your browser does not support Javascript 1.5 regular expressions.\
-					You won't be able to run this tool.\
-					</div>\
-					");
-			}
-
-
 			/**
 				@returnval the version of IE
 				@returnval 0 if not an IE browser
@@ -198,6 +182,42 @@
 			{
 				return escape(text).replace(/\+/g,"%2B");
 			}
+
+
+			function genHTMLBound( string, max_length )
+			{
+				var chars = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+				if ( max_length == undefined )
+					max_length = 20;
+				for( tries=0 ; tries<16 ; tries++ )
+				{
+					var size = 4 + Math.round(Math.random()*(max_length-4)); // the bound's length also is randomized every new try
+					var bound = "";
+					for ( c=0 ; c<size ; c++ )
+						bound += chars[Math.round(Math.random()*(chars.length-1))];// add a random character to the bound
+					if ( string.indexOf(bound) < 0 )
+						return bound;
+				}
+				return null;// failed
+			}
+
+
+			function escapeHTML( string )
+			{
+				var char_ent = [
+					["\\&","&amp;"],
+					["\\\"","&quot;"],
+					["\\ ","&nbsp;"],
+					["\\<","&lt;"],
+					["\\>","&gt;"],
+					["\\'","&#39;"]
+					];
+				var escaped = string;
+				for ( e=0 ; e<char_ent.length ; e++ )
+					escaped = escaped.replace( new RegExp(char_ent[e][0],"g"), char_ent[e][1] );
+				return escaped;
+			}
+
 
 			/**
 				A simple iterator on an array, looping forever.
@@ -330,24 +350,39 @@
 
 
 			/* Manages the validity of the checked options (not all can be enabled at the same time) */
-			function checkOption( option )
+			function checkOptions()
 			{
-				//alert("checkOption("+option+")");
-				if ( document.getElementById("displaymode_text").checked )
+				if ( document.getElementById("inputmode").value == "replace" )
 				{
-					document.form.autorefresh.disabled = false;
-					document.form.showempty.disabled = false;
-					document.form.showindex.disabled = false;
-					document.form.backref.disabled = false;
-					document.form.showcontext.disabled = true;
+						document.getElementById("displaymode_text").disabled = true;
+						document.getElementById("displaymode_table").disabled = true;
+						document.form.autorefresh.disabled = false;
+						document.form.showempty.disabled = false;
+						document.form.showindex.disabled = true;
+						document.form.backref.disabled = true;
+						document.form.showcontext.disabled = true;
 				}
-				else if ( document.getElementById("displaymode_table").checked )
+				else
 				{
-					document.form.autorefresh.disabled = false;
-					document.form.showempty.disabled = true;
-					document.form.showindex.disabled = false;
-					document.form.backref.disabled = false;
-					document.form.showcontext.disabled = false;
+					document.getElementById("displaymode_text").disabled = false;
+					document.getElementById("displaymode_table").disabled = false;
+
+					if ( document.getElementById("displaymode_text").checked )
+					{
+						document.form.autorefresh.disabled = false;
+						document.form.showempty.disabled = false;
+						document.form.showindex.disabled = false;
+						document.form.backref.disabled = false;
+						document.form.showcontext.disabled = true;
+					}
+					else if ( document.getElementById("displaymode_table").checked )
+					{
+						document.form.autorefresh.disabled = false;
+						document.form.showempty.disabled = true;
+						document.form.showindex.disabled = false;
+						document.form.backref.disabled = false;
+						document.form.showcontext.disabled = false;
+					}
 				}
 			}
 
@@ -356,11 +391,17 @@
 			/* Manages the event for all options */
 			function onOptionChange( option )
 			{
-				checkOption(option);
+				checkOptions();
 				// redraws the result
 				document.form.submit.click();
 				//document.style.col_index.display = form.showindex.disabled ? "none" : "inherit";
 			}
+
+
+
+			// once of two, we alternate the style in order to show something has been done
+			// even if the result is exactly the same
+			var desc_again = new Loop(["desc","desc_again"]);
 
 
 
@@ -374,16 +415,16 @@
 			{
 				var url = "mailto:cbonar@users.berlios.de";
 				url += "?subject=" + myEscape("regexpresso error");
-				url += "&body=regex=" + myEscape(document.form.regex);
-				url += "%0D%0Asubject=" + myEscape(document.form.subject);
-				url += "%0D%0Adisplaymode=" + getRadioButtonsValue("displaymode");
-				url += "%0D%0Ainputmode=" + document.form.inputmode;
-				url += "%0D%0Ashowempty=" + myEscape(document.form.showempty);
-				url += "%0D%0Ashowindex=" + myEscape(document.form.showindex);
-				url += "%0D%0Abackref=" + myEscape(document.form.backref);
-				url += "%0D%0Ashowcontext=" + myEscape(document.form.showcontext);
-				url += "%0D%0Aempty=" + myEscape(document.form.empty);
-				url += "%0D%0Astylesheet=" + myEscape(document.form.stylesheet);
+				url += "&body=regex=" + myEscape(document.form.regex.value);
+				url += "%0D%0Asubject=" + myEscape(document.form.subject.value);
+				url += "%0D%0Adisplaymode=" + myEscape(getRadioButtonsValue("displaymode"));
+				url += "%0D%0Ainputmode=" + myEscape(document.form.inputmode.value);
+				url += "%0D%0Ashowempty=" + myEscape(document.form.showempty.checked);
+				url += "%0D%0Ashowindex=" + myEscape(document.form.showindex.checked);
+				url += "%0D%0Abackref=" + myEscape(document.form.backref.checked);
+				url += "%0D%0Ashowcontext=" + myEscape(document.form.showcontext.checked);
+				url += "%0D%0Aempty=" + myEscape(document.form.empty.value);
+				url += "%0D%0Astylesheet=" + myEscape(document.form.stylesheet.value);
 				url += "%0D%0Auser-agent=" + myEscape(navigator.userAgent);
 
 				var anchor = createSimpleElement("a","error",document.createTextNode(text));
@@ -399,69 +440,6 @@
 				var div = createSimpleElement("div","error",document.createTextNode("Unattended error. You can send a "));
 				div.appendChild( createReportLink("mail report") );
 				return div;
-			}
-
-
-
-			// once of two, we alternate the style in order to show something has been done
-			// even if the result is exactly the same
-			var desc_again = new Loop(["desc","desc_again"]);
-
-
-
-			/**
-				Parses the match and stores the results in a table of matches with each the following fields :
-					before = what was not matched between the last match (or the start) and this match
-					match = the matched text
-					index = the index of the first char of the match
-					groups = a table containing the matched groups
-					context = formatted text showing the match in an extract of text
-					after = the text that was not matched after
-			*/
-			function match( subject, regexp )
-			{
-				var matches = new Array();
-				matches.tail = "";
-
-				// computes the matches
-				var results = regexp.exec(subject);
-
-				// match_index is the index of the match of the original subject
-				for ( m=0, match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; m++ )
-				{
-					matches[m] = new Object();
-
-					// updates the index to the start of the match
-					match_index += results.index;
-
-					// saves the text not matched before this match
-					matches[m].before = subject.substring(text_before_index,match_index);
-
-					// saves the index
-					matches[m].index = match_index;
-
-					// saves the match
-					matches[m].match = results[0];
-
-					// saves the groups
-					matches[m].groups = new Array();
-					for ( r=1 ; r<results.length ; r++ )
-						matches[m].groups[r-1] = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
-
-					// prepares match_index for the next loop
-					text_before_index = match_index + results[0].length;
-					if ( results[0].length > 0 )
-						match_index += results[0].length;
-					else
-						match_index++;
-					results = regexp.exec( subject.substring(match_index,subject.length) );	// continue on the remaining part of the subject
-
-					// saves the trailing text, if existing
-					if ( results == null )
-						matches.tail = subject.substring(match_index,subject.length);
-				}
-
-				return matches;
 			}
 
 
@@ -622,100 +600,44 @@
 
 
 
-			function replace( output, subject, regexp, replace_string, mode )
+			/**
+				Parses the match and stores the results in a table of matches with each the following fields :
+					before = what was not matched between the last match (or the start) and this match
+					match = the matched text
+					index = the index of the first char of the match
+					groups = a table containing the matched groups
+					context = formatted text showing the match in an extract of text
+					tail = the text that was not matched after
+			*/
+			function match( subject, regexp )
 			{
+				var matches = new Array();
+				matches.tail = "";
+
 				// computes the matches
-				//alert(regexp+".replace("+subject+","+replace_string+")");
-				var results = regexp.replace(subject,replace_string);
+				var results = regexp.exec(subject);
 
-				var desc_class = desc_again.next();
-
-				var info = createSimpleElement("div",desc_class,null);
-				output.appendChild(info);
-
-				// first, a message indicating whether the subject has been matched or not
-				if ( results == null )
-					info.innerHTML = "No match.";
-
-				// then, creates the container for the results
-				else if ( mode == "text" )
-					var dom_results = output.appendChild( createSimpleElement("pre","match",null) );
-				else
-					var dom_results = output.appendChild( createSimpleElement("div","results",null) );
-
-				// finally, iterate over the results and inserts them into the node
 				// match_index is the index of the match of the original subject
-				for ( howmany=1, match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; howmany++ )
+				for ( m=0, match_index=0, text_before_index=0 ; results!=null && match_index<subject.length ; m++ )
 				{
+					matches[m] = new Object();
+
 					// updates the index to the start of the match
-					match_index += RegExp.index;
+					match_index += results.index;
 
-					info.innerHTML = howmany + (howmany>1 ? " matches :" : " match :");
+					// saves the text not matched before this match
+					matches[m].before = subject.substring(text_before_index,match_index);
 
-					// the first element is the full match
-					if ( mode == "text" )
-					{
-						var text_before = subject.substring(text_before_index,match_index);
-						if ( text_before.length > 0 )
-							dom_results.appendChild( document.createTextNode(text_before) );
-						// var dom_highlight is used later to insert the backrefs into in text mode
-						if ( results[0].length > 0 )
-						{
-							if ( showindex )
-								dom_results.appendChild( createSimpleElement("span","highlight_index",document.createTextNode(howmany)) );
-							var dom_highlight = createSimpleElement( "span", "highlight", document.createTextNode(results[0]) );
-							dom_results.appendChild(dom_highlight);
-						}
-						else if ( showempty )
-						{
-							// we show the empty cells by filling their content with the "empty set" symbol (here in UTF-8)
-							// again, due to IE, we must declare a separate CSS class
-							var dom_highlight = createSimpleElement( "span", "highlight_empty", null );
-							dom_highlight.innerHTML = empty;
-							dom_results.appendChild(dom_highlight);
-						}
-					}
-					else
-					{
-						dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Matched at char. "+match_index+" :")) );
+					// saves the index
+					matches[m].index = match_index;
 
-						var dom_match = createSimpleElement( "span", "match", document.createTextNode(results[0]) );
-						// adds a tooltip describing the context
-						// @todo visual tooltips are limited in length, if the match is too big, cut it
-						var index_context_before = Math.max(0,match_index-10);
-						var index_context_after = Math.min(match_index+results[0].length+10,subject.length);
-						var context_before = subject.substring(index_context_before,match_index);		// what's before
-						var context_after = subject.substring(Math.min(match_index+results[0].length,subject.length),index_context_after);	// what's after
-						var tooltip = "char. " + match_index + " : ";
-						if ( index_context_before > 0 )
-							tooltip += "...";
-						tooltip += context_before + "*" + results[0] + "*" + context_after;
-						if ( index_context_after < subject.length-1 )
-							tooltip += "...";
-						dom_match.setAttribute("title",tooltip);
+					// saves the match
+					matches[m].match = results[0];
 
-						dom_results.appendChild(dom_match);
-					}
-
-					// the remaining elements are the matches captured by the parentheses
-					if ( backref && results.length>1 )
-					{
-						if ( mode != "text" )
-							dom_results.appendChild( createSimpleElement("div",desc_class,document.createTextNode("Captured groups :")) );
-
-						for ( r=1 ; r<results.length ; r++ )
-						{
-							//alert("match:["+results[r]+"]");
-							var patched_result = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
-							if ( mode == "text" )
-								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(patched_result)) );
-							else
-							{
-								dom_results.appendChild( createSimpleElement("span","backref",document.createTextNode(patched_result)) );
-								dom_results.appendChild( document.createElement("br") );
-							}
-						}
-					}
+					// saves the groups
+					matches[m].groups = new Array();
+					for ( r=1 ; r<results.length ; r++ )
+						matches[m].groups[r-1] = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
 
 					// prepares match_index for the next loop
 					text_before_index = match_index + results[0].length;
@@ -725,57 +647,99 @@
 						match_index++;
 					results = regexp.exec( subject.substring(match_index,subject.length) );	// continue on the remaining part of the subject
 
-					// don't forget the trailing text in text mode
-					if ( mode == "text" && results == null )
+					// saves the trailing text, if existing
+					if ( results == null )
+						matches.tail = subject.substring(match_index,subject.length);
+				}
+
+				return matches;
+			}
+
+
+
+			/** 'replace' is a trick, it's not fully operational */
+			function formatReplace( output, subject, regexp, replace_string, showempty, empty )
+			{
+				var my_replace_string = replace_string;
+				var className = "highlight";
+				// FIXME : the following 'empty' replacement detection does not work for advanced syntax (e.g. with $1)
+				if ( showempty && replace_string.length == 0 )
+				{
+					my_replace_string = empty;
+					className = "highlight_empty";
+				}
+
+				var results = subject.replace(regexp,my_replace_string);
+
+				if ( replace_string.length > 0 || showempty )
+				{
+					// this is why we need to know what's inside the previously computed result
+					var start = genHTMLBound(results,6);
+					var end = genHTMLBound(start+results,6);
+					if ( start != null && end != null )
 					{
-						var text_after = subject.substring(match_index,subject.length);
-						if ( text_after.length > 0 )
-							dom_results.appendChild(document.createTextNode(text_after));
+						results = subject.replace(regexp,start+my_replace_string+end);
+						results = escapeHTML(results);
+						results = results.replace(new RegExp(start,"g"),"<span class='"+className+"'>");
+						results = results.replace(new RegExp(end,"g"),"<\/span>");
+						var dom_results = output.appendChild( createSimpleElement("div","match",null) );
+						dom_results.innerHTML = results;
+					}
+					// falling back to not-highlighted
+					else
+					{
+						alert("Could not find a bounding string to highlight.\nYou could retry, but this is probably due to a too big amount of data.\nHighlighting disabled.");
+						output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );
 					}
 				}
+				// the replacement is empty & don't print empty
+				else
+					output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );
 			}
 
 
 
-		/** Displays only the relevant input fields for the regex */
-		function switchInputMode( mode )
-		{
-			document.getElementById("inputmode").value = mode;
-
-			switch ( mode )
+			/** Displays only the relevant input fields for the regex */
+			function switchInputMode( mode )
 			{
-				case "search":
-					document.getElementById("regex_purejs").style.display = "none";
-					document.getElementById("regex_search").style.display = "block";
-					document.getElementById("regex_replace").style.display = "none";
-					document.getElementById("regex_mod").style.display = "block";
-					document.getElementById("tab_purejs").className = "tab_off";
-					document.getElementById("tab_search").className = "tab_on";
-					document.getElementById("tab_replace").className = "tab_off";
-					break;
-				case "replace":
-					document.getElementById("regex_purejs").style.display = "none";
-					document.getElementById("regex_search").style.display = "none";
-					document.getElementById("regex_replace").style.display = "block";
-					document.getElementById("regex_mod").style.display = "block";
-					document.getElementById("tab_purejs").className = "tab_off";
-					document.getElementById("tab_search").className = "tab_off";
-					document.getElementById("tab_replace").className = "tab_on";
-					break;
-				default:
-					document.getElementById("regex_purejs").style.display = "block";
-					document.getElementById("regex_search").style.display = "none";
-					document.getElementById("regex_replace").style.display = "none";
-					document.getElementById("regex_mod").style.display = "none";
-					document.getElementById("tab_purejs").className = "tab_on";
-					document.getElementById("tab_search").className = "tab_off";
-					document.getElementById("tab_replace").className = "tab_off";
-					break;
-			}
+				document.getElementById("inputmode").value = mode;
 
-			// makes sure the regex' value is set according to the one currently displayed
-			updateRegex();
-		}
+				switch ( mode )
+				{
+					case "search":
+						document.getElementById("regex_purejs").style.display = "none";
+						document.getElementById("regex_search").style.display = "block";
+						document.getElementById("regex_replace").style.display = "none";
+						document.getElementById("regex_mod").style.display = "block";
+						document.getElementById("tab_purejs").className = "tab_off";
+						document.getElementById("tab_search").className = "tab_on";
+						document.getElementById("tab_replace").className = "tab_off";
+						break;
+					case "replace":
+						document.getElementById("regex_purejs").style.display = "none";
+						document.getElementById("regex_search").style.display = "none";
+						document.getElementById("regex_replace").style.display = "block";
+						document.getElementById("regex_mod").style.display = "block";
+						document.getElementById("tab_purejs").className = "tab_off";
+						document.getElementById("tab_search").className = "tab_off";
+						document.getElementById("tab_replace").className = "tab_on";
+						break;
+					default:
+						document.getElementById("regex_purejs").style.display = "block";
+						document.getElementById("regex_search").style.display = "none";
+						document.getElementById("regex_replace").style.display = "none";
+						document.getElementById("regex_mod").style.display = "none";
+						document.getElementById("tab_purejs").className = "tab_on";
+						document.getElementById("tab_search").className = "tab_off";
+						document.getElementById("tab_replace").className = "tab_off";
+						break;
+				}
+
+				checkOptions();
+
+				// makes sure the regex' value is set according to the one currently displayed
+				updateRegex();
+			}
 
 
 
@@ -798,7 +762,7 @@
 				if ( param_displaymode != null )
 				{
 					document.getElementById("displaymode_"+param_displaymode).checked = true;
-					checkOption(document.getElementById("displaymode_"+param_displaymode));
+					checkOptions();
 				}
 
 				var param_inputmode = getParam("inputmode");
@@ -808,22 +772,22 @@
 				var param_showempty = getParam("showempty");
 				if ( param_showempty != null )
 					document.form.showempty.checked = param_showempty == "on";
-				checkOption(document.form.showempty);
+				checkOptions();
 
 				var param_showindex = getParam("showindex");
 				if ( param_showindex != null )
 					document.form.showindex.checked = param_showindex == "on";
-				checkOption(document.form.showindex);
+				checkOptions();
 
 				var param_backref = getParam("backref");
 				if ( param_backref != null )
 					document.form.backref.checked = param_backref == "on";
-				checkOption(document.form.backref);
+				checkOptions();
 
 				var param_showcontext = getParam("showcontext");
 				if ( param_showcontext != null )
 					document.form.showcontext.checked = param_showcontext == "on";
-				checkOption(document.form.showcontext);
+				checkOptions();
 
 				var param_empty = getParam("empty");
 				if ( param_empty != null )
@@ -939,7 +903,21 @@
 
 								//alert("s: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
 								var regex = new RegExp(pattern,modifiers);
-								replace( dom_output, subject, regex, replace_string, getRadioButtonsValue("displaymode") );
+								// the 'replace' method of the 'String' object does it all, but we have no control on it.
+								// so we still need to do a 'match' to know more about the replaced parts.
+								// Therefore, the replace function of this tool is nothing more than a replace AND a match.
+								matches = match( subject, regex );	// using the global variable 'matches'
+
+								// display common informations
+								var info = dom_output.appendChild( createSimpleElement("div",desc_again.next(),null) );
+								if ( matches == null || matches.length == 0 )
+									info.innerHTML = "No match.";
+								else if ( matches.length == 1 )
+									info.innerHTML = "1 match :";
+								else
+									info.innerHTML = matches.length + " matches :";
+
+								formatReplace( dom_output, subject, regex, replace_string, document.form.showempty.checked, document.form.empty.value );
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -1032,19 +1010,62 @@
 
 
 
+		/** Export results as plain text, in a new window */
+		// FIXME : the name of the new window is 'regexpresso.html' and when saving, it's the code of regexpresso, not the one generated !
 		function exportResult( matches )
 		{
-			var win = document.open("","_blank","width=320,height=240,menubar=1,scrollbars=1,resizable=1,toolbar=1");
-			// finds the node to copy
-			dom_output = document.getElementById('output');
-			for ( m=0 ; m<matches.length ; m++ )
+			if ( matches == undefined || matches == null )
 			{
-				win.document.write(m+"\t"+matches[m].match+"\t"+matches[m].index);
-				for ( g=0 ; g<matches[m].groups.length ; g++ )
-					win.document.write("\t"+matches[m].groups[g]);
-				win.document.writeln();
+				alert("There is no result to export. Execute a regular expression on a subject first.");
+				return false;
 			}
-			win.document.close();
+
+			// opens a window in which we're going to write the output
+			var win = document.open("output.txt","_blank","");
+
+			// if the result is displayed as a table, the output will be CSV formated
+			if ( document.getElementById("displaymode_table").checked )
+			{
+				var csv = win.document.open("text/plain");
+				//var csv = win.document;
+				for ( m=0 ; m<matches.length ; m++ )
+				{
+					// 1. index
+					if ( document.getElementById("showindex").checked )
+						csv.write( m + "\t" );
+					// 2. match
+					csv.write( matches[m].match + "\t" );
+					// 3. groups
+					if ( document.getElementById("backref").checked )
+					{
+						for ( g=0 ; g<matches[m].groups.length ; g++ )
+						{
+							csv.write( matches[m].groups[g] );
+							if ( g<matches[m].groups.length-1 )
+								csv.write("\t");
+						}
+					}
+					csv.write("\n");
+				}
+				csv.close();
+				win.document.close();
+			}
+			// else, the output will not be formatted
+			else
+			{
+				var txt = win.document.open("text/plain");
+				for ( m=0 ; m<matches.length ; m++ )
+				{
+					// 1. before
+					txt.write( matches[m].before );
+					// 2. match
+					txt.write( matches[m].match );
+				}
+				// 3. after
+				txt.write( matches.tail );
+				txt.close();
+			}
+
 			return false;
 		}
 
@@ -1081,12 +1102,44 @@
 
 		// -->
 		</script>
+
 	</head>
 
 
 
 	<body onLoad="javascript:parseURL();">
+
+
+
 		<!--
+			Compatibility check.
+			Maybe should we check at the beginning of every function...
+			I personally prefer not to restrict the user... after all he has been warned.
+			However, this could become necessary if not all functions require the same compatibility level.
+		-->
+		<noscript>
+			<div class="warning">
+			WARNING : Your browser does not support Javascript or it is disabled.
+			You need it to be enabled to use this tool.
+			</div>
+		</noscript>
+		<script type="text/javascript">
+		<!--
+			if ( ! window.RegExp )
+			{
+				document.write("\
+					<div class='warning'>\
+					WARNING : It seems that your browser does not support Javascript 1.5 regular expressions.\
+					You won't be able to run this tool.\
+					<\/div>\
+					");
+			}
+		// -->
+		</script>
+
+
+
+			<!--
 			Top menu with links to open this page in different ways.
 
 			This is a shame to be forced to add the boundary pictures in the HTML because of the non-CSS aware browsers, but I had no real choice :[
@@ -1100,25 +1153,25 @@
 			There is also a link that opens this page with the current fields values in a new window.
 			Finally, there is a link that opens the results in the main (bigger) window, while in sidebar mode.
 		-->
-		<span class="menu" onMouseOver="this.id='hover'" onMouseOut="this.id=''" nowrap><!--
+		<span class="menu" onMouseOver="this.id='hover'" onMouseOut="this.id=''"><!--
 				Left (start) boundary
-			--><img src="menu-down-left.png"><!--
+			--><img src="menu-down-left.png" alt=""><!--
 				To the sidebar (only for IE and Firefox)
 			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
-				--><img class="menu" src="sidebar-22x22.png" alt="[sidebar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
+				--><img class="menu" src="sidebar-22x22.png" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
 			--></a><!--
-				In a new window
-			--><img class="menu" src="new-22x22.png" alt="[pop-out]" title="Open result in a new window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
+				In a new window (TODO ? dependent=yes might be added)
+			--><img class="menu" src="new-22x22.png" alt="[pop]" title="Pop out the results in a new window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
 				Reopen in the current window
 			--><a id="toMain" target="_main" href="regexpresso.html"><!--
 				--><img class="menu" src="main-22x22.png" alt="[=&gt;]" title="Open result in the main window"><!--
 			--></a><!--
 				Export in a different format
-			--><img class="menu" src="floppy-22x22.png" alt="[export]" title="Export the result" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);"><!--
+			--><img onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);" class="menu" src="floppy-22x22.png" alt="[exp]" title="Export the result"><!--
 				Import from the main window
 			--><!--img class="menu" src="dropper-22x22.png" alt="[&lt=]" title="Import from the main window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:document.form.subject.value='TODO';"--><!--
 				Right (end) boundary
-			--><img src="menu-down-right.png"><!--
+			--><img src="menu-down-right.png" alt=""><!--
 		--></span>
 
 		<!-- the tool's view -->
@@ -1127,7 +1180,7 @@
 		<div class="title">RegEx<span class="presto">presso</span></div>
 
 		<!-- user's input -->
-		<form name="form" id="form" onSubmit="javascript:prepare();go(this.subject.value,this.regex.value,'output');finish();return false;" enctype="UTF-8">
+		<form name="form" id="form" onSubmit="javascript:prepare();go(this.subject.value,this.regex.value,'output');finish();return false;" enctype="UTF-8" action="get">
 			<input type="hidden" id="empty" name="empty" value="&empty;">
 			<input type="hidden" id="stylesheet" name="stylesheet" value="">
 			<input type="hidden" id="inputmode" name="inputmode" value="purejs">
@@ -1157,12 +1210,12 @@
 						onkeyup="javascript:updateRegex();">
 				</div>
 				<!-- 4. 'easy' replace mode, initially not displayed -->
-				<div id="regex_replace" style="display:none;">
-					<input type="text" id="regex_replace_a" class="input" value="\b\w*(e)" title="Enter here the text you want to replace"
+				<div id="regex_replace" style="display:none; white-space:nowrap;">
+					<input type="text" id="regex_replace_a" class="input" style="width:45%;" value="\b\w*(e)" title="Enter here the text you want to replace"
 						onFocus="javascript:this.select();"
 						onchange="javascript:updateRegex();"
 						onkeyup="javascript:updateRegex();">
-					<input type="text" id="regex_replace_b" class="input" value="[Replacement string]" title="Enter here the replacement string"
+					<input type="text" id="regex_replace_b" class="input" style="width:45%;" value="[Replacement string]" title="Enter here the replacement string"
 						onFocus="javascript:this.select();"
 						onchange="javascript:updateRegex();"
 						onkeyup="javascript:updateRegex();">
@@ -1201,22 +1254,22 @@
 							<td onClick="javascript:document.form.showempty.click();">Show empty matches :</td>
 							<td><input align="right" type="checkbox" id="showempty" name="showempty" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked disabled></td>
 							<td><label class="info" onclick="alert('EMPTY MATCHES :\nCheck this box if you want the empty matches (those of length 0) do be displayed as a special character.\nThe default character is the \'Null\' symbol.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
-						<tr>
+						</tr>
 						<tr title="Show or hide the index for each match">
 							<td onClick="javascript:document.form.showindex.click();">Show indexes :</td>
 							<td><input align="right" type="checkbox" id="showindex" name="showindex" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
 							<td><label class="info" onclick="alert('SHOW INDEXES :\nCheck this box if you want to identify every match by its index in the result field (the first one will be marked \'1\', etc.). Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''">?</label></td>
-						<tr>
+						</tr>
 						<tr title="Show groups captured by the parentheses">
 							<td onClick="javascript:document.form.backref.click();"><label>Show groups :</label></td>
 							<td><input align="right" type="checkbox" id="backref" name="backref" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td>
 							<td><label class="info" onclick="alert('SHOW GROUPS :\nCheck this box if you want to display the groups captured by the expression after every match. Groups are also known as \'back references\'. Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
-						<tr>
+						</tr>
 						<tr title="Show match in the original context (text before and after)">
 							<td onClick="javascript:document.form.showcontext.click();"><label>Show context :</label></td>
 							<td><input align="right" type="checkbox" id="showcontext" name="showcontext" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked disabled></td>
 							<td><label class="info" onclick="alert('SHOW CONTEXT :\nExplain here. Works in \'table\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
-						<tr>
+						</tr>
 				</table>
 			</div>
 		</form>
@@ -1229,13 +1282,19 @@
 		<hr>
 		<div id="doc" title="External resources">
 			<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
-			[<a class="doc" target="_main" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a>]<br>
-			[<a class="doc" target="_main" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a>]<br>
-			[<a class="doc" target="_main" href="http://regexpresso.berlios.de/readme.html">About this tool</a>]<br>
-			<br>
-			<a align="right" target="_main" href="http://developer.berlios.de"><img src="http://developer.berlios.de/bslogo.php?group_id=3235&type=1" width="124" height="32" border="0" alt="[BerliOS Logo]"></a><br>
-			<br>
+			[<a class="doc" target="_blank" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a>]<br>
+			[<a class="doc" target="_blank" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a>]<br>
+			[<a class="doc" target="_blank" href="http://regexpresso.berlios.de/readme.html">About this tool</a>]<br>
+		</div>
+		<br>
+		<div id="ads">
+			<div><a href="http://developer.berlios.de" target="_blank"><img src="http://developer.berlios.de/bslogo.php?group_id=3235&amp;type=1" width="124" height="32" border="0" alt="[BerliOS Logo]"></a></div>
 			<div class="googlead"><script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script></div>
+			<!-- unhide the following during validating session -->
+			<!--div class="w3cvalid">
+				<a href="http://validator.w3.org/check?uri=referer" target="_blank"><img src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01 Transitional"></a>
+				<a href="http://jigsaw.w3.org/css-validator/check/referer" target="_blank"><img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+			</div-->
 		</div>
 </body>
 
