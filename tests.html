@@ -26,11 +26,10 @@
 						subject::String,
 						regex::String,
 						highlight::Boolean,
-						showempty::Boolean,
+						shownp::Boolean,
 						showindex::Boolean,
 						backref::Boolean,
 						plaintext::Boolean,
-						empty::HTMLString,
 						stylesheets::space-separated-URL-list,
 						result::HTMLString
 						]
@@ -44,7 +43,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"Matches and backreferences as follow :\n\n"
 						+"<span class='match'>http://cbonar.free.fr/regexpresso/regexpresso.html</span>\n"
@@ -60,7 +58,6 @@
 						false,
 						false,
 						false,
-						"&empty;",
 						"",
 						"Swaps the first two words : <span class='highlight'>Two One</span> Three"
 					],
@@ -71,7 +68,6 @@
 						false,
 						false,
 						true,
-						"&empty;",
 						"",
 						"eeeeee"
 					],
@@ -82,7 +78,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"g = global search.<br />I still need to investigate what should be the difference between <span class='highlight'>/e/g</span> and <span class='highlight'>/e/</span>."
 					],
@@ -93,7 +88,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"i = case insensitive.<br />One more letter is matched compared to <span class='highlight'>/e/</span> (the upper case 'E')."
 					],
@@ -104,7 +98,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"Must be the same as <span class='highlight'>/e/ig</span>."
 					],
@@ -116,7 +109,6 @@
 						false,
 						false,
 						true,
-						"&empty;",
 						"",
 						"m = multiple lines.<br />Just observe the behaviour depending on the browser"
 					],
@@ -127,7 +119,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"Must be the same as <span class='highlight'>/e/gi</span>."
 					],
@@ -138,7 +129,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"A match between every character"
 					],
@@ -149,7 +139,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"No <em>visible</em> match."
 					],
@@ -161,7 +150,6 @@
 						false,
 						true,
 						false,
-						"&empty;",
 						"",
 						"No match"
 					],
@@ -173,7 +161,6 @@
 						false,
 						false,
 						false,
-						"&empty;",
 						"",
 						"<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"
 					],
@@ -185,7 +172,6 @@
 						false,
 						false,
 						false,
-						"&empty;",
 						"",
 						"<span class='error'>A syntax exception is thrown <strong>and catched by RegExpresso</strong> (not the browser).</span>"
 					],
@@ -197,7 +183,6 @@
 						false,
 						false,
 						false,
-						"&empty;",
 						"",
 						"Empty matches at char 0,1,2. <span class='match'>t</span> matches at char 3."
 					],
@@ -209,7 +194,6 @@
 						false,
 						false,
 						false,
-						"&empty;",
 						"",
 						"<span class='match'>Bart</span>"
 					],
@@ -217,13 +201,23 @@
 						"Line 1.\nLine 2\nLine 3",
 						"s/Line 1/Line 2/m",
 						false,
-						false,
+						true,
 						false,
 						false,
 						true,
-						"&empty;",
 						"",
 						"Multiple lines must remain in the result."
+					],
+					[
+						"Line 1.\nLine \t2\r\nLi\tne 3",
+						"/[\\n\\r\\t]/m",
+						false,
+						true,
+						false,
+						false,
+						true,
+						"",
+						"\\n, \\r, \\t must be displayed."
 					]
 				];
 
@@ -240,11 +234,10 @@
 				url += "?subject=" + escape(fixture[0]).replace(/\+/g,"%2B");
 				url += "&regex=" + escape(fixture[1]).replace(/\+/g,"%2B");
 				url += "&highlight=" + (fixture[2] ? "on" : "off");
-				url += "&showempty=" + (fixture[3] ? "on" : "off");
+				url += "&shownp=" + (fixture[3] ? "on" : "off");
 				url += "&showindex=" + (fixture[4] ? "on" : "off");
 				url += "&backref=" + (fixture[5] ? "on" : "off");
 				url += "&plaintext=" + (fixture[6] ? "on" : "off");
-				url += "&empty=" + escape(fixture[7]);
 				open(url,"test");
 				return false;
 			}
@@ -329,12 +322,11 @@
 							document.write("<tr><th class='param'>pattern="+fixtures[f][1]+"<br /><input type='text' id='pattern"+f+"' style='width:100%;' /></th></tr>");
 							document.getElementById("pattern"+f).setAttribute("value",fixtures[f][1]);
 							document.write("<tr><th class='param'>highlight="+fixtures[f][2]+"</th></tr>");
-							document.write("<tr><th class='param'>showempty="+fixtures[f][3]+"</th></tr>");
+							document.write("<tr><th class='param'>shownp="+fixtures[f][3]+"</th></tr>");
 							document.write("<tr><th class='param'>showindex="+fixtures[f][4]+"</th></tr>");
 							document.write("<tr><th class='param'>backref="+fixtures[f][5]+"</th></tr>");
 							document.write("<tr><th class='param'>plaintext="+fixtures[f][6]+"</th></tr>");
-							document.write("<tr><th class='param'>empty="+fixtures[f][7]+"</th></tr>");
-							document.write("<tr><th class='param'>stylesheets="+fixtures[f][8]+"</th></tr>");
+							document.write("<tr><th class='param'>stylesheets="+fixtures[f][7]+"</th></tr>");
 							var results = fixtures[f][fixtures[f].length-1];
 							document.write("<tr><td class='results'><pre>"+results+"</pre></td></tr>");
 						document.write("</table>");
@@ -353,12 +345,11 @@
 						document.write("<input type='hidden' name='subject' value='"+fixtures[f][0]+"'>");
 						document.write("<input type='hidden' name='regex' value='"+fixtures[f][1]+"'>");
 						document.write("<input type='hidden' name='highlight' value='"+fixtures[f][2]+"'>");
-						document.write("<input type='hidden' name='showempty' value='"+fixtures[f][3]+"'>");
+						document.write("<input type='hidden' name='shownp' value='"+fixtures[f][3]+"'>");
 						document.write("<input type='hidden' name='showindex' value='"+fixtures[f][4]+"'>");
 						document.write("<input type='hidden' name='backref' value='"+fixtures[f][5]+"'>");
 						document.write("<input type='hidden' name='plaintext' value='"+fixtures[f][6]+"'>");
-						document.write("<input type='hidden' name='empty' value='"+fixtures[f][7]+"'>");
-						document.write("<input type='hidden' name='stylesheets' value='"+fixtures[f][8]+"'>");
+						document.write("<input type='hidden' name='stylesheets' value='"+fixtures[f][7]+"'>");
 						document.write("<table width='100%'><tr>");
 						document.write("<td><table>");
 						document.write("<tr><td>Success :</td><td><input type='radio' name='success' value='true'></td></tr>");

@@ -62,7 +62,8 @@
 			.highlight_backref:after { content:")"; }
 			.highlight_index { background:black; color:white; font-weight:bold; font-family:courier; border:none; }
 			/* empty matches : for those browsers that just cannot guess the right font by themselves ; tested on WinXP only */
-			.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:xx-small; }
+			.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:x-small; }
+			.nonprintable { font-weight:bold; margin:2px; color:#DB0000; font-family:"Lucida sans Unicode", arial, verdana, "courier new"; }
 			.googlead { padding:0; margin:0; border:none; }
 			/* info div used to display context help */
 			.info { font-weight:bold; color:blue; background:yellow; border:solid #808000 1px; padding:0; padding-left:2px; padding-right:2px; }
@@ -81,11 +82,12 @@
 			.context_match { font-weight:bold; color:red; }
 			/* same as input */
 			.output { border: solid red 1px; border-collapse:collapse; background-color:white; }
-			table.output thead tr th { background:red; color:white; font-weight:bold; font-size:90%; text-align:center; }
+			table.output thead tr th { background:red; color:white; font-weight:bold; font-size:90%; text-align:center; padding:2px; padding-left:10px; padding-right:10px; }
 			.output tr.even { background:#DBFFBB; }
 			.output tr:hover, .output tr:hover td * { background:#DBFF00; }		/* highlights the line under the cursor */
 			/* table mode : column specific */
 			.output thead tr > th:first-child { border-left:none; }			/* the left <th> must never show a different border */
+			.output td { vertical-align:top; padding:5px; }
 			th.col_index {}
 			th.col_match, th.col_groups, th.col_context { border-left:solid white 1px; }
 			th.col_match, th.col_groups { text-align:left; }
@@ -209,11 +211,12 @@
 					["\\ ","&nbsp;"],
 					["\\<","&lt;"],
 					["\\>","&gt;"],
-					["\\'","&#39;"]
+					["\\'","&#39;"],
+					["\n","<br />"]		// workaround with IE that does not seem to return correct linefeeds within the result of a 'replace'
 					];
 				var escaped = string;
 				for ( e=0 ; e<char_ent.length ; e++ )
-					escaped = escaped.replace( new RegExp(char_ent[e][0],"g"), char_ent[e][1] );
+					escaped = escaped.replace( new RegExp(char_ent[e][0],"gm"), char_ent[e][1] );
 				return escaped;
 			}
 
@@ -269,12 +272,14 @@
 
 			/**
 				@returnval the value of an argument of the URL
-				@returnval null if not found or no regex support
+				@returnval 'def' if not found or no regex support
 				@returnval "" if the param was found but empty
 				@param name
 					the (case insensitive) name of the param
+				@param def
+					the default value to return if not found
 			*/
-			function getParam( name )
+			function getParam( name, def )
 			{
 				if ( window.RegExp )
 				{
@@ -284,10 +289,10 @@
 						// with text/plain, the '+' signs will be converted to spaces, even if they were real '+'
 						return unescape(result[1].replace(/\+/g," "));
 					else
-						return null;
+						return def;
 				}
 				else
-					return null;
+					return def;
 			}
 
 
@@ -321,8 +326,8 @@
 		<!-- user stylesheet -->
 		<script type="text/javascript">
 		<!--
-			var alt_style = getParam("stylesheet");
-			if ( alt_style != null && alt_style != "" )
+			var alt_style = getParam("stylesheet","");
+			if ( alt_style != "" )
 				document.write("<link rel='stylesheet' type='text/css' title='user style' href='"+alt_style+"'>");
 		// -->
 		</script>
@@ -356,7 +361,7 @@
 						document.getElementById("displaymode_text").disabled = true;
 						document.getElementById("displaymode_table").disabled = true;
 						document.form.autorefresh.disabled = false;
-						document.form.showempty.disabled = false;
+						document.form.shownp.disabled = false;
 						document.form.showindex.disabled = true;
 						document.form.backref.disabled = true;
 						document.form.showcontext.disabled = true;
@@ -369,7 +374,7 @@
 					if ( document.getElementById("displaymode_text").checked )
 					{
 						document.form.autorefresh.disabled = false;
-						document.form.showempty.disabled = false;
+						document.form.shownp.disabled = false;
 						document.form.showindex.disabled = false;
 						document.form.backref.disabled = false;
 						document.form.showcontext.disabled = true;
@@ -377,7 +382,7 @@
 					else if ( document.getElementById("displaymode_table").checked )
 					{
 						document.form.autorefresh.disabled = false;
-						document.form.showempty.disabled = true;
+						document.form.shownp.disabled = false;
 						document.form.showindex.disabled = false;
 						document.form.backref.disabled = false;
 						document.form.showcontext.disabled = false;
@@ -418,11 +423,11 @@
 				url += "%0D%0Asubject=" + myEscape(document.form.subject.value);
 				url += "%0D%0Adisplaymode=" + myEscape(getRadioButtonsValue("displaymode"));
 				url += "%0D%0Ainputmode=" + myEscape(document.form.inputmode.value);
-				url += "%0D%0Ashowempty=" + myEscape(document.form.showempty.checked);
+				url += "%0D%0Aautorefresh=" + myEscape(document.form.autorefresh.checked);
+				url += "%0D%0Ashownp=" + myEscape(document.form.shownp.checked);
 				url += "%0D%0Ashowindex=" + myEscape(document.form.showindex.checked);
 				url += "%0D%0Abackref=" + myEscape(document.form.backref.checked);
 				url += "%0D%0Ashowcontext=" + myEscape(document.form.showcontext.checked);
-				url += "%0D%0Aempty=" + myEscape(document.form.empty.value);
 				url += "%0D%0Astylesheet=" + myEscape(document.form.stylesheet.value);
 				url += "%0D%0Auser-agent=" + myEscape(navigator.userAgent);
 
@@ -482,12 +487,10 @@
 					the DOMElement where to insert the results
 				@param backref::Boolean
 					if true, the matches captured by the parentheses will be shown
-				@param empty::String
-					the content to insert in empty matches
 			*/
-			function formatAsTable( output, matches, showempty, showindex, backref, showcontext, empty, subject, mode )
+			function formatAsTable( output, matches, shownp, showindex, backref, showcontext, subject, mode )
 			{
-				//alert("formatAsTable("+output+","+matches+","+showempty+","+showindex+","+backref+","+empty+")");
+				//alert("formatAsTable("+output+","+matches+","+shownp+","+showindex+","+backref+")");
 
 				// initiates the output container by inserting the head elements
 				var dom_results = output.appendChild( createSimpleElement("table","output",null) );
@@ -517,8 +520,11 @@
 
 					// row 2 : the raw match
 					var td_match = tr.appendChild( createSimpleElement("td","col_match",null) );
-					td_match_text = document.createTextNode(matches[m].match);
-					td_match.appendChild( createSimpleElement( "span", "match", td_match_text ) );
+					var div_match = td_match.appendChild( createSimpleElement( "span", "match", null) );
+					if ( matches[m].match.length > 0 )
+						div_match.innerHTML = shownp ? showNonPrintable(matches[m].match,false) : matches[m].match;
+					else if ( shownp )
+						div_match.innerHTML = "<span class='highlight_empty'>&empty;</span>";
 
 					// row 3 : the groups
 					if ( backref )
@@ -526,10 +532,14 @@
 						var td_groups = tr.appendChild( createSimpleElement("td","col_groups",null) );
 						for ( g=0 ; g<matches[m].groups.length ; g++ )
 						{
-							td_groups_text = document.createTextNode(matches[m].groups[g]);
-							td_groups_div = createSimpleElement( "span", "backref", td_groups_text );
-							td_groups.appendChild( td_groups_div );
-							td_groups.appendChild( document.createTextNode(" ") );
+							td_groups_div = td_groups.appendChild( createSimpleElement("span","backref",null) );
+							if ( matches[m].groups[g].length > 0 )
+								td_groups_div.innerHTML = shownp ? showNonPrintable(matches[m].groups[g],false) : matches[m].groups[g];
+							else if ( shownp )
+								td_groups_div.innerHTML = "<span class='highlight_empty'>&empty;</span>";
+
+							if ( g < matches[m].groups.length - 1 )
+								td_groups.innerHTML = td_groups.innerHTML + "<br>";
 						}
 					}
 
@@ -544,56 +554,73 @@
 
 
 
+			/** Replace non visible characters by a visible entity / symbol */
+			function showNonPrintable( text, keep )
+			{
+				var char_ent = [
+					[ "\r", "<span class='nonprintable'>&#8629;</span>" + (keep ? "\r" : "") ],
+					[ "\n", "<span class='nonprintable'>&#182;</span>" + (keep ? "\n" : "") ],
+					[ "\t", "<span class='nonprintable'>&#8594;</span>" ]
+					];
+				var unhidden = text;
+				for ( e=0 ; e<char_ent.length ; e++ )
+					unhidden = unhidden.replace( new RegExp(char_ent[e][0],"gm"), char_ent[e][1] );
+				return unhidden;
+			}
+
+
+
 			/**
 				Writes the results of a match as plain text.
 				I guess this would be clearer with a recursive algorithm...
 
 				@param backref::Boolean
 					if true, the matches captured by the parentheses will be shown
-				@param empty::String
-					the content to insert in empty matches
 			*/
-			function formatAsText( output, matches, showempty, showindex, backref, empty, subject, mode )
+			function formatAsText( output, matches, shownp, showindex, backref, subject, mode )
 			{
 				var dom_results = output.appendChild( createSimpleElement("pre","match",null) );
 
 				for ( m=0 ; m<matches.length ; m++ )
 				{
 					// 1. text before
-					dom_results.appendChild( createSimpleElement("span",null,document.createTextNode(matches[m].before)) );
+					dom_results.innerHTML = dom_results.innerHTML + (shownp ? showNonPrintable(matches[m].before,true) : matches[m].before);
 
+					// 2. index
+					if ( showindex )
+						dom_results.appendChild( createSimpleElement("span","highlight_index",document.createTextNode(m)) );
+
+					// 3. text that matched
 					if ( matches[m].match.length > 0 )
 					{
-						// 2. index
-						if ( showindex )
-							dom_results.appendChild( createSimpleElement("span","highlight_index",document.createTextNode(m)) );
-
-						// 3. text that matched
-						var dom_highlight = createSimpleElement( "span", "highlight", document.createTextNode(matches[m].match) );
+						var dom_highlight = createSimpleElement( "span", "highlight", null );
+						dom_highlight.innerHTML = shownp ? showNonPrintable(matches[m].match,true) : matches[m].match;
 						dom_results.appendChild(dom_highlight);
-
-						// 4. the remaining elements are the matches captured by the parentheses
-						if ( backref && matches[m].groups.length>0 )
-						{
-							for ( g=0 ; g<matches[m].groups.length ; g++ )
-								dom_highlight.appendChild( createSimpleElement("span","highlight_backref",document.createTextNode(matches[m].groups[g])) );
-						}
 					}
 					// 2bis. empty symbol if matched but empty
-					else if ( showempty )
+					else if ( shownp )
 					{
 						// we show the empty cells by filling their content with the "empty set" symbol (here in UTF-8)
 						// again, due to IE, we must declare a separate CSS class
 						var dom_highlight = createSimpleElement( "span", "highlight_empty", null );
-						dom_highlight.innerHTML = empty;
+						dom_highlight.innerHTML = "&empty;";
 						dom_results.appendChild(dom_highlight);
+					}
 
-						// TODO ? 3bis : empty groups ?
+					// 4. the remaining elements are the matches captured by the parentheses
+					if ( backref && matches[m].groups.length>0 )
+					{
+						for ( g=0 ; g<matches[m].groups.length ; g++ )
+						{
+							var dom_group = createSimpleElement("span","highlight_backref",null);
+							dom_group.innerHTML = shownp ? showNonPrintable(matches[m].groups[g],true) : matches[m].groups[g];
+							dom_highlight.appendChild( dom_group );
+						}
 					}
 				}
 
 				// 5. don't forget the trailing text in text mode
-				dom_results.appendChild( document.createTextNode(matches.tail) );
+				dom_results.innerHTML = dom_results.innerHTML + (shownp ? showNonPrintable(matches.tail,true) : matches.tail);
 			}
 
 
@@ -657,43 +684,40 @@
 
 
 			/** 'replace' is a trick, it's not fully operational */
-			function formatReplace( output, subject, regexp, replace_string, showempty, empty )
+			function formatReplace( output, subject, regexp, replace_string, shownp )
 			{
-				var my_replace_string = replace_string;
-				var className = "highlight";
-				// FIXME : the following 'empty' replacement detection does not work for advanced syntax (e.g. with $1)
-				if ( showempty && replace_string.length == 0 )
-				{
-					my_replace_string = empty;
-					className = "highlight_empty";
-				}
+				var replaced = subject.replace(regexp,replace_string);
 
-				var results = subject.replace(regexp,my_replace_string);
-
-				if ( replace_string.length > 0 || showempty )
+				// this is why we need to know what's inside the previously computed result
+				var start = genHTMLBound(replaced,6);
+				var end = genHTMLBound(start+replaced,6);
+				if ( start != null && end != null )
 				{
-					// this is why we need to know what's inside the previously computed result
-					var start = genHTMLBound(results,6);
-					var end = genHTMLBound(start+results,6);
-					if ( start != null && end != null )
+					if ( replace_string.length > 0 )
 					{
-						results = subject.replace(regexp,start+my_replace_string+end);
-						results = escapeHTML(results);
-						results = results.replace(new RegExp(start,"g"),"<span class='"+className+"'>");
-						results = results.replace(new RegExp(end,"g"),"<\/span>");
-						var dom_results = output.appendChild( createSimpleElement("div","match",null) );
-						dom_results.innerHTML = results;
+						replaced = subject.replace(regexp,start+replace_string+end);
+						replaced = escapeHTML(replaced);
+						replaced = replaced.replace(new RegExp(start,"gm"),"<span class='highlight'>");
+						replaced = replaced.replace(new RegExp(end,"gm"),"<\/span>");
 					}
-					// falling back to not-highlighted
-					else
+					else if ( shownp )
 					{
-						alert("Could not find a bounding string to highlight.\nYou could retry, but this is probably due to a too big amount of data.\nHighlighting disabled.");
-						output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );
+						replaced = subject.replace(regexp,start+"&empty;"+end);
+						replaced = replaced.replace(new RegExp(start,"gm"),"<span class='highlight_empty'>");
+						replaced = replaced.replace(new RegExp(end,"gm"),"<\/span>");
 					}
+					if ( shownp )
+						replaced = showNonPrintable(replaced,true);
+					var dom_replaced = output.appendChild( createSimpleElement("pre","match",null) );
+					dom_replaced.innerHTML = replaced;
 				}
-				// the replacement is empty & don't print empty
+				// falling back to not-highlighted
 				else
-					output.appendChild( createSimpleElement("div","match",document.createTextNode(results)) );
+				{
+					alert("Could not find a bounding string to highlight.\nYou could retry, but this is probably due to a too big amount of data.\nHighlighting disabled.");
+					var dom_replaced = output.appendChild( createSimpleElement("div","match",null) );
+					dom_replaced.innerHTML = replaced;
+				}
 			}
 
 
@@ -706,29 +730,30 @@
 				switch ( mode )
 				{
 					case "search":
-						document.getElementById("regex_purejs").style.display = "none";
+						document.getElementById("regex_expert").style.display = "none";
 						document.getElementById("regex_search").style.display = "block";
 						document.getElementById("regex_replace").style.display = "none";
 						document.getElementById("regex_mod").style.display = "block";
-						document.getElementById("tab_purejs").className = "tab_off";
+						document.getElementById("tab_expert").className = "tab_off";
 						document.getElementById("tab_search").className = "tab_on";
 						document.getElementById("tab_replace").className = "tab_off";
 						break;
 					case "replace":
-						document.getElementById("regex_purejs").style.display = "none";
+						document.getElementById("regex_expert").style.display = "none";
 						document.getElementById("regex_search").style.display = "none";
 						document.getElementById("regex_replace").style.display = "block";
 						document.getElementById("regex_mod").style.display = "block";
-						document.getElementById("tab_purejs").className = "tab_off";
+						document.getElementById("tab_expert").className = "tab_off";
 						document.getElementById("tab_search").className = "tab_off";
 						document.getElementById("tab_replace").className = "tab_on";
 						break;
+					case "expert":
 					default:
-						document.getElementById("regex_purejs").style.display = "block";
+						document.getElementById("regex_expert").style.display = "block";
 						document.getElementById("regex_search").style.display = "none";
 						document.getElementById("regex_replace").style.display = "none";
 						document.getElementById("regex_mod").style.display = "none";
-						document.getElementById("tab_purejs").className = "tab_on";
+						document.getElementById("tab_expert").className = "tab_on";
 						document.getElementById("tab_search").className = "tab_off";
 						document.getElementById("tab_replace").className = "tab_off";
 						break;
@@ -737,67 +762,15 @@
 				checkOptions();
 
 				// makes sure the regex' value is set according to the one currently displayed
-				updateRegex();
-			}
-
-
-
-			/**
-				Retrieve the URL's parameters if any to fill the form's fields with.
-				That enables us for instance to deal with a full URL to show the result of a match.
-				This is also used to open a new window with the same fields values as the current one.
-			*/
-			function parseURL()
-			{
-				var param_subject = getParam("subject");
-				if ( param_subject != null )
-					document.form.subject.value = param_subject;
-
-				var param_regex = getParam("regex");
-				if ( param_regex != null )
-					document.form.regex.value = param_regex;
-
-				var param_displaymode = getParam("displaymode");
-				if ( param_displaymode != null )
+				if ( mode == "expert" )
 				{
-					document.getElementById("displaymode_"+param_displaymode).checked = true;
-					checkOptions();
+						// expert mode works differently : it takes the regex that was set by the other modes
+						// because it's expected users will come to this mode after having tried in simple modes first
+						// This enable to observer how to compose a regular expression in expert mode
+						document.getElementById("regex_expert_a").value = document.getElementById("regex").value;
 				}
-
-				var param_inputmode = getParam("inputmode");
-				if ( param_inputmode != null )
-					switchInputMode(param_inputmode);
-
-				var param_showempty = getParam("showempty");
-				if ( param_showempty != null )
-					document.form.showempty.checked = param_showempty == "on";
-				checkOptions();
-
-				var param_showindex = getParam("showindex");
-				if ( param_showindex != null )
-					document.form.showindex.checked = param_showindex == "on";
-				checkOptions();
-
-				var param_backref = getParam("backref");
-				if ( param_backref != null )
-					document.form.backref.checked = param_backref == "on";
-				checkOptions();
-
-				var param_showcontext = getParam("showcontext");
-				if ( param_showcontext != null )
-					document.form.showcontext.checked = param_showcontext == "on";
-				checkOptions();
-
-				var param_empty = getParam("empty");
-				if ( param_empty != null )
-					document.form.empty.value = param_empty;
-
-				var param_stylesheet = getParam("stylesheet");
-				if ( param_stylesheet != null )
-					document.form.stylesheet.value = param_stylesheet;
-
-				if ( param_subject != null && param_regex != null )
-					go(param_subject,param_regex,"output");
+				else
+					updateRegex(false);
 			}
 
 
@@ -818,14 +791,17 @@
 					var param_regex = myEscape(document.getElementById('regex').value);
 					var param_displaymode = getRadioButtonsValue("displaymode");
 					var param_inputmode = document.getElementById("inputmode").value;
-					var param_showempty = document.getElementById('showempty').checked ? "on" : "";
+					var param_autorefresh = document.getElementById('autorefresh').checked ? "on" : "";
+					var param_shownp = document.getElementById('shownp').checked ? "on" : "";
 					var param_showindex = document.getElementById('showindex').checked ? "on" : "";
 					var param_backref = document.getElementById('backref').checked ? "on" : "";
 					var param_showcontext = document.getElementById('showcontext').checked ? "on" : "";
-					var param_empty = myEscape(document.getElementById("empty").value);
 					var param_stylesheet = myEscape(document.getElementById("stylesheet").value);
-					var url = document.location.pathname+'?subject='+param_subject+'&regex='+param_regex+'&displaymode='+param_displaymode+'&inputmode='+param_inputmode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+'&showcontext='+param_showcontext+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
-					//var url = document.location.href.replace(/\?(.*)/,"")+'?subject='+param_subject+'&regex='+param_regex+'&displaymode='+param_displaymode+'&showempty='+param_showempty+'&showindex='+param_showindex+'&backref='+param_backref+"&empty="+param_empty+"&stylesheet="+param_stylesheet;
+					// The URL may be cut to fit maximum authorized length (limited both by the server and the web browser).
+					// Therefore, the regex is put at the beginning, and the subject is put at the end because in most cases it's the least lossy way.
+					// For instance, Internet Explorer allows 2048 characters (http://support.microsoft.com/default.aspx?scid=KB;en-us;q208427).
+					// In Apache, this is given by the value of LimitRequestLine, which defaults to 8190.
+					var url = document.location.pathname+'?regex='+param_regex+'&displaymode='+param_displaymode+'&inputmode='+param_inputmode+'&autorefresh='+param_autorefresh+'&shownp='+param_shownp+'&showindex='+param_showindex+'&backref='+param_backref+'&showcontext='+param_showcontext+"&stylesheet="+param_stylesheet+"&subject="+param_subject;
 				}
 				/// @todo (maybe) else try with the standard document.form.subject, etc.
 				else
@@ -846,6 +822,63 @@
 
 
 
+			/** Makes sure the pattern has an understandable format */
+			function normalizePerlRegex( pattern )
+			{
+				var perl_regex = pattern;
+
+				var slashes = perl_regex.replace(/\\\\/g,"").replace(/\\\//,"").split("/").length-1;
+				//alert(slashes+" slashes");
+				// the user can omit the first slash
+				if ( slashes == 1 && perl_regex.charAt(0) != "/" )
+					perl_regex = "/" + perl_regex;
+				// the user can enter no slash : he then gives only the subject to match
+				else if ( slashes < 2 )
+					perl_regex = "/" + perl_regex + "/";
+				// we also allow the form : "s/search/replace" with no final slash
+				else if ( new RegExp("s/.*/[^/]*","i").test(perl_regex) && slashes < 3 )
+					perl_regex = perl_regex + "/";
+
+				return perl_regex;
+			}
+
+
+
+			/**
+				perl_regex MUST have been through normalizePerlRegex before
+				Extracts the function (action), pattern, replace string and modifiers from a regex
+			*/
+			function explainPerlRegex( perl_regex )
+			{
+				var explained = new Object();
+				explained.action = perl_regex.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes in normalizePerlRegex
+				switch ( explained.action )
+				{
+					case "s":
+						var user_pattern = new RegExp("s/(.*)/(.*)/([^/]*)","i").exec(perl_regex);
+						if ( user_pattern != null )
+						{
+							explained.pattern = user_pattern[1];
+							explained.replace_string = user_pattern[2];
+							explained.modifiers = user_pattern[3];
+						}
+						break;
+
+					case "":
+					case "m":
+						var user_pattern = new RegExp("m?/(.*)/([^/]*)","i").exec(perl_regex);
+						if ( user_pattern != null )
+						{
+							explained.pattern = user_pattern[1];
+							explained.modifiers = user_pattern[2];
+						}
+						break;
+				}
+				return explained;
+			}
+
+
+
 			/**
 				@param subject
 					The subject to which to apply the regular expression
@@ -862,8 +895,33 @@
 				// this does not work well if local, but no problem if remote
 				// Opera can't open local files with parameters
 				var newloc = newLocation();
-				document.getElementById("toMain").setAttribute("href",newloc);
-				document.getElementById("toSidebar").setAttribute("href",newloc);
+				var toMain = document.getElementById("toMain");
+				var toMain_img = toMain.getElementsByTagName("img")[0];
+				var toSidebar = document.getElementById("toSidebar");
+				var toSidebar_img = toSidebar.getElementsByTagName("img")[0];
+				var popOut_img = document.getElementById("popOut");
+				toMain.setAttribute("href",newloc);
+				toSidebar.setAttribute("href",newloc);
+				// if the URL is too long, warn the user
+				if ( newloc.length > 1024 )
+				{
+					var warning = "WARNING : The URL is very long, this link may not work.";
+					toMain_img.src = "tomain-warning-22x22.png";
+					toMain_img.title = warning + " (to main window)";
+					toSidebar_img.src = "tosidebar-warning-22x22.png";
+					toSidebar_img.title = warning + " (to sidebar)";
+					popOut_img.src = "popout-warning-22x22.png";
+					popOut_img.title = warning + " (pop out)";
+				}
+				else
+				{
+					toMain_img.src = "tomain-22x22.png";
+					toMain_img.title = "Open result in the main window";
+					toSidebar_img.src = "tosidebar-22x22.png";
+					toSidebar_img.title = "Open result in sidebar (Internet Explorer and Firefox only)";
+					popOut_img.src = "popout-22x22.png";
+					popOut_img.title = "Pop out the results in a new window";
+				}
 
 				// cleans the output zone by removing all its children
 				var dom_output = document.getElementById(output);
@@ -871,17 +929,7 @@
 					dom_output.removeChild(dom_output.firstChild);
 
 				// using Perl syntax
-				var slashes = perl_regex.replace(/\\\\/g,"").replace(/\\\//,"").split("/").length-1;
-				//alert(slashes+" slashes");
-				// the user can omit the first slash
-				if ( slashes == 1 && perl_regex.charAt(0) != "/" )
-					perl_regex = "/" + perl_regex;
-				// the user can enter no slash : he then gives only the subject to match
-				else if ( slashes < 2 )
-					perl_regex = "/" + perl_regex + "/";
-				// we also allow the form : "s/search/replace" with no final slash
-				else if ( new RegExp("s/.*/[^/]*","i").test(perl_regex) && slashes < 3 )
-					perl_regex = perl_regex + "/";
+				perl_regex = normalizePerlRegex(perl_regex);
 
 				// prints the full regex
 				var full_regex = dom_output.appendChild( createSimpleElement("span","regex",document.createTextNode(perl_regex)) );
@@ -889,19 +937,14 @@
 
 				try
 				{
-					var action = perl_regex.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes
-					switch( action )
+					var user_regex = explainPerlRegex(perl_regex);
+
+					switch( user_regex.action )
 					{
 						case "s":
-							var user_pattern = new RegExp("s/(.*)/(.*)/([^/]*)","i").exec(perl_regex);
-							if ( user_pattern != null )
+							if ( user_regex.pattern != undefined && user_regex.replace_string != undefined && user_regex.modifiers != undefined )
 							{
-								var pattern = user_pattern[1];
-								var replace_string = user_pattern[2];
-								var modifiers = user_pattern[3];
-
-								//alert("s: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
-								var regex = new RegExp(pattern,modifiers);
+								var regex = new RegExp( user_regex.pattern, user_regex.modifiers );
 								// the 'replace' method of the 'String' object does it all, but we have no control on it.
 								// so we still need to do a 'match' to know more about the replaced parts.
 								// Therefore, the replace function of this tool is nothing more than a replace AND a match.
@@ -916,7 +959,7 @@
 								else
 									info.innerHTML = matches.length + " matches :";
 
-								formatReplace( dom_output, subject, regex, replace_string, document.form.showempty.checked, document.form.empty.value );
+								formatReplace( dom_output, subject, regex, user_regex.replace_string, document.form.shownp.checked );
 							}
 							else
 								dom_output.appendChild( createReport() );
@@ -924,15 +967,10 @@
 
 						case "m":
 						case "":
-							var user_pattern = new RegExp("m?/(.*)/([^/]*)","i").exec(perl_regex);
-							if ( user_pattern != null )
+							if ( user_regex.pattern != undefined && user_regex.modifiers != undefined )
 							{
-								var pattern = user_pattern[1];
-								var modifiers = user_pattern[2];
-
 								// computes the results
-								//alert("m: new RegExp(\""+pattern+"\",\""+modifiers+"\")");
-								var regex = new RegExp(pattern,modifiers);
+								var regex = new RegExp( user_regex.pattern, user_regex.modifiers );
 								// using the global variable 'matches'
 								matches = match( subject, regex );
 
@@ -951,10 +989,10 @@
 									switch( getRadioButtonsValue("displaymode") )
 									{
 										case "text":
-											formatAsText( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.empty.value, subject, "text" );
+											formatAsText( dom_output, matches, document.form.shownp.checked, document.form.showindex.checked, document.form.backref.checked, subject, "text" );
 											break;
 										case "table":
-											formatAsTable( dom_output, matches, document.form.showempty.checked, document.form.showindex.checked, document.form.backref.checked, document.form.showcontext.checked, document.form.empty.value, subject, "table" );
+											formatAsTable( dom_output, matches, document.form.shownp.checked, document.form.showindex.checked, document.form.backref.checked, document.form.showcontext.checked, subject, "table" );
 											break;
 										default:
 											// should never happen
@@ -1070,11 +1108,16 @@
 
 
 
-		function updateRegex()
+		/**
+			Sets the hidden field 'regex' to the value of the current regex field.
+			@param refresh
+				If true, also refreshes the result
+		*/
+		function updateRegex( refresh )
 		{
 			var regex = document.getElementById("regex");
 			var oldval = regex.value;
-			var modifiers = ( document.form.mod_I.checked ? '' : 'i' ) + ( document.form.mod_g.checked ? 'g' : '' ) + (document.form.mod_m.checked ? 'm' : '' );
+			var modifiers = ( document.form.mod_i.checked ? 'i' : '' ) + ( document.form.mod_g.checked ? 'g' : '' ) + (document.form.mod_m.checked ? 'm' : '' );
 
 			// 1. gets an active input field
 			// 2. and updates the regex with its value
@@ -1088,13 +1131,14 @@
 					regex.value = "s/" + document.getElementById("regex_replace_a").value + "/" + document.getElementById("regex_replace_b").value + "/" + modifiers;
 					break;
 
+				case "expert":
 				default:
-					regex.value = document.getElementById("regex_purejs_a").value;
+					regex.value = document.getElementById("regex_expert_a").value;
 					break;
 			}
 
 			// 3. updates the result if needed
-			if ( document.form.autorefresh.checked && regex.value != oldval )
+			if ( refresh && document.form.autorefresh.checked && regex.value != oldval )
 				document.form.submit.click();
 		}
 
@@ -1106,7 +1150,7 @@
 
 
 
-	<body onLoad="javascript:parseURL();">
+	<body>
 
 
 
@@ -1157,16 +1201,16 @@
 			--><img src="menu-down-left.png" alt=""><!--
 				To the sidebar (only for IE and Firefox)
 			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
-				--><img class="menu" src="sidebar-22x22.png" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
+				--><img class="menu" src="tosidebar-22x22.png" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
 			--></a><!--
 				In a new window (TODO ? dependent=yes might be added)
-			--><img class="menu" src="new-22x22.png" alt="[pop]" title="Pop out the results in a new window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
+			--><img id="popOut" class="menu" src="popout-22x22.png" alt="[pop]" title="Pop out the results in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
 				Reopen in the current window
 			--><a id="toMain" target="_main" href="regexpresso.html"><!--
-				--><img class="menu" src="main-22x22.png" alt="[=&gt;]" title="Open result in the main window"><!--
+				--><img class="menu" src="tomain-22x22.png" alt="[=&gt;]" title="Open result in the main window"><!--
 			--></a><!--
 				Export in a different format
-			--><img onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);" class="menu" src="floppy-22x22.png" alt="[exp]" title="Export the result"><!--
+			--><img onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:exportResult(matches);" class="menu" src="export-22x22.png" alt="[exp]" title="Export the result"><!--
 				Import from the main window
 			--><!--img class="menu" src="dropper-22x22.png" alt="[&lt=]" title="Import from the main window" onMouseOver="this.id='hover'" onMouseOut="this.id=''" onClick="javascript:document.form.subject.value='TODO';"--><!--
 				Right (end) boundary
@@ -1180,102 +1224,184 @@
 
 		<!-- user's input -->
 		<form name="form" id="form" onSubmit="javascript:prepare();go(this.subject.value,this.regex.value,'output');finish();return false;" enctype="UTF-8" action="get">
-			<input type="hidden" id="empty" name="empty" value="&empty;">
-			<input type="hidden" id="stylesheet" name="stylesheet" value="">
-			<input type="hidden" id="inputmode" name="inputmode" value="purejs">
-			<div><textarea name="subject" id="subject" class="input" rows="10" cols="20" onFocus="javascript:this.select();" title="The text ('subject') to evaluate">[Paste here the text to evaluate]</textarea></div>
+			<script type="text/javascript"><!--
+				// the fieds of this form are dynamically created because onLoad event is not satisfactory (there is a short delay where the original values are displayed), only then the new ones are applied
 
-			<!-- regex can be displayed using several modes -->
-			<!-- 1. the real, hidden field -->
-			<input type="hidden" name="regex" id="regex" value="/\b\w*(e)/i" style="width:100%; background:yellow;">
-			<!-- tabs to change from one input mode to another -->
-			<span><!--
-			--><a href="" id="tab_search" class="tab_off" onclick="javascript:switchInputMode('search');return false;" title="Easy search mode">&nbsp;&nbsp;search&nbsp;&nbsp;</a><!--
-			--><a href="" id="tab_replace" class="tab_off" onclick="javascript:switchInputMode('replace');return false;" title="Easy replace mode">&nbsp;&nbsp;replace&nbsp;&nbsp;</a><!--
-			--><a id="tab_purejs" href="" class="tab_on" onclick="javascript:switchInputMode('purejs');return false;" title="Expert mode">&nbsp;&nbsp;expert&nbsp;&nbsp;</a><!--
-		--></span>
-			<div>
-				<!-- 2. expert mode input field -->
-				<div id="regex_purejs">
-					<input type="text" id="regex_purejs_a" class="input search" value="/\b\w*(e)/i" title="'[m]/pattern/[modifiers]' or 's/pattern/replace/[modifiers]'"
-						onFocus="javascript:this.select();"
-						onkeyup="javascript:updateRegex();">
-				</div>
-				<!-- 3. 'easy' search mode, initially not displayed -->
-				<div id="regex_search" style="display:none;">
-					<input type="text" id="regex_search_a" class="input search" value="\b\w*(e)" title="Type your search expression here"
-						onFocus="javascript:this.select();"
-						onchange="javascript:updateRegex();"
-						onkeyup="javascript:updateRegex();">
-				</div>
-				<!-- 4. 'easy' replace mode, initially not displayed -->
-				<div id="regex_replace" style="display:none; white-space:nowrap;">
-					<input type="text" id="regex_replace_a" class="input" style="width:45%;" value="\b\w*(e)" title="Enter here the text you want to replace"
-						onFocus="javascript:this.select();"
-						onchange="javascript:updateRegex();"
-						onkeyup="javascript:updateRegex();">
-					<input type="text" id="regex_replace_b" class="input" style="width:45%;" value="[Replacement string]" title="Enter here the replacement string"
-						onFocus="javascript:this.select();"
-						onchange="javascript:updateRegex();"
-						onkeyup="javascript:updateRegex();">
-				</div>
-				<!-- 5. modifiers, for 'easy' modes -->
-				<div id="regex_mod" style="display:none;">
-					<span style="white-space:nowrap;"><input id="mod_I" type="checkbox" onclick="javascript:updateRegex();" checked>case-sens.</span>
-					<span style="white-space:nowrap;"><input id="mod_g" type="checkbox" onclick="javascript:updateRegex();">find all</span>
-					<span style="white-space:nowrap;"><input id="mod_m" type="checkbox" onclick="javascript:updateRegex();">multiline</span>
-				</div>
-			</div>
+				// custom stylesheet
+				document.write('<input type="hidden" id="stylesheet" name="stylesheet" value="' + getParam("stylesheet","") + '">');
+
+				// inputmode
+				document.write('<input type="hidden" id="inputmode" name="inputmode" value="' + getParam("inputmode","expert") + '">');
+
+				// subject
+				document.write("<div>");
+					document.write('<textarea name="subject" id="subject" class="input" rows="10" cols="20" onFocus="javascript:this.select();" title="The text (\'subject\') to evaluate">' + getParam("subject","[Paste here the text to evaluate]") + '<\/textarea>');
+				document.write("<\/div>");
+
+				//////////////////////////////////////////////////
+				// regex can be displayed using several modes
+				//////////////////////////////////////////////////
+
+				// some usefull shortcuts adn default values
+				var param_regex = getParam("regex","/\\b\\w*(e)/");
+				var param_regex_explained = explainPerlRegex( normalizePerlRegex(param_regex) );
+				var param_inputmode = getParam("inputmode","expert");
+
+				// 1. the real, hidden field
+				document.write('<input type="hidden" name="regex" id="regex" value="' + param_regex + '" style="width:100%; background:yellow;"');
+
+				// tabs to change from one input mode to another
+				document.write('<span>');
+					document.write('<a id="tab_search" href="" class="' + ( param_inputmode == "search" ? "tab_on" : "tab_off" ) + '" onclick="javascript:switchInputMode(\'search\');return false;" title="Easy search mode">&nbsp;&nbsp;search&nbsp;&nbsp;<\/a>');
+					document.write('<a id="tab_replace" href="" class="' + ( param_inputmode == "replace" ? "tab_on" : "tab_off" ) + '" onclick="javascript:switchInputMode(\'replace\');return false;" title="Easy replace mode">&nbsp;&nbsp;replace&nbsp;&nbsp;<\/a>');
+					document.write('<a id="tab_expert" href="" class="' + ( param_inputmode == "expert" ? "tab_on" : "tab_off" ) + '" onclick="javascript:switchInputMode(\'expert\');return false;" title="Expert mode">&nbsp;&nbsp;expert&nbsp;&nbsp;<\/a>');
+				document.write('<\/span>');
+
+				// regex input fields
+				document.write('<div>');
+
+					// 2. expert mode input field
+					document.write('<div id="regex_expert"' + ( param_inputmode != "expert" ? ' style="display:none;"' : '' ) + '>');
+						document.write('<input type="text" id="regex_expert_a" class="input search" value="' + param_regex + '" title="\'[m]/pattern/[modifiers]\' or \'s/pattern/replace/[modifiers]\'"\
+							onFocus="javascript:this.select();"\
+							onkeyup="javascript:updateRegex(true);">');
+					document.write('<\/div>');
+
+					<!-- 3. 'easy' search mode -->
+					document.write('<div id="regex_search"' + ( param_inputmode != "search" ? ' style="display:none;"' : '' ) + '>');
+						document.write('<input type="text" id="regex_search_a" class="input search" value="' + param_regex_explained.pattern + '" title="Type your search expression here"\
+							onFocus="javascript:this.select();"\
+							onchange="javascript:updateRegex(true);"\
+							onkeyup="javascript:updateRegex(true);">');
+					document.write('<\/div>');
+
+					<!-- 4. 'easy' replace mode -->
+					document.write('<div id="regex_replace"' + ( param_inputmode != "replace" ? ' style="display:none;"' : '' ) + '>');
+						document.write('<div><input type="text" id="regex_replace_a" class="input search" value="' + param_regex_explained.pattern + '" title="Enter here the text you want to replace"\
+							onFocus="javascript:this.select();"\
+							onchange="javascript:updateRegex(true);"\
+							onkeyup="javascript:updateRegex(true);"><\/div>');
+						document.write('<div><input type="text" id="regex_replace_b" class="input search" value="' + ( param_regex_explained.replace_string != undefined ? param_regex_explained.replace_string : "[Replacement string]" ) + '" title="Enter here the replacement string"\
+							onFocus="javascript:this.select();"\
+							onchange="javascript:updateRegex(true);"\
+							onkeyup="javascript:updateRegex(true);"><\/div>');
+					document.write('<\/div>');
+
+					<!-- 5. modifiers, for 'easy' modes -->
+					document.write('<div id="regex_mod"' + ( param_inputmode == "search" || param_inputmode == "replace" ? '' : ' style="display:none;"' ) + '>');
+						document.write('<span style="white-space:nowrap;"><input id="mod_i" type="checkbox" onclick="javascript:updateRegex(true);"' + ( param_regex_explained.modifiers.indexOf("i") >= 0 ? " checked" : "" ) + '>no case<\/span>');
+						document.write('<span style="white-space:nowrap;"><input id="mod_g" type="checkbox" onclick="javascript:updateRegex(true);"' + ( param_regex_explained.modifiers.indexOf("g") >= 0 ? " checked" : "" ) + '>global<\/span>');
+						document.write('<span style="white-space:nowrap;"><input id="mod_m" type="checkbox" onclick="javascript:updateRegex(true);"' + ( param_regex_explained.modifiers.indexOf("m") >= 0 ? " checked" : "" ) + '>multiline<\/span>');
+					document.write('<\/div>');
+
+				// end of regex input fields
+				document.write('<\/div>');
+
+			--></script>
 
 			<div>
 				<input name="submit" id="submit" type="submit" class="input" value="EVALUATE">
 				<input type="button" id="options.caption" class="input" onclick="javascript:showHideOptions();" value="OPTIONS">
 			</div>
+
 			<div id="options" class="input">
 				<table>
 						<!-- NOTE : the onclick's below were added because of a behaviour observed in IE6 : the 'onchange' is not called after a 'onclick' => see what's the matter -->
 						<tr title="Input change triggers evaluation">
 							<td onClick="javascript:document.form.autorefresh.click();">Evaluate on the fly :</td>
-							<td><input align="right" type="checkbox" id="autorefresh" name="autorefresh" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="checkbox" id="autorefresh" name="autorefresh"');
+									document.write('onchange="onOptionChange(this);" onclick="onOptionChange(this);"');
+									document.write( getParam("autorefresh",undefined) == "on" ? " checked" : "" );
+									document.write(' disabled>');
+							--></script></td>
 							<td><label class="info" onclick="alert('AUTOREFRESH :\nCheck this box if you want the results to be updated whenever the regular expression or one of the option changes (not the text).');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Highlight matches inside the subject">
 							<td onClick="javascript:document.getElementById('displaymode_text').click();">Display mode : <em>text</em></td>
-							<td><input align="right" type="radio" id="displaymode_text" name="displaymode" value="text" title="Highlight matches inside the subject" onchange="onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="radio" id="displaymode_text" name="displaymode" value="text" title="Highlight matches inside the subject"');
+									document.write('onchange="onOptionChange(this);" onclick="onOptionChange(this);"');
+									document.write( getParam("displaymode","text") == "text" ? " checked" : "" );
+									document.write(' disabled>');
+							--></script></td>
 							<td><label class="info" onclick="alert('HIGHLIGHT MODE :\nCheck this box to display the result with the same layout as in the parsed text and highlight matched parts.');return false;" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Display results in a table">
 							<td onClick="javascript:document.getElementById('displaymode_table').click();">Display mode : <em>table</em></td>
-							<td><input align="right" type="radio" id="displaymode_table" name="displaymode" value="table" title="Display results in a table" onchange="onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="radio" id="displaymode_table" name="displaymode" value="table" title="Display results in a table"');
+									document.write('onchange="javascript:onOptionChange(this);" onclick="javascript:onOptionChange(this);"');
+									document.write( getParam("displaymode",undefined) == "table" ? " checked" : "" );
+									document.write(' disabled>');
+							--></script></td>
 							<td><label class="info" onclick="alert('TABLE MODE :\nCheck this box to display the results in a table.');return false;" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
-						<tr title="Show or hide empty matches in the result">
-							<td onClick="javascript:document.form.showempty.click();">Show empty matches :</td>
-							<td><input align="right" type="checkbox" id="showempty" name="showempty" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked disabled></td>
-							<td><label class="info" onclick="alert('EMPTY MATCHES :\nCheck this box if you want the empty matches (those of length 0) do be displayed as a special character.\nThe default character is the \'Null\' symbol.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
+						<tr title="Show or hide non printable characters in result">
+							<td onClick="javascript:document.form.shownp.click();">Show non printable :</td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="checkbox" id="shownp" name="shownp"');
+									document.write('onchange="javascript:onOptionChange(this);" onclick="javascript:onOptionChange(this);"');
+									document.write( getParam("shownp","on") == "on" ? " checked" : "");
+									document.write(' disabled>');
+							--></script></td>
+							<td><label class="info" onclick="alert('SHOW NON PRINTABLE CHARACTERS :\nCheck this box if you want non printable characters like line feeds or empty matches (those of length 0) do be displayed as a special symbol.\nThe default character for empty matches is the \'Null\' symbol.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Show or hide the index for each match">
 							<td onClick="javascript:document.form.showindex.click();">Show indexes :</td>
-							<td><input align="right" type="checkbox" id="showindex" name="showindex" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked></td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="checkbox" id="showindex" name="showindex"');
+									document.write('onchange="javascript:onOptionChange(this);" onclick="javascript:onOptionChange(this);"');
+									document.write( getParam("showindex","on") == "on" ? " checked" : "" );
+									document.write( ' disabled>');
+							--></script></td>
 							<td><label class="info" onclick="alert('SHOW INDEXES :\nCheck this box if you want to identify every match by its index in the result field (the first one will be marked \'1\', etc.). Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''">?</label></td>
 						</tr>
 						<tr title="Show groups captured by the parentheses">
 							<td onClick="javascript:document.form.backref.click();"><label>Show groups :</label></td>
-							<td><input align="right" type="checkbox" id="backref" name="backref" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);"></td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="checkbox" id="backref" name="backref"');
+									document.write('onchange="javascript:onOptionChange(this);" onclick="javascript:onOptionChange(this);"');
+									document.write( getParam("backref",undefined) == "on" ? " checked" : "" );
+									document.write(' disabled>');
+							--></script></td>
 							<td><label class="info" onclick="alert('SHOW GROUPS :\nCheck this box if you want to display the groups captured by the expression after every match. Groups are also known as \'back references\'. Works in \'text\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 						<tr title="Show match in the original context (text before and after)">
 							<td onClick="javascript:document.form.showcontext.click();"><label>Show context :</label></td>
-							<td><input align="right" type="checkbox" id="showcontext" name="showcontext" onchange="javascript:onOptionChange(this);" onclick="onOptionChange(this);" checked disabled></td>
+							<td><script type="text/javascript"><!--
+								document.write('<input align="right" type="checkbox" id="showcontext" name="showcontext"');
+									document.write('onchange="javascript:onOptionChange(this);" onclick="javascript:onOptionChange(this);"');
+									document.write( getParam("showcontext",undefined) == "on" ? " checked" : "" );
+									document.write(' disabled>');
+							--></script></td>
 							<td><label class="info" onclick="alert('SHOW CONTEXT :\nExplain here. Works in \'table\' mode only.');" onMouseOver="this.id='hover'" onMouseOut="this.id=''" >?</label></td>
 						</tr>
 				</table>
+
+				<script type="text/javascript"><!--
+					// all options are disabled by default
+					// once they all have a value, we enable those who should be
+					checkOptions();
+				--></script>
+
 			</div>
+
+
 		</form>
+
 
 		<!-- script's output (dynamic content) -->
 		<span id="output">
 		</span>
+
+		<script type="text/javascript"><!--
+			// executes at load time if needed
+			var given_subject = getParam("subject",undefined);
+			var given_regex = getParam("regex",undefined);
+			if ( given_subject != undefined && given_regex != undefined )
+				go( given_subject, given_regex, "output" );
+		--></script>
 
 		<!-- Some external resources -->
 		<hr>
@@ -1283,7 +1409,7 @@
 			<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
 			[<a class="doc" target="_blank" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a>]<br>
 			[<a class="doc" target="_blank" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a>]<br>
-			[<a class="doc" target="_blank" href="http://developer.berlios.de/docman/display_doc.php?docid=1512&group_id=3235#top">About this tool</a>]<br>
+			[<a class="doc" target="_blank" href="http://developer.berlios.de/docman/display_doc.php?docid=1512&amp;group_id=3235#top">About this tool</a>]<br>
 		</div>
 		<br>
 		<div id="ads">
