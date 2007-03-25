@@ -1,26 +1,7 @@
-
-//////////////////////////////////////////////////////////////////////////////
-// a few usefull extensions not found in other libraries
-
-
-
 /**
-	@tparam String dom_type			The type of the DOM Node
-	@tparam String css_class		The CSS class
-	@tparam DOMElement dom_child	The DOM Node to insert into the node
-	@return a DOM Node and set some properties ; null parameters are ignored
+	This library contains classes that ease the use of the RegExp object.
+	Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
 */
-document.createSimpleElement = function( dom_type, css_class, dom_child )
-{
-	//console.log("createSimpleElement("+dom_type+","+text+","+css_class+")");
-
-	var el = document.createElement(dom_type);
-	if ( css_class != null )
-		el.className = css_class;
-	if ( dom_child != null )
-		el.appendChild(dom_child);
-	return el;
-}
 
 
 
@@ -72,29 +53,24 @@ function Context( text, matchIndex, indexBefore, indexAfter, textBefore, textAft
 	This class is a user friendly tool to work on regular expressions.
 	It holds several instances of Match.
 
-	@param subject a String
-	@param regexp a RegExp
+	@tparam String subject
+	@tparam subject regex
 */
 function RegexWorker( subject, regex )
 {
-	// private fields
-
-	/**
-	 * stores the object itself in order to avoid any copy of its content, that may be huge.
-	 * TODO : how to check that ?
-	 */
-	//this.domSubject = domSubject;
-	//this.domPattern = domPattern;
-	//this.regex = null;
-
-	// public fields & methods
+	/////////////////////
+	// public fields
 
 	/** An array holding the matches ; can be empty. The first cell (0) contains the matched text, the others (from 1) contain the matched groups */
 	this.matches = new Array();
+
 	/** The text that was NOT matched after the last match */
 	this.tail = "";
 
 
+
+	/////////////////////
+	// initialization
 
 	// computes the matches
 	var results = regex.exec(subject);
@@ -134,31 +110,16 @@ function RegexWorker( subject, regex )
 			this.tail = subject.substring(match_index,subject.length);
 	}
 }
-//new RegexWorker()	// forces creation of RegexWorker.prototype
 
 
 
 /**
-	@returns The last subject used
+	@param match				the match to generate the surrounding context
+	@param subject				the text to extract the context from
+	@param length_before		the number of characters to take into account before the match
+	@param length_after			the number of characters to take into account after the match
+	@type Context
 */
-/*RegexWorker.prototype.getSubject = function()
-{
-	return this.subject;
-}*/
-
-
-
-/**
-	@returns The last RegExp used
-	TODO ? always the same because of the static behavior of the RegExp class ?
-*/
-/*RegexWorker.prototype.getRegExp = function()
-{
-	return this.regex;
-}*/
-
-
-
 RegexWorker.prototype.getContext = function( match, subject, length_before, length_after )
 {
 	return new Context(
@@ -171,56 +132,3 @@ RegexWorker.prototype.getContext = function( match, subject, length_before, leng
 		);
 }
 
-
-
-/**
-	Updates the context with dots before and after to emphasize that there's text even before and/or after.
-	@return the modified context
-*/
-RegexWorker.prototype.getDottedContext = function( match, subject, length_before, length_after )
-{
-	var context = this.getContext(match,length_before,length_after);
-
-	if ( context.index_before > 0 )
-		context.text_before = "..." + context.text_before;
-	if ( context.index_after < this.subject.length-1 )
-		context.text_after += "...";
-
-	return context;
-}
-
-
-
-/**
-	Formats a match in an extract of text
-	@return a TextNode
-*/
-RegexWorker.prototype.getContextAsText = function ( match, mode )
-{
-	var context = this.getDottedContext( match, 10, 10 );
-	return document.createTextNode( "char. " + context.match_index + " : " + context.text_before + "*" + context.text + "*" + context.text_after );
-}
-
-
-
-/**
-	Formats a match in an extract of text
-	@return a <span/> DOM node
-*/
-RegexWorker.prototype.getContextAsNode = function ( match, mode )
-{
-	var context = this.getDottedContext( match, 10, 10 );
-	var span = document.createElement("span");
-	span.appendChild( createSimpleElement("span","context_info",document.createTextNode("char. "+match_index+" : ")) );
-	span.appendChild( createSimpleElement("span","context_before",document.createTextNode(context_before)) );
-	span.appendChild( createSimpleElement("span","context_match",document.createTextNode(match)) );
-	span.appendChild( createSimpleElement("span","context_after",document.createTextNode(context_after)) );
-	return span;
-}
-
-
-
-RegexWorker.prototype.testMe = function()
-{
-	return "toto";
-}
