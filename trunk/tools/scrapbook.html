@@ -1,0 +1,19 @@
+<html debug="true">
+	<head>
+		<script language="javascript" type="text/javascript" src="firebug/firebug.js"></script>
+		<script type="text/javascript" src="../lib/RegexWorker.js"></script>
+		<script type="text/javascript" src="../lib/regexpresso.js"></script>
+		<script type="text/javascript">
+		</script>
+	</head>
+	<body>
+		<div id="testarea"></div>
+		<pre>
+			<script type="text/javascript">
+					var worker = new RegexWorker( "toto", /t/ );
+					document.write( worker.testMe() );
+					console.log( worker.testMe() );
+			</script>
+		</pre>
+	</body>
+</html>

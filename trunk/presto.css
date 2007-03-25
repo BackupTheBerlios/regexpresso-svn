@@ -1,0 +1,58 @@
+
+/* core style */
+body
+	{
+	background-color:#EEEEEE;
+	margin:0;
+	padding:8px;
+	font-family:arial,verdana;
+	}
+
+div
+	{
+	margin-top:4px;
+	margin-bottom:4px;
+	}
+
+table
+	{
+	empty-cells:show;
+	}
+
+/* form fields */
+form
+	{
+	margin:0;
+	}
+
+/* the title : 'RegexPresso' */
+.title
+	{
+	font-family:arial,verdana,courier;
+	font-size:13pt;
+	font-weight:bold;
+	}
+.presto
+	{
+	font-style:italic;
+	color:red;
+	}
+/* for beta releases ; blink is not implemented in IE6, though */
+.beta
+	{
+	color:#FF9900;
+	text-decoration:blink;
+	}
+
+/* important messages */
+.warning
+	{
+	background-color:red;
+	color:white;
+	font-weight:bold;
+	padding:2pt;
+	}
+.error
+	{
+	color:red;
+	}

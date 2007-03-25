@@ -1,0 +1,12 @@
++ autorefresh parameter is now passed in the URL like the other options
+# moving to a different tab when in autorefresh does not executes the regex (since it's a completely different context)
++ expert mode has no distinct context anymore, it takes the last regex that was entered whether in search or replace mode
++ fixed : search, replace, and expert tabs are now filled when regex is passed as a parameter of the url
+# fixed : fields and options take their value immediately, without waiting for body.onload
+- menu icons are now inside a .xcf (Gimp)
++ when URL is too long, the icons show a warning
+# replace field is now on its own row (more space, better looking)
+# each group is now on its own row in table mode
++ non printable characters are now displayable (\n, \t and \r)
+# 'showempty' option is now 'shownp' and serves as well to display non printable characters
++ fixed : indexes are now displayed also for empty matches

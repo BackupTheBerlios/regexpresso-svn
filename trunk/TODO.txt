@@ -1,0 +1,36 @@
+* test with http://hmdt-web.net/shiira/en
+
+* cool regexes :
+
+/[RegExprso]/g
+=> matches all letters of RegExpresso
+
+s/\w+/Malkovitch/g
+=> replaces all words with Malkovitch (see Dans la peau de John Malkovitch)
+
+un texte adapté et on highlight seulement certains caractères pour faire ressortir un dessin
+/[]/s
+
+* remove 'empty' URL param in readme
+
+* change description of 'showempty' option in readme
+
+* requirements : innerHTML
+
+* display empty / non printable chars in context preview
+
+
+BUGS :
+
+Opera : title is big and empty when hovering the icons when the URL is too long
+
+Opera : first time the warning icons are displayed, they are not loaded -> bug or not ? Opera prints the URL in the title, so it may be because of that
+
+IE : when only empty matches, the result is blank
+
+IE : onhover does not work in table mode
+
+IE : search multiline : lines are kept but there is an additionnal character at the beginning of the line (\r+\n ?)
+	=> this is due to a bug in IE : it silently converts \n to \r\n when assigned to a textarea's value (see http://www.sitepoint.com/blogs/2004/02/16/line-endings-in-javascript)
+	This would be solved by using a variable for the textarea, and using the textarea only as a way to modify the value of this variable
+	=> Anyway, the handling of line feeds is very tricky and different from one browser to another
