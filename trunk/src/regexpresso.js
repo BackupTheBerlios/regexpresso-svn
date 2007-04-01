@@ -1,7 +1,10 @@
-/**
-	This library contains code specific to the RegexPresso project.
-	Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
-*/
+/**///////////////////////////////////////////////////////////////////////////
+///
+/// @file
+/// Classes and functions specific to the RegexPresso project.
+/// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
+///
+///////////////////////////////////////////////////////////////////////////*/
 
 
 
@@ -14,7 +17,7 @@
 	@tparam String dom_type			The type of the DOM Node
 	@tparam String css_class		The CSS class
 	@tparam DOMElement dom_child	The DOM Node to insert into the node
-	@return a DOM Node and set some properties ; null parameters are ignored
+	@treturn DOMElement sets some properties ; null parameters are ignored
 */
 document.createSimpleElement = function( dom_type, css_class, dom_child )
 {
@@ -26,6 +29,81 @@ document.createSimpleElement = function( dom_type, css_class, dom_child )
 	if ( dom_child != null )
 		el.appendChild(dom_child);
 	return el;
+}
+
+
+
+/**
+	A Context is used to locate the match inside a text.
+	It gathers the text before and the text after the match.
+	It's not usefull to call this constructor directly, it's meant to be instanciated by RegexPressoWorker#getContext().
+	@ctor
+	All arguments to this constructor are just stored and can simply be accessed later as member variables.
+*/
+function Context( matchIndex, matchText, textBefore, textAfter )
+{
+	/**
+	 * The position of the first character of the match in the full text
+	 * @type int
+	 */
+	this.matchIndex = matchIndex;
+
+	/**
+	 * The text of the match
+	 * @type String
+	 */
+	this.matchText = matchText;
+
+	/**
+	 * What's before the match
+	 * @type String
+	 */
+	this.textBefore = textBefore;
+
+	/**
+	 * What's after the match
+	 * @type String
+	 */
+	this.textAfter = textAfter;
+}
+
+
+
+/**
+ * @treturn Array	The differents parts of this object that makes a string : { textBefore, matchText, textAfter }
+ */
+Context.prototype.valueOf = function()
+{
+	return [ this.matchText, this.textBefore, this.textAfter ];
+}
+
+
+
+/**
+ * @treturn String	This Context as a string
+ */
+Context.prototype.toString = function()
+{
+	return this.valueOf().join("");
+}
+
+
+
+/**
+	@tparam Match match		the match to generate the surrounding context
+	@tparam String subject		the text to extract the context from
+	@tparam int length_before	the number of characters to take into account before the match
+	@tparam int length_after	the number of characters to take into account after the match
+	@treturn Context		the context surrounding the matched text
+*/
+RegexWorker.prototype.getContext = function( match, subject, length_before, length_after )
+{
+	return new Context(
+		match.text,
+		match.index,
+		this.subject.substring( Math.max(0,match.index-length_before), match.index ),
+		this.subject.substring( Math.min(match.index+match.length,subject.length), Math.min(match.index+text.length+length_after,subject.length) )
+		);
 }
 
 
