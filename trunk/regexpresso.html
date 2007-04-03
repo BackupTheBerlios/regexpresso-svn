@@ -17,14 +17,64 @@
 		<link rel="stylesheet" type="text/css" href="css/core.css">
 
 		<!-- usefull frameworks -->
-		<!--script type="text/javascript" src="lib/prototype.js"></script>
-		<script type="text/javascript" src="lib/dojo.js"></script-->
+		<!--script type="text/javascript" src="lib/prototype.js"></script-->
+		<!--script type="text/javascript">djConfig = { isDebug: false };</script>
+		<script type="text/javascript" src="lib/dojo.js"></script>
+		<script type="text/javascript">
+			dojo.require("dojo.event.*");
+			dojo.require("dojo.io.*");
+		</script-->
 		<script type="text/javascript" src="lib/mootools.js"></script>
-		<script type="text/javascript" src="lib/Debugger.js"></script>
-		<script type="text/javascript" src="lib/element.cnet.js"></script>
-		<script type="text/javascript" src="lib/tabswapper.js"></script>
-		<script type="text/javascript" src="lib/regexpresso.js"></script>
+		<script type="text/javascript">
+			
+			function initialize()
+			{
+				initialize_accordion();
+			}
 
+			function initialize_accordion()
+			{
+				var stretchers = $$('div.accordion');
+				stretchers.each( function(item) { item.setStyles({'height': '0', 'overflow': 'hidden'}); });
+
+				var togglers = $$('.toggler');
+				
+				var bgFx = [];
+				togglers.each(function(toggler, i){
+					toggler.defaultColor = toggler.getStyle('background-color');
+					//fx creation
+					bgFx[i] = new Fx.Color(toggler, 'background-color', {wait: false});
+				});
+
+				var myAccordion = new Fx.Accordion(togglers, stretchers, { opacity: false, start: false, transition: Fx.Transitions.quadOut,
+					
+					onActive: function(toggler, i){
+						alert(toggler.getFirst().id);
+						toggler.getFirst().setStyle('color', '#fff');
+					},
+				
+					onBackground: function(toggler, i){
+						bgFx[i].clearTimer();
+						toggler.setStyle('background-color', toggler.defaultColor);
+						toggler.getFirst().setStyle('color', '#222');
+					}
+				});
+			
+				//anchors
+				function checkHash(){
+					var found = false;
+					$$('.toggler a').each(function(link, i){
+						if (window.location.hash.test(link.hash)){
+							myAccordion.showThisHideOpen(i);
+							found = true;
+						}
+					});
+					return found;
+				}
+		
+				if (!checkHash()) myAccordion.showThisHideOpen(0);
+			}
+		</script>
 	</head>
 
 	<body onload="javascript:initialize();">
@@ -76,7 +126,7 @@
 			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
 				--><img class="menu" src="img/tosidebar-22x22.png" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
 			--></a><!--
-				In a new window (TODO ? dependent=yes might be added)
+				In a new window
 			--><img id="popOut" class="menu" src="img/popout-22x22.png" alt="[pop]" title="Pop out the results in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
 				Reopen in the current window
 			--><a id="toMain" target="_main" href="regexpresso.html"><!--
@@ -86,56 +136,72 @@
 		--></span>
 
 
-
+<div id="content">
 		<!-- title -->
-		<div id="title">RegEx<span class="presto">presso</span><span class="beta">&nbsp;beta</span></div>
+		<h1 id="toggler title">RegEx<span class="presto">presso</span><span class="beta">&nbsp;beta</span></h1>
 
 
 
-		<!-- user's input -->
-		<form id="section_input" enctype="UTF-8" action="get">
+		<div class="accordion">
 
-			<textarea id="input_subject">
-			</textarea>
-
-			<!-- input regex can be displayed using several modes -->
-			<div id="section_regex">
-				<ul id="regex_tabs">
-					<li class="tab on"><a>expert</a></li>
-					<li class="tab off"><a>second tab</a></li>
-					<li class="tab off"><a>third tab</a></li>
-				</ul>
-				<div id="regex_panels">
-					<!-- 2. expert mode input field -->
-					<div class="panel inputregex" id="regex_expert">
-						<input type="text" id="regex_expert_a" class="input search"
-							value=""
-							title="\'[m]/pattern/[modifiers]\' or \'s/pattern/replace/[modifiers]\'"
-							onFocus="javascript:this.select();"\
-							onkeyup="javascript:updateRegex(true);">
+			<!-- user's input -->
+			<form id="section_input" enctype="UTF-8" action="get">
+	
+				<textarea id="input_subject">
+				</textarea>
+	
+				<!-- input regex can be displayed using several modes -->
+				<div id="section_regex">
+					<ul id="regex_tabs">
+						<li class="tab on"><a>expert</a></li>
+						<li class="tab off"><a>second tab</a></li>
+						<li class="tab off"><a>third tab</a></li>
+					</ul>
+					<div id="regex_panels">
+						<!-- 2. expert mode input field -->
+						<div class="panel inputregex" id="regex_expert">
+							<input type="text" id="regex_expert_a" class="input search"
+								value=""
+								title="\'[m]/pattern/[modifiers]\' or \'s/pattern/replace/[modifiers]\'"
+								onFocus="javascript:this.select();"\
+								onkeyup="javascript:updateRegex(true);">
+						</div>
+						<div class="panel" style="display:none;">I'm the content for the second panel.</div>
+						<div class="panel" style="display:none;">I'm the content for the third panel.</div>
 					</div>
-					<div class="panel" style="display:none;">I'm the content for the second panel.</div>
-					<div class="panel" style="display:none;">I'm the content for the third panel.</div>
 				</div>
-			</div>
-
-		</form>
-
-
-
-		<!-- script's output (dynamic content) -->
-		<span id="section_output">
-		</span>
+	
+			</form>
 
 
 
-		<!-- visible (and elegant :) separator -->
-		<hr />
+			<!-- script's output (dynamic content) -->
+			<span id="section_output">
+			</span>
+
+		</div>
+
+
+
+		<h2 class="toggler options"><a href="#options">Options</a></h2>
+		<div id="section_options" class="accordion">
+			<table>
+				<tr>
+					<td>OPTION 1</td>
+					<td>sdmlsqds</td>
+				</tr>
+				<tr>
+					<td>OPTION 2</td>
+					<td>sdmlsqds</td>
+				</tr>
+			</table>
+		</div>
 
 
 
 		<!-- Documentation -->
-		<div id="section_doc" title="External resources">
+		<h2 class="toggler docs"><a href="#docs">External resources</a></h2>
+		<div id="section_doc" class="accordion">
 			<ul class="doc">
 				<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
 				<li class="doc"><a class="doc" target="_blank" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a></li>
@@ -146,13 +212,9 @@
 
 
 
-		<!-- invisible separator (enhances visibility) -->
-		<br />
-
-
-
 		<!-- Advertisement, sponsors -->
-		<div id="section_ads">
+		<h2 class="toggler ads"><a href="#ads">Advertisement</a></h2>
+		<div id="section_ads" class="accordion">
 
 			<!-- All stuff related to the Google ads is in the following div -->
 			<div style="padding:0;margin:0;border:none;">
@@ -191,6 +253,7 @@
 			</div>
 
 		</div>
+</div>
 </body>
 
 </html>
