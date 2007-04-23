@@ -1,4 +1,15 @@
 /**
  @mainpage RegexPresso : API documentation.
+ 
+ @section what What is it ?
  Here you can find technical docs to understand and use RegexPresso Javascript functions.
+ 
+ @section usage Usage
+ Simply browse to see the specifications by class / file.<br />
+ This documentation is generated using <a href="http://jsunit.berlios.de/internal.html">jsdoxy</a> and <a href="http://www.stack.nl/~dimitri/doxygen/">Doxygen</a>.<br />
+ It's not perfect and one might find <em>void</em> types definitions where the type specification is missing in the embedded documentation.<br />
+ 
+ @section unittesting Unit testing
+ Unit testing is realised by loading <tt>tools/unittests.html</tt> into the <a href="http://www.jsunit.net">JsUnit TestRunner</a>.<br />
+ There is also a <tt>tools/testcases.html</tt> with use cases to be realised by hand.<br />
 */

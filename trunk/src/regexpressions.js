@@ -16,6 +16,8 @@
 
 /**
  * Link several Joint to make a chained list.
+ * @ctor
+ * Contructor
  * @tparam Joint previous	The previous Joint in the chain (or null if none)
  * @tparam Joint next		The next Joint in the chain (or null if none)
  */
@@ -23,11 +25,13 @@ function Joint( previous, next )
 {
 	/**
 	 * Access the Joint before this one
+	 * @type Joint
 	 */
 	this.previous = previous;
 
 	/**
 	 * Access the Joint after this one
+	 * @type Joint
 	 */
 	this.next = next;
 }
@@ -35,22 +39,22 @@ function Joint( previous, next )
 
 
 /**
- * Loops forever if this chain is a loop !
- * @treturn Joint The first Joint of the chain, or this one if there's none
+ * BEWARE : Loops forever if this chain has a loop !
+ * @treturn Joint The first Joint of the chain, including this one
  */
 Joint.prototype.getFirst = function()
 {
 	var f = this;
-	while ( f && f.previous )
-		f = f.previous;
+	while( f && f.previous )
+		f = f.previous
 	return f;
 }
 
 
 
 /**
- * Loops forever if this chain is a loop !
- * @treturn Joint The last Joint of the chain, or this one if there's none
+ * BEWARE : Loops forever if this chain has a loop !
+ * @treturn Joint The last Joint of the chain, including this one
  */
 Joint.prototype.getLast = function()
 {
@@ -95,6 +99,7 @@ Joint.prototype.insertBefore = function( newPrevious )
 }
 
 
+
 /**
  * Removes this Joint from the chain, attaching the one before to the one after (if any).
  * @treturn Joint	This Joint, previous and next references unchanged
@@ -111,10 +116,11 @@ Joint.prototype.remove = function()
 
 
 /**
- * This class simply holds informations about the result of a pattern match on a text.
- * It's represented as a chained-list.
+ * Holds informations about one of the matches of the result of a match() operation.
+ * It's implemented as a chained-list.
  *
  * @ctor
+ * Contructor
  * @tparam String textBefore	see Match#getTextBefore()
  * @tparam String textAfter	see Match#getTextAfter()
  * Other member values defaults to -1 for numbers, empty for arrays and null for others.
@@ -147,12 +153,14 @@ function Match( index, text, textBefore, textAfter, groups )
 	this.setTextAfter(textAfter);
 }
 Match.prototype = new Joint();
+/** @ctor */
 Match.prototype.constructor = Match;
 
 
 
 /**
  * Makes sure the text after is the one of newNext
+ * @tparam Joint newNext
  * @see Joint#insertAfter()
  */
 Match.prototype.insertAfter = function( newNext )
@@ -166,6 +174,7 @@ Match.prototype.insertAfter = function( newNext )
 
 /**
  * Makes sure the text before is the one of newPrevious
+ * @tparam Joint newPrevious
  * @see Joint#insertBefore()
  */
 Match.prototype.insertBefore = function( newPrevious )
@@ -243,7 +252,7 @@ Match.prototype.setTextAfter = function( text )
 
 
 /**
-	This class is a user friendly tool to work on regular expressions.
+	A user friendly tool to work on regular expressions.
 
 	It works the following way : one build an instance around an existing RegExp and text to apply to.
 	It then compute the regular expression against the given text and stores all matches so they can be accessed without further work.
@@ -261,6 +270,7 @@ Match.prototype.setTextAfter = function( text )
 	This is why match x is directly accessible via this.matches[x)
 
 	@ctor
+	Constructor
 	@tparam String subject	The text to apply the regex to
 	@tparam RegExp regex	The regular expression
 */

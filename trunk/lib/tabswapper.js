@@ -60,7 +60,6 @@ Options:
 			selectedClass - the class for the tab when it is selected
 			deselectedClass - the class for the tab when it isn't selected
 			mouseoverClass - the class for the tab when the user mouses over
-			mouseoutClass - the class for the tab when the user mouses out
 			tabSelector - the css selector to find all the tabs
 			clickSelector - the css selector for all the elements the user clicks
 											optional; if not defined, will use tabSelector
@@ -74,63 +73,67 @@ Options:
 	*/
 
 var TabSwapper = new Class({
+	options: {
+		selectedClass: 'tabSelected',
+		mouseoverClass: 'tabOver',
+		deselectedClass: '',
+		tabSelector: '',
+		clickSelector:'',
+		sectionSelector:'',
+		initPanel: 0, 
+		smooth: false, 
+		cookieName: null, 
+		cookieDays: 999 
+	},
 	initialize: function(options){
-		this.setOptions({
-			initPanel: 0, 
-			smooth: false, 
-			cookieName: null, 
-			cookieDays: 999 
-		}, options || {});
+		this.setOptions(options);
 		this.sectionOpacities = [];
-		if(! $type(this.options.clickSelector)) this.options.clickSelector = this.options.tabSelector;
+		if(!$chk(this.options.clickSelector)) this.options.clickSelector = this.options.tabSelector;
 		this.setup();
-		if(this.options.cookieName && parseInt(this.recall())) this.swap(parseInt(this.recall()));
+		if(this.options.cookieName && this.recall()) this.swap(this.recall().toInt());
 		else this.swap(this.options.initPanel);
 	},
 	setup: function(){
-		var swapper = this;
 		var opt = this.options;
 		$$(opt.clickSelector).each(function(lnk, idx){
-			lnk.addEvent('click', function(){swapper.swap(idx)});
-		});
-		if($type(opt.mouseoverClass) && $type(opt.mouseoutClass))
-			tabMouseOvers(opt.mouseoverClass, opt.mouseoutClass, opt.tabSelector);
+			lnk.addEvent('click', function(){this.swap(idx)}.bind(this));
+		},this);
 		this.tabs = $$(opt.tabSelector);
 		this.sections = $$(opt.sectionSelector);
+		this.tabs.each(function(tab, i){
+			tab.addEvent('mouseout',function(){
+				tab.removeClass(this.options.mouseoverClass);
+			}.bind(this)).addEvent('mouseover', function(){
+				tab.addClass(this.options.mouseoverClass);
+			}.bind(this));
+		}.bind(this));
 	},
 	swap: function(swapIdx){
-		var opt = this.options;
-		var swapper = this;
-		this.tabs.each(function(tab, idx){
-			if(swapIdx == idx) tab.addClass(opt.selectedClass).removeClass(opt.deselectedClass);
-			else tab.addClass(opt.deselectedClass).removeClass(opt.selectedClass);
-		});
 		this.sections.each(function(sect, idx){
-			if(swapIdx == idx) swapper.showSection(idx);
-			else swapper.hideSection(idx);
-		});
-		if(opt.cookieName) this.save(swapIdx);
+			if(swapIdx == idx) this.showSection(idx);
+			else this.hideSection(idx);
+		}, this);
+		if(this.options.cookieName) this.save(swapIdx);
 	},
 	save: function(index){
 		Cookie.set(this.options.cookieName, index, {duration:this.options.cookieDays});
 	},
 	recall: function(){
-		return Cookie.get(this.options.cookieName);
+		return $pick(Cookie.get(this.options.cookieName), false);
 	},
 	hideSection: function(idx) {
 		this.sections[idx].hide();
+		this.tabs[idx].removeClass(this.options.selectedClass).addClass(this.options.deselectedClass);
 	},
 	showSection: function(idx) {
 		var sect = this.sections[idx];
-		var opacityFx = this.sectionOpacities[idx];
 		if(!sect.visible()) {
-			if(this.options.smooth && !window.ie6) {
-				if (!opacityFx) opacityFx = this.sections[idx].effect('opacity', {duration: 500});
-				opacityFx.set(0);
-			}
-			sect.show('block');
-			if(this.options.smooth) opacityFx.custom(0,1);
+			if (!this.sectionOpacities[idx]) this.sectionOpacities[idx] = this.sections[idx].effect('opacity', {duration: 500});
+			sect.show();
+			if(this.options.smooth && (!window.ie6 || (window.ie6 && sect.fxOpacityOk()))) this.sectionOpacities[idx].custom(0,1);
+			else if(sect.getStyle('opacity') < 1) this.sectionOpacities[idx].set(1);
 		}
+		this.tabs[idx].addClass(this.options.selectedClass).removeClass(this.options.deselectedClass);
 	}
 });
 TabSwapper.implement(new Options);
@@ -141,6 +144,15 @@ var tabSwapper = TabSwapper;
 
 $Source: /cvs/main/flatfile/html/rb/js/global/cnet.global.framework/common/layout.widgets/tabswapper.js,v $
 $Log: tabswapper.js,v $
+Revision 1.10  2007/04/12 23:47:34  newtona
+fixed a bug where if you defined tabSelector but not clickSelector, things went whacky; now it acts as it should - if !clickSelector then clickSelector = tabSelector
+
+Revision 1.9  2007/03/28 18:08:35  newtona
+tabswapper now uses Element.fxOpacityOk to deal with the IE bug where text gets blurry when you fade an element in and out without a bgcolor set
+
+Revision 1.8  2007/03/23 17:59:39  newtona
+tabswapper no longer cmplains about this.recall() on load
+
 Revision 1.7  2007/03/16 17:18:41  newtona
 transitions no longer used for ie6
 

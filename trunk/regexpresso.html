@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
 <html>
 	<head>
+		<!-- 'meta' informations -->
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="Content-Language" content="en">
 		<meta name="author" content="cbonar@users.berlios.de">
@@ -10,76 +11,119 @@
 		<meta name="description" content="A quick tester for regular expressions">
 		<meta name="keywords" content="regexpresso regex regexp regular expressions expression sidebar javavascript test tester evaluator">
 		<link rel="shortcut icon" href="http://regexpresso.berlios.de/favicon.ico">
-
 		<title>RegExpresso</title>
 
-		<link rel="stylesheet" type="text/css" href="css/colors.css">
-		<link rel="stylesheet" type="text/css" href="css/core.css">
 
-		<!-- usefull frameworks -->
+
+		<!-- stylesheets -->
+		<link rel="stylesheet" type="text/css" href="style/colors.css">
+		<link rel="stylesheet" type="text/css" href="style/layout.css">
+
+
+
+		<!-- frameworks -->
+
+		<!-- the basic prototype -->
 		<!--script type="text/javascript" src="lib/prototype.js"></script-->
+
+		<!-- Dojo -->
 		<!--script type="text/javascript">djConfig = { isDebug: false };</script>
 		<script type="text/javascript" src="lib/dojo.js"></script>
 		<script type="text/javascript">
 			dojo.require("dojo.event.*");
 			dojo.require("dojo.io.*");
 		</script-->
+
+		<!-- mootools -->
 		<script type="text/javascript" src="lib/mootools.js"></script>
+
+		<!-- cnet's mootools extensions -->
+		<script type="text/javascript" src="lib/element.cnet.js"></script>
+		<script type="text/javascript" src="lib/tabswapper.js"></script>
+
+		<!-- moo.fx for prototype -->
+		<!--script type="text/javascript" src="lib/moo.fx-prototype/prototype.lite.js"></script>
+		<script type="text/javascript" src="lib/moo.fx-prototype/moo.fx.js"></script>
+		<script type="text/javascript" src="lib/moo.fx-prototype/moo.fx.pack.js"></script>
+		<script type="text/javascript" src="lib/moo.fx-prototype/moo.fx.utils.js"></script>
+		<script type="text/javascript" src="lib/moo.fx-prototype/accordion.js"></script>
+		<script type="text/javascript" src="lib/moo.fx-prototype/moo.fx.transitions.js"></script-->
+
+
+
+		<!-- additional, gui-related, scripts -->
 		<script type="text/javascript">
-			
-			function initialize()
+
+
+			var PARAMETERS = {
+				'accordion_opacity_transition': true
+			};
+
+
+
+			/**
+				Initializes the dynamic elements not waiting for the images to load.
+			*/
+			window.onDomReady( function() {
+				init_accordion();
+				init_tabs();
+				init_input_fields();
+				console.log( $$("#section_regex .tabs .tab")  );
+			} );
+
+
+
+			function init_accordion()
 			{
-				initialize_accordion();
+				// accordion 'titles' have CSS class 'accordion_toggler'
+				// accordion 'content panes' have CSS class 'accordion_stretecher'
+				// active accordion title has CSS class 'on'
+				new Fx.Accordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
+					show: 0,
+					opacity: PARAMETERS['accordion_opacity_transition'],
+					onActive: function(toggler,el) { toggler.addClass("on"); },
+					onBackground: function(toggler,i) { toggler.removeClass("on") }
+					} );
 			}
 
-			function initialize_accordion()
+
+
+			function init_tabs()
 			{
-				var stretchers = $$('div.accordion');
-				stretchers.each( function(item) { item.setStyles({'height': '0', 'overflow': 'hidden'}); });
-
-				var togglers = $$('.toggler');
-				
-				var bgFx = [];
-				togglers.each(function(toggler, i){
-					toggler.defaultColor = toggler.getStyle('background-color');
-					//fx creation
-					bgFx[i] = new Fx.Color(toggler, 'background-color', {wait: false});
+				new tabSwapper({
+					initPanel: 0,
+					selectedClass: "on",
+					deselectedClass: "off",
+					tabSelector: "#section_regex .tab",
+					sectionSelector: "#section_regex .tabbed_panel",
+					/*remember what the last tab the user clicked was*/
+					cookieName: "tabSetExample",
+					/*use transitions to fade across*/
+					smooth: true
 				});
-
-				var myAccordion = new Fx.Accordion(togglers, stretchers, { opacity: false, start: false, transition: Fx.Transitions.quadOut,
-					
-					onActive: function(toggler, i){
-						alert(toggler.getFirst().id);
-						toggler.getFirst().setStyle('color', '#fff');
-					},
-				
-					onBackground: function(toggler, i){
-						bgFx[i].clearTimer();
-						toggler.setStyle('background-color', toggler.defaultColor);
-						toggler.getFirst().setStyle('color', '#222');
-					}
-				});
-			
-				//anchors
-				function checkHash(){
-					var found = false;
-					$$('.toggler a').each(function(link, i){
-						if (window.location.hash.test(link.hash)){
-							myAccordion.showThisHideOpen(i);
-							found = true;
-						}
-					});
-					return found;
-				}
-		
-				if (!checkHash()) myAccordion.showThisHideOpen(0);
 			}
+
+
+
+			/**
+				Apply common properties / methods to objects.
+			*/
+			function init_input_fields()
+			{
+				$$(".input").each( function(el,p) { el.onfocus=function(){this.select()} } );
+			}
+
 		</script>
 	</head>
 
-	<body onload="javascript:initialize();">
 
-		<!-- This is the place where to put warnings and other messages -->
+
+	<body>
+
+		<!--
+			Permanent header (that is hidden by default).
+			This is the place where to put warnings and other messages.
+		-->
 		<div id="warning">
 			<!--
 				Embedded compatibility check.
@@ -119,141 +163,162 @@
 			There is also a link that opens this page with the current fields values in a new window.
 			Finally, there is a link that opens the results in the main (bigger) window, while in sidebar mode.
 		-->
-		<span id="section_menu"><!--
+		<div id="section_menu"><!--
 				Left (start) boundary
-			--><img src="img/menu-down-left.png" alt=""><!--
+			--><img src="style/menu-down-left.png" alt="{"><!--
 				To the sidebar (only for IE and Firefox)
 			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
-				--><img class="menu" src="img/tosidebar-22x22.png" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
+				--><img class="topmenu" src="style/tosidebar-22x22.gif" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
 			--></a><!--
 				In a new window
-			--><img id="popOut" class="menu" src="img/popout-22x22.png" alt="[pop]" title="Pop out the results in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
+			--><img id="popOut" class="topmenu" src="style/popout-22x22.gif" alt="[pop]" title="Pop out the results in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
 				Reopen in the current window
 			--><a id="toMain" target="_main" href="regexpresso.html"><!--
-				--><img class="menu" src="img/tomain-22x22.png" alt="[=&gt;]" title="Open result in the main window"><!--
+				--><img class="topmenu" src="style/tomain-22x22.gif" alt="[=&gt;]" title="Open result in the main window"><!--
 			--></a><!--
-				--><img src="img/menu-down-right.png" alt=""><!--
-		--></span>
-
-
-<div id="content">
-		<!-- title -->
-		<h1 id="toggler title">RegEx<span class="presto">presso</span><span class="beta">&nbsp;beta</span></h1>
+				--><img src="style/menu-down-right.png" alt="}"><!--
+		--></div>
 
 
 
-		<div class="accordion">
+		<!--
+			Page content with subsections arranged into an accordion.
+		-->
+		<div id="content" style="height:100%">
 
-			<!-- user's input -->
-			<form id="section_input" enctype="UTF-8" action="get">
-	
-				<textarea id="input_subject">
-				</textarea>
-	
-				<!-- input regex can be displayed using several modes -->
-				<div id="section_regex">
-					<ul id="regex_tabs">
-						<li class="tab on"><a>expert</a></li>
-						<li class="tab off"><a>second tab</a></li>
-						<li class="tab off"><a>third tab</a></li>
-					</ul>
-					<div id="regex_panels">
-						<!-- 2. expert mode input field -->
-						<div class="panel inputregex" id="regex_expert">
-							<input type="text" id="regex_expert_a" class="input search"
-								value=""
-								title="\'[m]/pattern/[modifiers]\' or \'s/pattern/replace/[modifiers]\'"
-								onFocus="javascript:this.select();"\
-								onkeyup="javascript:updateRegex(true);">
+			<!-- title -->
+			<h1 id="title" class="accordion_toggler">RegEx<span class="presto">presso</span><span class="beta">&nbsp;beta</span></h1>
+
+
+
+			<div class="accordion_stretcher">
+
+				<!-- user's input -->
+				<form id="section_input" enctype="UTF-8" action="get">
+
+					<textarea id="input_subject" class="input" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:99%;">[Paste here the text to evaluate]</textarea>
+
+					<br class="spacer">
+
+					<!-- input regex can be displayed using several modes -->
+					<div id="section_regex">
+						<div class="tabs">
+							<a  class="tab off" title="Easy search mode">search</a
+							><a class="tab off" title="Easy replace mode">replace</a
+							><a class="tab on" title="Expert mode">expert</a>
 						</div>
-						<div class="panel" style="display:none;">I'm the content for the second panel.</div>
-						<div class="panel" style="display:none;">I'm the content for the third panel.</div>
+						<div class="tabbed_panels"">
+							<!-- 1. 'easy' search mode -->
+							<div class="tabbed_panel off" style="display:none;">
+								<input type="text" id="regex_search_a" class="input search"
+									value="sss"
+									title="Type your search expression here"
+									 style="width:100%;">
+							</div>
+							<!-- 2. 'easy' replace mode -->
+							<div class="tabbed_panel off" style="display:none;">
+								<input type="text" id="regex_replace_a" class="input search"
+									value="rrr"
+									title="Enter here the text you want to replace"
+									style="width:49%;">
+								<input type="text" id="regex_replace_b" class="input search"
+									value="[Replacement string]"
+									title="Enter here the replacement string"
+									style="width:49%;">
+							</div>
+							<!-- 3. expert mode input field -->
+							<div class="tabbed_panel on" id="regex_expert">
+								<input type="text" id="regex_expert_a" class="input search"
+									value="xxx"
+									title="\'[m]/pattern/[modifiers]\' or \'s/pattern/replace/[modifiers]\'"
+									style="width:100%;">
+							</div>
+						</div>
 					</div>
-				</div>
+
+				</form>
+
+
+
+				<!-- script's output (dynamic content) -->
+				<span id="section_output" class="output" style="width:100%;">
+				</span>
 	
-			</form>
-
-
-
-			<!-- script's output (dynamic content) -->
-			<span id="section_output">
-			</span>
-
-		</div>
-
-
-
-		<h2 class="toggler options"><a href="#options">Options</a></h2>
-		<div id="section_options" class="accordion">
-			<table>
-				<tr>
-					<td>OPTION 1</td>
-					<td>sdmlsqds</td>
-				</tr>
-				<tr>
-					<td>OPTION 2</td>
-					<td>sdmlsqds</td>
-				</tr>
-			</table>
-		</div>
-
-
-
-		<!-- Documentation -->
-		<h2 class="toggler docs"><a href="#docs">External resources</a></h2>
-		<div id="section_doc" class="accordion">
-			<ul class="doc">
-				<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
-				<li class="doc"><a class="doc" target="_blank" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a></li>
-				<li class="doc"><a class="doc" target="_blank" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a></li>
-				<li class="doc"><a class="doc" target="_blank" href="http://developer.berlios.de/docman/display_doc.php?docid=1512&amp;group_id=3235#top">About this tool</a></li>
-			</ul>
-		</div>
-
-
-
-		<!-- Advertisement, sponsors -->
-		<h2 class="toggler ads"><a href="#ads">Advertisement</a></h2>
-		<div id="section_ads" class="accordion">
-
-			<!-- All stuff related to the Google ads is in the following div -->
-			<div style="padding:0;margin:0;border:none;">
-				<script type="text/javascript">
-				<!--
-					google_ad_client = "pub-8221689042153078";
-					google_alternate_color = "EEEEEE";
-					google_ad_width = 125;
-					google_ad_height = 125;
-					google_ad_format = "125x125_as";
-					google_ad_type = "text_image";
-					google_ad_channel ="";
-					google_color_border = "EEEEEE";
-					google_color_bg = "EEEEEE";
-					google_color_link = "0000FF";
-					google_color_url = "0000FF";
-					google_color_text = "000000";
-				//-->
-				</script>
-				<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js" defer></script>
 			</div>
 
-			<!-- Regexpresso's nice host -->
-			<div>
-				<!-- TODO : defer the loading of this picture, so when the server is not available the page is still loaded without delay -->
-				<a href="http://developer.berlios.de" target="_blank">
-					<img src="http://developer.berlios.de/bslogo.php?group_id=3235&amp;type=1"
-						width="124" height="32" border="0" alt="[BerliOS Logo]">
-				</a>
+
+
+			<h2 class="accordion_toggler options">Options</h2>
+			<div id="section_options" class="accordion_stretcher">
+				<table>
+					<tr>
+						<td>OPTION 1</td>
+						<td>sdmlsqds</td>
+					</tr>
+					<tr>
+						<td>OPTION 2</td>
+						<td>sdmlsqds</td>
+					</tr>
+				</table>
 			</div>
 
-			<!-- hide the following before publishing -->
-			<div class="w3cvalid">
-				<a href="http://validator.w3.org/check?uri=referer" target="_blank"><img src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01 Transitional"></a>
-				<a href="http://jigsaw.w3.org/css-validator/check/referer" target="_blank"><img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+
+
+			<!-- Documentation -->
+			<h2 class="accordion_toggler docs">External resources</h2>
+			<div id="section_doc" class="accordion_stretcher">
+				<ul class="doc">
+					<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
+					<li class="doc"><a class="doc" target="_blank" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a></li>
+					<li class="doc"><a class="doc" target="_blank" href="http://www.webreference.com/js/column5/index.html">A comprehensive article</a></li>
+					<li class="doc"><a class="doc" target="_blank" href="http://developer.berlios.de/docman/display_doc.php?docid=1512&amp;group_id=3235#top">About this tool</a></li>
+				</ul>
 			</div>
 
+
+
+			<!-- Advertisement, sponsors -->
+			<h2 class="accordion_toggler ads">Advertisement</h2>
+			<div id="section_ads" class="accordion_stretcher">
+
+				<!-- All stuff related to the Google ads is in the following div -->
+				<div style="padding:0;margin:0;border:none;">
+					<script type="text/javascript">
+					<!--
+						google_ad_client = "pub-8221689042153078";
+						google_alternate_color = "EEEEEE";
+						google_ad_width = 125;
+						google_ad_height = 125;
+						google_ad_format = "125x125_as";
+						google_ad_type = "text_image";
+						google_ad_channel ="";
+						google_color_border = "EEEEEE";
+						google_color_bg = "EEEEEE";
+						google_color_link = "0000FF";
+						google_color_url = "0000FF";
+						google_color_text = "000000";
+					//-->
+					</script>
+					<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js" defer></script>
+				</div>
+
+				<!-- Regexpresso's nice host -->
+				<div>
+					<!-- TODO : defer the loading of this picture, so when the server is not available the page is still loaded without delay -->
+					<a href="http://developer.berlios.de" target="_blank">
+						<img src="http://developer.berlios.de/bslogo.php?group_id=3235&amp;type=1"
+							width="124" height="32" border="0" alt="[BerliOS Logo]">
+					</a>
+				</div>
+
+				<!-- hide the following before publishing -->
+				<div class="w3cvalid">
+					<a href="http://validator.w3.org/check?uri=referer" target="_blank"><img src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01 Transitional"></a>
+					<a href="http://jigsaw.w3.org/css-validator/check/referer" target="_blank"><img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+				</div>
+
+			</div>
 		</div>
-</div>
 </body>
 
 </html>
