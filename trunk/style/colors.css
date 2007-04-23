@@ -1,0 +1,206 @@
+/**
+	Only changes colors and few aspects.
+	=> Changing this will never break the rendering, but may remove valuable visual clues.
+*/
+
+
+
+/* ////////////////////////////////
+	Base style
+//////////////////////////////// */
+
+
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color:white;
+	padding:8px;
+	font-family:arial,verdana;
+	}
+
+a img {
+	border:0;	/* no anchor border around images */
+}
+
+
+
+/* ////////////////////////////////
+	Unique elements
+//////////////////////////////// */
+
+
+
+/* the title : 'RegexPresso' */
+#title {
+	font-family: arial,verdana,courier;
+	font-size: 13pt;
+	font-weight: bold;
+	}
+#title .presto {
+	font-style:italic;
+	color:red;
+	}
+
+/* for beta releases ; blink is not implemented in IE6, though */
+#title .beta {
+	color: #FF9900;
+	text-decoration: blink;
+	}
+
+/* A div container for important messages. Those messages may be of class 'error' */
+#warning {
+	background-color: red;
+	color: white;
+	font-weight: bold;
+	padding: 2pt;
+	}
+
+
+
+/* ////////////////////////////////
+	Specific elements
+//////////////////////////////// */
+
+
+
+/* any error message */
+.error {
+	color: red;
+}
+
+/* the (only) active accordion toggler */
+h2.on {
+	background-color:red;
+	}
+
+img.topmenu:hover {
+	background:#DBDBFF;
+}
+
+.spacer {
+	display: block;
+	background:none;
+	margin:0;
+	padding:0;
+	margin-top:1em;
+}
+
+/* documentation / external resources */
+a.doc {
+	font-size:10pt;
+	text-decoration:none;
+}
+
+li.doc {
+	list-style-image: url(../pix/paperclip.gif);
+}
+
+ul.doc {
+	margin:0;
+	padding-left:2em;
+}
+
+
+
+/* ////////////////////////////////
+	Form fields
+//////////////////////////////// */
+
+
+
+/* The 'input' class highlights the tag as beeing an input zone */
+.input {
+	border:solid #2449DB 1px;
+	}
+
+/* on hover */
+.input:hover {
+	border: solid #FFA500 1px;
+	}
+
+/* on focus for editable inputs */
+input[type=text]:focus, textarea:focus, .tabbed_panel:focus {
+	background-color:#FFFFBB;
+	}
+
+input[type=button], input[type=submit] {
+	font-family:arial, verdana;
+	font-size:9pt;
+	}
+
+
+
+/* ////////////////////////////////
+	Tabs : shape of the borders
+//////////////////////////////// */
+
+
+
+.tabbed_panels, .tab {
+	border-width:2px;
+}
+
+/* only the selected tab */
+.tabs .on {
+	border-top-width:1px;	/* looks betters since pixels are not exact squares*/
+	padding-bottom: 2px;	/* must be same as .tabbed_panels[border-top-width] */
+}
+
+.tab {
+	text-decoration:none;	/* because we use anchors to make the tabs */
+	text-align: center;
+}
+
+
+
+/* ////////////////////////////////
+	Input regex
+//////////////////////////////// */
+
+
+
+#section_regex .tabbed_panels {
+	padding:1em;
+	border-color: #a1a6a9;
+	background-color:#E1E1FF;
+	background-color:white;
+}
+
+#section_regex .tab {
+	padding-left:0.5em;
+	padding-right:0.5em;
+	font-weight:bold;
+	color:#666666;
+	font-size:8pt;
+	background:#a1a6a9;
+	border-color: #a1a6a9;		/* should be same color as .tabbed_panels[border-color] */
+}
+
+/* only the selected tab */
+#section_regex .tabs .on {
+	color:black;
+	background: yellow;
+	background-color:#E1E1FF;	/* nice to make it make color as .tabbed_panels[background-color] */
+	background-color:yellow;	/* nice to make it make color as .tabbed_panels[background-color] */
+	border-color: #a1a6a9;
+}
+
+
+
+/* ////////////////////////////////
+	Options
+//////////////////////////////// */
+
+
+
+/*#options {
+	font-size:small;
+	background-color:#E1E1FF;
+}*/
+
+
+

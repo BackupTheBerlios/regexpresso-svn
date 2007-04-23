@@ -1,0 +1,94 @@
+/**
+	'Core' style, used to position the elements within the page and relative to each other.
+	This is mainly used to construct visual components in accordance with widgets' special behaviours.
+	=> required to obtain a correct rendering.
+*/
+
+
+
+
+/* ////////////////////////////////
+	Tabs rendering
+//////////////////////////////// */
+
+.tab {
+	display: inline;
+	padding-top: 0;
+	padding-bottom: 0;
+	cursor: pointer;
+	}
+
+
+
+/* ////////////////////////////////
+	Tabs with a border-effect
+	( draws tabs with no image, only well placed borders )
+
+.tabs		: contains the real tabs
+.tab		: the real tabs
+.tabbed_panels	: contains the content panes to be tabbed
+.tabbed_panel	: the tabbed panels
+.on		: the selected tab
+//////////////////////////////// */
+
+.tabbed_panels {
+	border-style:solid;
+}
+
+.tab {
+	border-style:solid;
+	border-top:none;
+	border-bottom: none;
+}
+
+/* only the selected tab */
+.tabs .on {
+	border-top-style: solid;
+}
+
+
+
+/* ////////////////////////////////
+	Accordion widget
+//////////////////////////////// */
+
+.accordion_toggler:hover {
+	cursor:pointer;
+	}
+
+
+
+/* ////////////////////////////////
+	Unique items
+//////////////////////////////// */
+
+
+
+
+/* ////////////////////////////////
+	The top menu
+//////////////////////////////// */
+
+#section_menu {
+	position:fixed;
+	top:-15px;
+	left:0;
+	white-space:nowrap;
+	}
+
+#section_menu:hover {
+	top:0;
+	}
+
+img.topmenu {
+	border:none;
+	border-bottom:solid gray 1px;	/* this color must be the same as the border of the left and right edges pictures */
+	/* the color in the 2 following declarations must be the same as the background of the edges pictures */
+	background:white;
+	border-top:solid white 1px;
+	}
+
+img.topmenu:hover {
+	cursor:pointer;
+	}
+
