@@ -1,0 +1,107 @@
+<!-- This is a test page to be used with http://jsunit.net/ -->
+<html>
+ <head>
+  <title>Test Page for RegexPresso</title>
+  <script language="javascript" src="jsunit/app/jsUnitCore.js"></script>
+  <script language="javascript" src="../src/chainedlist.js"></script>
+  <script language="javascript" src="../src/regularexpressions.js"></script>
+ </head>
+ <body>
+  <script language="javascript">
+
+	////////////////////////////
+	// Joint class testing
+
+	function testJoint()
+	{
+		var joint1 = new Joint();
+		assertUndefined( "1", joint1.previous);
+		assertUndefined( "2", joint1.next);
+
+		var joint2 = new Joint(joint1);
+		assertEquals( "3", joint1, joint2.previous );
+
+		var joint3 = new Joint(joint1,joint2);
+		assertEquals( "4", joint1, joint3.previous );
+		assertEquals( "5", joint2, joint3.next );
+	}
+
+	function testJointInsertAfter()
+	{
+		var joint1 = new Joint();
+		var joint2 = joint1.insertAfter( new Joint() );
+		var joint3 = joint2.insertAfter( new Joint() );
+		assertUndefined( "1", joint1.previous );
+		assertEquals( "2", joint2, joint1.next );
+		assertEquals( "3", joint1, joint2.previous );
+		assertEquals( "4", joint3, joint2.next );
+		assertEquals( "5", joint2, joint3.previous );
+		assertUndefined( "6", joint3.next );
+	}
+
+	function testJointRemove()
+	{
+		var joint1 = new Joint();
+		var joint2 = joint1.insertAfter( new Joint() );
+		var joint3 = joint2.insertAfter( new Joint() );
+		assertEquals( "1", joint2, joint2.remove() );
+		assertEquals( "2", joint3, joint1.next );
+		assertEquals( "3", joint1, joint3.previous );
+	}
+
+	function testJointGetLast()
+	{
+		var joint1 = new Joint();
+		assertEquals( "1", joint1, joint1.getLast() );
+		var joint2 = joint1.insertAfter( new Joint() );
+		assertEquals( "2", joint2, joint1.getLast() );
+	}
+
+
+
+	////////////////////////////
+	// Match class testing
+
+	// Tests inheritance mecanism
+	function testMatchPrototype()
+	{
+		var match1 = new Match();
+		assertEquals( "1", Match, Match.prototype.constructor );
+	}
+
+	function testMatch()
+	{
+		// tests default values
+		var match1 = new Match();
+		assertUndefined( "1", match1.index );
+		assertUndefined( "1.1", match1.text );
+		assertEquals( "1.2", "", match1.getTextBefore() );
+		assertEquals( "1.3", "", match1.getTextAfter() );
+		assertEquals( "1.4", 0, match1.groups.length );
+
+		// tests initial assignment
+		var match2 = new Match(4,"matched","before","after",["one","two"]);
+		assertEquals( "2", 4, match2.index );
+		assertEquals( "2.1", "matched", match2.text );
+		assertEquals( "2.2", "before", match2.getTextBefore() );
+		assertEquals( "2.3", "after", match2.getTextAfter() );
+		assertTrue( "2.4", match2.groups.length > 0 );
+	}
+
+	function testMatchGetTextBeforeAfter()
+	{
+		var match1 = new Match(null,null,"before");
+		assertEquals( "1", "before", match1.getTextBefore() );
+
+		var match2 = match1.insertAfter( new Match( null, null, "before", "after" ) );
+		assertEquals( "2", "before", match2.getTextBefore() );
+		assertEquals( "3", "after", match2.getTextAfter() );
+		assertEquals( "3.1", match1.getTextAfter(), match2.getTextBefore() );
+
+		var match3 = match2.insertAfter( new Match( null, null, "before height", "after height" ) );
+		assertEquals( "4", match2.getTextAfter(), match3.getTextBefore() );
+	}
+
+  </script>
+ </body>
+</html>
