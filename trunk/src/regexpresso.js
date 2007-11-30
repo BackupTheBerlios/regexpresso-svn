@@ -1,5 +1,6 @@
 /**///////////////////////////////////////////////////////////////////////////
 ///
+/// @requires ie.js
 /// @file
 /// Classes and functions specific to the RegexPresso project.
 /// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
@@ -34,7 +35,7 @@ function warning( text )
 */
 document.createSimpleElement = function( dom_type, css_class, dom_child )
 {
-	//console.log("createSimpleElement("+dom_type+","+text+","+css_class+")");
+	//console.debug("createSimpleElement("+dom_type+","+text+","+css_class+")");
 
 	var el = document.createElement(dom_type);
 	if ( css_class != null )
@@ -206,7 +207,7 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 */
 RegExpresso = function()
 {
-	// builds the tabs around the regular expression input section
+	// all options are gathered in this table
 	this.options = {
 		'accordion_opacity': true,
 		'tabswapper_smooth': true,
@@ -219,29 +220,33 @@ RegExpresso = function()
 	this.desc_again = new Loop(["desc","desc_again"]);
 
 
-	// accordion 'titles' have CSS class 'accordion_toggler'
-	// accordion 'content panes' have CSS class 'accordion_stretcher'
-	// active accordion title has CSS class 'on'
-	this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
-		openAll: false,
-		show: 0,
-		opacity: this.options['accordion_opacity_transition'],
-		onActive: function(toggler,el) { toggler.addClass("on"); },
-		onBackground: function(toggler,i) { toggler.removeClass("on") }
-		} );
-
-
+	// Tabs have to be initialized before accordion so the accordion
+	// opens with the right size when it opens itself.
+	// Actually, the accordion seems to use the size of the selected tab
+	// so it has to be the largest one...
 	this.tabs_regex = new tabSwapper({
-		initPanel: 0,
+		initPanel: 1,
 		selectedClass: "on",
 		deselectedClass: "off",
 		tabSelector: "#section_regex .tab",
 		sectionSelector: "#section_regex .tabbed_panel",
 		/*remember what the last tab the user clicked was*/
-		cookieName: "regexpresso",
+		/*cookieName: "regexpresso",*/
 		/*use transitions to fade across*/
 		smooth: this.options['tabswapper_smooth']
 		});
+
+
+	// accordion 'titles' have CSS class 'accordion_toggler'
+	// accordion 'content panes' have CSS class 'accordion_stretcher'
+	// active accordion title has CSS class 'on'
+	this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
+		openAll: false,
+		firstElementsOpen: [0,3],
+		opacity: this.options['accordion_opacity'],
+		onActive: function(toggler,el) { toggler.addClass("on"); },
+		onBackground: function(toggler,i) { toggler.removeClass("on") }
+		} );
 
 
 	this.worker = null;
@@ -253,18 +258,19 @@ RegExpresso = function()
 		el.onfocus = function() { this.select(); };
 	} );
 
-	// triggers the corresponding rules when changing the value of a field
-	$$(".input").each( function(el,p) {
-		// FIXME : the existence of 'regexpresso' is out of control from this objet !!!!
-		el.onchange = function() { regexpresso.onFieldUpdate(this); };
-		el.onkeyup = el.onchange;
-	} );
+	// registers this object as the listener to 'onchange' events on the following fields
+	$$(".input").each( function(item,index) {
+		var me = this;
+		item.onchange = function() { me.onFieldUpdate(this); };
+		item.onkeyup = item.onchange;
+	}, this );
 }
 
 
 
 /**
-	Rules when an input field is being modified
+	This function handles all 'onchange' events, that happens when an input field is being modified.
+	It's a clearer view than to have it in every object.
 	@tparam Element el	The field (or its id)
 */
 RegExpresso.prototype.onFieldUpdate = function( el )
@@ -294,7 +300,7 @@ RegExpresso.prototype.onFieldUpdate = function( el )
 			$('regex_expert_a').value = input_regex.value;	// see comment on 'regex_expert'
 			break;
 
-		// expert mode works differently than 'esay' modes : it reuses the regex that was set by the other modes
+		// expert mode works differently than 'easy' modes : it reuses the regex that was set by the other modes
 		// because it's expected users will come to this mode after having tried in simple modes first
 		// This also enables to observe how to compose a regular expression in expert mode
 		case 'regex_expert_a':
@@ -304,7 +310,7 @@ RegExpresso.prototype.onFieldUpdate = function( el )
 
 	// updates the result if needed
 	if ( this.options['autorefresh'] && input_regex.value != oldval )
-		document.form.submit.click();
+		document.form.submit();
 }
 
 
@@ -317,12 +323,13 @@ RegExpresso.prototype.onFieldUpdate = function( el )
 */
 RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
 {
+	console.debug('onSubmit(',output,input_subject,input_regex,')');
 	var dom_output = $(output);
 	try
 	{
 		// the following operation can take time if the input text is big
 		this.worker = new RegexWorker( $(input_subject).value, $(input_regex).value );
-		switch ( explainPerlRegexPattern(this.worker.pattern).action )
+		switch ( cbonar_regex_explainPerlRegexPattern(this.worker.pattern).action )
 		{
 			case 'm':
 			case '':
@@ -366,7 +373,7 @@ RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
 		console.debug(e);
 
 		// @see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/script56/html/js56jslrfJScriptErrorsTOC.asp
-		if ( ie_version() > 0 )
+		if ( cbonar_ie_version() > 0 )
 		{
 			switch ( e.number & 0xFFFF )
 			{
@@ -388,7 +395,8 @@ RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
 		}
 		else
 		{
-			throw e;
+			//throw e;
+			return false;	// disable this line when debug is finished
 		}
 	}
 

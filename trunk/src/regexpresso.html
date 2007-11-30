@@ -16,8 +16,8 @@
 
 
 		<!-- stylesheets -->
-		<link rel="stylesheet" type="text/css" href="style/colors.css">
-		<link rel="stylesheet" type="text/css" href="style/layout.css">
+		<link rel="stylesheet" type="text/css" href="l&amp;f/colors.css">
+		<link rel="stylesheet" type="text/css" href="l&amp;f/layout.css">
 
 
 
@@ -35,13 +35,23 @@
 		</script-->
 
 		<!-- mootools -->
+		<!--
 		<script type="text/javascript" src="lib/mootools.js"></script>
-		<script type="text/javascript" src="lib/Moo.js"></script>	<!-- patch with latest upgrades -->
+		<script type="text/javascript" src="lib/Moo.js">patch with latest upgrades</script>
+		-->
 
 		<!-- cnet's mootools extensions -->
+		<!--
 		<script type="text/javascript" src="lib/element.cnet.js"></script>
+		<script type="text/javascript" src="lib/element.shortcuts.js"></script>
 		<script type="text/javascript" src="lib/tabswapper.js"></script>
 		<script type="text/javascript" src="lib/multiple.open.accordion.js"></script>
+		-->
+
+		<!-- packaged cnet's libraries -->
+		<script type="text/javascript" src="lib/clientside.moo.v1.1.packed.js"></script>
+		<script type="text/javascript" src="lib/cnet.moo.extensions.js"></script>
+		<script type="text/javascript" src="lib/cnet.plugins.js"></script>
 
 		<!-- moo.fx for prototype -->
 		<!--script type="text/javascript" src="lib/moo.fx-prototype/prototype.lite.js"></script>
@@ -51,9 +61,13 @@
 		<script type="text/javascript" src="lib/moo.fx-prototype/accordion.js"></script>
 		<script type="text/javascript" src="lib/moo.fx-prototype/moo.fx.transitions.js"></script-->
 
+		<!-- other generic libraries -->
+		<script type="text/javascript" src="lib/chainedlist.js"></script>
+		<script type="text/javascript" src="lib/ie.js"></script>
 
-		<script type="text/javascript" src="src/regexpressions.js"></script>
-		<script type="text/javascript" src="src/regexpresso.js"></script>
+		<!-- libraries from this project -->
+		<script type="text/javascript" src="regex.js"></script>
+		<script type="text/javascript" src="regexpresso.js"></script>
 
 		<!-- additional init scripts -->
 		<script type="text/javascript">
@@ -81,7 +95,7 @@
 			-->
 			<noscript>
 				WARNING : Your browser does not support Javascript or it is disabled.
-				You need it to be enabled to use this tool.
+				You need to enable it to use this tool.
 			</noscript>
 			<script type="text/javascript">
 			<!--
@@ -113,18 +127,18 @@
 		-->
 		<div id="section_menu"><!--
 				Left (start) boundary
-			--><img src="style/menu-down-left.png" alt="{"><!--
+			--><img src="l&amp;f/menu-down-left.png" alt="{"><!--
 				To the sidebar (only for IE and Firefox)
 			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
-				--><img class="topmenu" src="style/tosidebar-22x22.gif" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
+				--><img class="topmenu" src="l&amp;f/tosidebar-22x22.gif" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
 			--></a><!--
 				In a new window
-			--><img id="popOut" class="topmenu" src="style/popout-22x22.gif" alt="[pop]" title="Pop out the results in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
+			--><img id="popOut" class="topmenu" src="l&amp;f/popout-22x22.gif" alt="[pop]" title="Pop the results up in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
 				Reopen in the current window
 			--><a id="toMain" target="_main" href="regexpresso.html"><!--
-				--><img class="topmenu" src="style/tomain-22x22.gif" alt="[=&gt;]" title="Open result in the main window"><!--
+				--><img class="topmenu" src="l&amp;f/tomain-22x22.gif" alt="[=&gt;]" title="Open result in the main window"><!--
 			--></a><!--
-				--><img src="style/menu-down-right.png" alt="}"><!--
+				--><img src="l&amp;f/menu-down-right.png" alt="}"><!--
 		--></div>
 
 
@@ -142,12 +156,12 @@
 			<div class="accordion_stretcher">
 
 				<!-- user's input -->
-					<form id="section_input" enctype="UTF-8" action="get" onsubmit="javascript:regexpresso.onSubmit('output','input_subject','input_regex');return false;">
+				<form id="section_input" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit('output','input_subject','input_regex');return false;">
 
 					<!-- the string representation of the regular expression to use ; is built depending what's typed into the section_regex -->
-					<input type="hidden" id="input_regex" name="regex" />
+					<input type="text" id="input_regex" name="regex" />
 
-					<textarea id="input_subject" class="input" name="subject" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:100%;">[Paste here the text to evaluate]</textarea>
+					<textarea id="input_subject" class="input" name="subject" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:100%;">[Type / paste here the text to evaluate]</textarea>
 
 					<br class="spacer">
 
@@ -160,24 +174,26 @@
 						</div>
 						<div class="tabbed_panels">
 							<!-- 1. 'easy' search mode -->
-							<div class="tabbed_panel off" style="display:none;">
+							<div class="tabbed_panel">
+								<div class="note">Type the text to search in the following field.</div>
 								<input type="text" id="regex_search_a" class="input"
 									style="width:100%;"
 									title="Type your search expression here"
 									value="sss">
 								<div id="regex_search_mod" class="input_regex_flags">
-									<span class="input_box" style="white-space:nowrap;"><input id="regex_search_mod_i" type="checkbox" class="input">no case</span>
-									<span class="input_box" style="white-space:nowrap;"><input id="regex_search_mod_g" type="checkbox" class="input">global</span>
-									<span class="input_box" style="white-space:nowrap;"><input id="regex_search_mod_m" type="checkbox" class="input">multiline</span>
+									<span class="input_box" style="white-space:nowrap;" title="Check to make the search case insensitive"><input id="regex_search_mod_i" type="checkbox" class="input">no case</span>
+									<span class="input_box" style="white-space:nowrap;" title="Check to make the search global"><input id="regex_search_mod_g" type="checkbox" class="input">global</span>
+									<span class="input_box" style="white-space:nowrap;" title="Check to repeat the search on each line"><input id="regex_search_mod_m" type="checkbox" class="input">multiline</span>
 								</div>
 							</div>
 							<!-- 2. 'easy' replace mode -->
-							<div class="tabbed_panel off" style="display:none;">
+							<div class="tabbed_panel" >
+								<div class="note">Type the text to search in the first field and the replacement text in the second one.</div>
 								<table style="width:100%;"><tr>
 									<td><input type="text" id="regex_replace_a" class="input"
 										style="width:100%;"
 										title="Enter here the text you want to replace"
-										value="rrr"><td>
+										value="[Text to search for]"><td>
 									<td></td>
 									<td><input type="text" id="regex_replace_b" class="input"
 										title="Enter here the replacement string"
@@ -185,13 +201,14 @@
 										value="[Replacement string]"><td>
 								</tr></table>
 								<div id="regex_replace_mod" class="input_regex_flags">
-									<span class="input_box" style="white-space:nowrap;"><input id="regex_replace_mod_i" type="checkbox" class="input">no case</span>
-									<span class="input_box" style="white-space:nowrap;"><input id="regex_replace_mod_g" type="checkbox" class="input">global</span>
-									<span class="input_box" style="white-space:nowrap;"><input id="regex_replace_mod_m" type="checkbox" class="input">multiline</span>
+									<span class="input_box" style="white-space:nowrap;" title="Check to make the search case insensitive"><input id="regex_replace_mod_i" type="checkbox" class="input">no case</span>
+									<span class="input_box" style="white-space:nowrap;" title="Check to make the search global"><input id="regex_replace_mod_g" type="checkbox" class="input">global</span>
+									<span class="input_box" style="white-space:nowrap;" title="Check to repeat the search on each line"><input id="regex_replace_mod_m" type="checkbox" class="input">multiline</span>
 								</div>
 							</div>
 							<!-- 3. expert mode input field -->
-							<div class="tabbed_panel on" id="regex_expert">
+							<div class="tabbed_panel" id="regex_expert">
+								<div class="note">Type a regular expression in the following field (e.g. /atext/i).</div>
 								<input type="text" id="regex_expert_a" class="input"
 									style="width:100%;"
 									title="\'[m]/pattern/[modifiers]\' or \'s/pattern/replace/[modifiers]\'"
@@ -257,7 +274,7 @@
 				</ul>
 
 				<br class="spacer">
-					
+
 				<!-- Regexpresso's nice host -->
 				<div>
 					<a href="http://developer.berlios.de" target="_blank">

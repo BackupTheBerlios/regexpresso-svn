@@ -45,15 +45,15 @@ function cbonar_regex_asPerlRegexPattern( pattern )
 	Splits a Perl pattern into different parts
 
 	@tparam String pattern	The pattern, using Perl syntax
-	@see asPerlRegexPattern
+	@see cbonar_regex_asPerlRegexPattern
 	@return an object with the following fields : { action (=function), pattern, modifiers [,replace_string] }. action is 'm' or '' (empty) for search, 's' for search & replace ; replace_string is present only if action = 's'.
 */
 function cbonar_regex_explainPerlRegexPattern( pattern )
 {
 	var explained = new Object();
-	var perl_pattern = asPerlRegexPattern(pattern);
+	var perl_pattern = cbonar_regex_asPerlRegexPattern(pattern);
 
-	explained.action = perl_pattern.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes in asPerlRegexPattern
+	explained.action = perl_pattern.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes in cbonar_regex_asPerlRegexPattern
 	switch ( explained.action )
 	{
 		case "s":
