@@ -12,4 +12,22 @@
  @section unittesting Unit testing
  Unit testing is realised by loading <tt>tools/unittests.html</tt> into the <a href="http://www.jsunit.net">JsUnit TestRunner</a>.<br />
  There is also a <tt>tools/testcases.html</tt> with use cases to be realised by hand.<br />
+
+ @section regexpresso About RegExpresso
+ This project started as a simple test page for the Javascript regular expression object <tt>RegExp</tt>.<br />
+ Talking about regular expressions, one has to know that all languages don't implement regular expressions exactly the same way.
+ This is why there's a Perl syntax (the one like <tt>s/toto/tutu/g</tt> ), Python extensions (like named backreferences),
+ and especially there are differences between Javascript implementations (depending on the browser, the version, ...).
+ One have a look at most of those differences in <a href="http://www.webreference.com/js/column5/index.html">this excellent column at webreference.com</a>.
+ Today a standard emerged : ECMAScript, that aims to unify all Javascript implementations in a common interface.
+ This standard defines a RegExp object, which this tool is using as a reference.
+ This has disadvantages : the Javascript engine of the web browser has to be at least 1.5.
+ 
+ This tool is also using <a href="">mootools</a> as a backend for the graphical interface and to make the code more maintainable.
+ It's based on <em>prototype</em> (and Ajax but RegExpresso doesn't make use of it) technology, and also requires advanced Javascript and CSS handling from the web browser.
+
+ @section references References
+ <ul>
+ <li><a href="http://www.webreference.com/js/column34/index.html">Inheritance through Prototypes</a>
+ </ul>
 */
