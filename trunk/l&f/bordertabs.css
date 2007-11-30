@@ -1,0 +1,72 @@
+/* ////////////////////////////////
+	Tabs with a border-effect
+	( draws tabs with no image, only well placed borders )
+
+.tabs		: contains the real tabs
+.tab		: the real tabs
+.tabbed_panels	: contains the content panes to be tabbed
+.tabbed_panel	: the tabbed panels
+.on		: the selected tab
+//////////////////////////////// */
+
+.tabbed_panels, .tabs {
+	border-style:none;
+}
+
+.tab {
+	border-top:none;
+	border-bottom: none;
+}
+
+/* only the selected tab */
+.tabs .on {
+	border-top-style: none;
+}
+
+
+
+/* ////////////////////////////////
+	Tabs : shape of the borders
+//////////////////////////////// */
+
+
+
+.tabbed_panels, .tab {
+	border-width:1px;
+}
+
+.tab {
+	text-decoration:none;	/* because we use anchors to make the tabs */
+	text-align: center;
+}
+
+/* only the selected tab */
+.tabs .on {
+	border-top-width:1px;	/* looks betters since pixels are not exact squares*/
+	padding-bottom: 1px;	/* must be same as .tabbed_panels[border-top-width] */
+}
+
+
+
+/* ////////////////////////////////
+	Tabs : colors
+//////////////////////////////// */
+
+
+
+#section_regex .tabbed_panels {
+	padding:1em;
+	background-color:#DBFF92;	/* pastel green */
+	border-color: #a1a6a9;
+}
+
+#section_regex .tab {
+	background-color:#a1a6a9;
+	border-color: #a1a6a9;		/* should be same color as .tabbed_panels[border-color] */
+}
+
+/* only the selected tab */
+#section_regex .tabs .on {
+	background-color:#DBFF92;	/* nice to make it make color as .tabbed_panels[background-color] */
+	border-color: #a1a6a9;
+}

@@ -21,34 +21,6 @@
 
 
 /* ////////////////////////////////
-	Tabs with a border-effect
-	( draws tabs with no image, only well placed borders )
-
-.tabs		: contains the real tabs
-.tab		: the real tabs
-.tabbed_panels	: contains the content panes to be tabbed
-.tabbed_panel	: the tabbed panels
-.on		: the selected tab
-//////////////////////////////// */
-
-.tabbed_panels {
-	border-style:solid;
-}
-
-.tab {
-	border-style:solid;
-	border-top:none;
-	border-bottom: none;
-}
-
-/* only the selected tab */
-.tabs .on {
-	border-top-style: solid;
-}
-
-
-
-/* ////////////////////////////////
 	Accordion widget
 //////////////////////////////// */
 

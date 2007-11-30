@@ -1,3 +1,5 @@
+/*@import "bordertabs.css";	/* a style to render tabs using css borders */
+
 /**
 	Only changes colors and few aspects.
 	=> Changing this will never break the rendering, but may remove valuable visual clues.
@@ -11,14 +13,10 @@
 
 
 
-* {
-	margin: 0;
-	padding: 0;
-}
-
 body {
 	background-color:white;
-	padding:8px;
+	margin: 0;
+	padding: 0;
 	font-family:arial,verdana;
 	}
 
@@ -42,14 +40,22 @@ a img {
 	}
 #title .presto {
 	font-style:italic;
-	color:red;
-	}
+	color: #0092FF;
+}
 
 /* for beta releases ; blink is not implemented in IE6, though */
 #title .beta {
 	color: #FF9900;
 	text-decoration: blink;
 	}
+
+/* version ² */
+#title .square {
+	color: #0092FF;
+	font-size: smaller;
+	vertical-align:sub;
+}
+
 
 /* A div container for important messages. Those messages may be of class 'error' */
 #warning {
@@ -71,11 +77,6 @@ a img {
 .error {
 	color: red;
 }
-
-/* the (only) active accordion toggler */
-h2.on {
-	background-color:red;
-	}
 
 img.topmenu:hover {
 	background:#DBDBFF;
@@ -104,6 +105,30 @@ ul.doc {
 	padding-left:2em;
 }
 
+/* accordion 'titles' */
+.accordion_toggler {
+	font-family: arial,verdana,courier;
+	font-size: 13pt;
+	font-weight: bold;
+	background-color: #BBBBBB;
+	margin:0;
+	padding-left:1em;
+	border-top:solid gray 1px;
+}
+
+/* the active accordion togglers */
+h1.on, h2.on {
+	background-color:#DDDDDD;
+	/*border-bottom:dotted #BBBBBB 1px;*/
+}
+
+
+
+/* alternate appearance of the description fields */
+.desc_again {
+	font-style:italic;
+}
+
 
 
 /* ////////////////////////////////
@@ -112,63 +137,52 @@ ul.doc {
 
 
 
+form {
+	margin: 5px;
+}
+
 /* The 'input' class highlights the tag as beeing an input zone */
 .input {
-	border:solid #2449DB 1px;
-	}
+	border: solid #0092FF 2px;
+}
 
 /* on hover */
 .input:hover {
-	border: solid #FFA500 1px;
+	border-color:#DB496D;	/* nice fruity purple */
 	}
 
 /* on focus for editable inputs */
 input[type=text]:focus, textarea:focus, .tabbed_panel:focus {
-	background-color:#FFFFBB;
+	background-color:#FFCCFF;
 	}
 
 input[type=button], input[type=submit] {
 	font-family:arial, verdana;
 	font-size:9pt;
+	border:none;
+	outline: solid #0092FF 2px;
 	}
 
-
-
-/* ////////////////////////////////
-	Tabs : shape of the borders
-//////////////////////////////// */
-
-
-
-.tabbed_panels, .tab {
-	border-width:2px;
+input[type=checkbox] {
+	border:solid #DBFF92 1px;
 }
 
-/* only the selected tab */
-.tabs .on {
-	border-top-width:1px;	/* looks betters since pixels are not exact squares*/
-	padding-bottom: 2px;	/* must be same as .tabbed_panels[border-top-width] */
+.input_box {
+	font-size:8pt;
 }
 
-.tab {
-	text-decoration:none;	/* because we use anchors to make the tabs */
-	text-align: center;
+.input_regex_flags {
+	margin-top:0.5em;
+	text-align: justify;
 }
 
 
 
 /* ////////////////////////////////
-	Input regex
+	Tabbed input fields : the regular expression pattern
 //////////////////////////////// */
 
 
-
-#section_regex .tabbed_panels {
-	padding:1em;
-	border-color: #a1a6a9;
-	background-color:#E1E1FF;
-	background-color:white;
-}
 
 #section_regex .tab {
 	padding-left:0.5em;
@@ -176,17 +190,22 @@ input[type=button], input[type=submit] {
 	font-weight:bold;
 	color:#666666;
 	font-size:8pt;
-	background:#a1a6a9;
-	border-color: #a1a6a9;		/* should be same color as .tabbed_panels[border-color] */
+	background-color:#a1a6a9;
 }
 
 /* only the selected tab */
 #section_regex .tabs .on {
 	color:black;
-	background: yellow;
-	background-color:#E1E1FF;	/* nice to make it make color as .tabbed_panels[background-color] */
-	background-color:yellow;	/* nice to make it make color as .tabbed_panels[background-color] */
-	border-color: #a1a6a9;
+}
+
+#section_regex .tabbed_panels {
+	padding:1em;
+	padding-left:0.7em;
+	padding-right:0.7em;
+}
+
+#section_regex .tabbed_panels, #section_regex .tabs .on {
+	background-color:#DBFF92;	/* pastel green */
 }
 
 
