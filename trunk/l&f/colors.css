@@ -8,7 +8,7 @@
 
 
 /* ////////////////////////////////
-	Base style
+	Basic style
 //////////////////////////////// */
 
 
@@ -208,6 +208,12 @@ input[type=checkbox] {
 	background-color:#DBFF92;	/* pastel green */
 }
 
+.tabbed_panel .note {
+	font-size:smaller;
+	color:gray;
+	/*font-style:italic;*/
+	margin-bottom:1em;
+}
 
 
 /* ////////////////////////////////
