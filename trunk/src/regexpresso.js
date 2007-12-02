@@ -310,7 +310,9 @@ RegExpresso.prototype.onFieldUpdate = function( el )
 
 	// updates the result if needed
 	if ( this.options['autorefresh'] && input_regex.value != oldval )
-		document.form.submit();
+	{
+		this.onSubmit();
+	}
 }
 
 
@@ -333,6 +335,8 @@ RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
 		{
 			case 'm':
 			case '':
+			{
+				// first, prints the number of matches
 				var howmany_text = "No match.";
 				if ( this.worker.matches.length() > 0 )
 				{
@@ -340,32 +344,31 @@ RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
 						howmany_text = "1 match :";
 					else
 						howmany_text = this.worker.matches.length() + " matches :";
+				}
+				dom_output.innerHTML = document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text));
 
-					// first, prints the number of matches
-					dom_output.innerHTML = document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text));
-
-					// then outputs the different kind of available representations
-					// the following operations can take time if the input text is big
+				// then outputs the different kind of available representations
+				// the following operations can take time if the input text is big
+				if ( this.worker.matches.length() > 0 )
+				{
 					dom_output.addTab( "output_text", this.worker.asHTML() );
 					dom_output.addTab( "output_table", this.worker.asTable() );
 				}
-				break;
+			}
+			break;
 
 			case 's':
-				var howmany_text = "Nothing was replaced.";
-				if ( this.worker.matches.length() > 0 )
-				{
-					howmany_text = this.worker.matches.length() + " replaced :";
+			{
+				// first, prints the number of matches
+				var howmany_text = this.worker.matches.length() > 0 ? this.worker.matches.length() + " replaced :" : "Nothing was replaced.";
+				dom_output.innerHTML = document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text));
 
-					// first, prints the number of matches
-					dom_output.innerHTML = document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text));
-
-					// then outputs the different kind of available representations
-					// the following operations can take time if the input text is big
-					dom_output.addTab( "output_text", this.worker.asHTML() );
-					dom_output.addTab( "output_text", this.worker.asText() );
-				}
-				break;
+				// then outputs the different kind of available representations
+				// the following operations can take time if the input text is big
+				dom_output.addTab( "output_text", this.worker.asHTML() );
+				dom_output.addTab( "output_text", this.worker.asText() );
+			}
+			break;
 		}
 	}
 	catch ( e )
