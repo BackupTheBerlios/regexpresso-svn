@@ -1,9 +1,10 @@
 /**///////////////////////////////////////////////////////////////////////////
-///
 /// @file
-/// Classes to ease the use of the RegExp object.
 ///
-/// @requires chainedlist.js
+/// Utility classes to make the RegExp object easier to use.
+///
+/// @requires Joint
+if ( Joint == null ) throw new Error("Class 'Joint' is missing. Make sure that the corresponding library has been correctly loaded.");
 ///
 /// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
 ///
@@ -15,12 +16,12 @@
 // Utility functions
 
 
-
 /**
-	Makes sure the pattern has an understandable format as per the Perl flavor of regular expressions syntax.
+	Formats a pattern using the syntax of the Perl flavor of regular expressions.
+
 	@tparam String pattern The pattern to normalize
 */
-function cbonar_regex_asPerlRegexPattern( pattern )
+asPerlRegexPattern = function( pattern )
 {
 	var perl_pattern = pattern;
 
@@ -45,15 +46,17 @@ function cbonar_regex_asPerlRegexPattern( pattern )
 	Splits a Perl pattern into different parts
 
 	@tparam String pattern	The pattern, using Perl syntax
-	@see cbonar_regex_asPerlRegexPattern
-	@return an object with the following fields : { action (=function), pattern, modifiers [,replace_string] }. action is 'm' or '' (empty) for search, 's' for search & replace ; replace_string is present only if action = 's'.
+	@see asPerlRegexPattern
+	@return an object with the following fields : { action (=function), pattern, modifiers [,replace_string] }.
+		action is 'm' or '' (empty) for search, 's' for search & replace ;
+		replace_string is present only if action = 's'.
 */
-function cbonar_regex_explainPerlRegexPattern( pattern )
+explainPerlRegexPattern = function( pattern )
 {
 	var explained = new Object();
-	var perl_pattern = cbonar_regex_asPerlRegexPattern(pattern);
+	var perl_pattern = asPerlRegexPattern(pattern);
 
-	explained.action = perl_pattern.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes in cbonar_regex_asPerlRegexPattern
+	explained.action = perl_pattern.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes in asPerlRegexPattern
 	switch ( explained.action )
 	{
 		case "s":
@@ -83,11 +86,13 @@ function cbonar_regex_explainPerlRegexPattern( pattern )
 
 
 /**
-	Makes a new RegExp as much as possible with the given pattern
+	Makes a new RegExp from a 'loose' pattern, typed by the end-user.
+
 	@see explainPerlRegexPattern
+	@tparam String pattern	A 'loose' pattern : it is expected to be typed by a user, and does not need to be in the exact format the RegExp object requires
 	@return a RegExp object, based on the given pattern or pattern itself if it's already a RegExp
 */
-function cbonar_regex_asRegExp( pattern )
+asRegExp = function( pattern )
 {
 	// a bit of easy coding...
 	if ( pattern && pattern.prototype && pattern.prototype == RegExp )
@@ -101,24 +106,24 @@ function cbonar_regex_asRegExp( pattern )
 
 
 //////////////////////////////////////////////////////////////////////////////
-// Helper classes
+// Helper class
 
 
 
 /**
  * Holds informations about one of the matches of the result of a match() operation.
+ *
  * It's implemented as a chained-list.
  *
- * @ctor
- * Contructor
+ * @ctor Constructor
  * @tparam String textBefore	see Match#getTextBefore()
  * @tparam String textAfter	see Match#getTextAfter()
  * Other member values defaults to -1 for numbers, empty for arrays and null for others.
  */
-function Match( index, text, textBefore, textAfter, groups )
+Match = function( index, text, textBefore, textAfter, groups )
 {
-	// ctor
-	Joint.call(this);
+	// @ctor
+	Joint.apply(this);
 
 	/**
 	 * The index of the first char of this match in the whole subject
@@ -138,13 +143,47 @@ function Match( index, text, textBefore, textAfter, groups )
 	 */
 	this.groups = groups ? groups : new Array();
 
+
+
+	/**
+	 * Sets the value of the text that was not matched between this match and the previous one.
+	 * Erases at the same time the text that was not matched after the previous match since it's the same.
+	 * The only difference is that this object stores the text instead of the previous one.
+	 *
+	 * If a second argument is given, it is the target object to assign the text to.
+	 */
+	this.setTextBefore = function( text )
+	{
+		var me = arguments.length > 1 ? arguments[1] : this;
+		me.textBefore = text;
+		if ( me.previous )
+			me.previous.textAfter = null;
+	}
+
+
+
+	/**
+	 * Sets the value of the text that was not matched between the next match and this one.
+	 * Erases at the same time the text that was not matched before the next match since it's the same.
+	 * The only difference is that this object stores the text instead of the next one.
+	 *
+	 * If a second argument is given, it is the target object to assign the text to.
+	 */
+	this.setTextAfter = function( text )
+	{
+		var me = arguments.length > 1 ? arguments[1] : this;
+		me.textAfter = text;
+		if ( me.next )
+			me.next.textBefore = null;
+	}
+
 	// private members, if they are directly modified, the corresponding accessors are not guaranteed to act as specified
 	this.setTextBefore(textBefore);
 	this.setTextAfter(textAfter);
 }
 Match.prototype = new Joint();
 /** @ctor */
-Match.prototype.constructor = Match;
+//Match.prototype.constructor = Match;
 
 
 
@@ -208,46 +247,21 @@ Match.prototype.getTextAfter = function()
 
 
 
-/**
- * Sets the value of the text that was not matched between this match and the previous one.
- * Erases at the same time the text that was not matched after the previous match since it's the same.
- * The only difference is that this object stores the text instead of the previous one.
- */
-Match.prototype.setTextBefore = function( text )
-{
-	this.textBefore = text;
-	if ( this.previous )
-		this.previous.textAfter = null;
-}
-
-
-
-/**
- * Sets the value of the text that was not matched between the next match and this one.
- * Erases at the same time the text that was not matched before the next match since it's the same.
- * The only difference is that this object stores the text instead of the next one.
- */
-Match.prototype.setTextAfter = function( text )
-{
-	this.textAfter = text;
-	if ( this.next )
-		this.next.textBefore = null;
-}
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 // The main class of this library
 
 
 
 /**
-	A user friendly tool to work on regular expressions.
+	A utility class to work on regular expressions.
 
-	It works the following way : one build an instance around an existing RegExp and text to apply to.
-	It then compute the regular expression against the given text and stores all matches so they can be accessed without further work.
+	All matches are computed using the standard Javascript RegExp object,
+	and stored in a chained list at construction time so they can be accessed without further work.
 
-	During a matching operation, the results are considered to be a sequence like :
+	The results are accessible through the variable 'matches'.
+	The match 'x' is directly accessible via this.matches[x).
+
+	The text given at construction time is splitted by the regular expression into a sequence like :
 	 - text not matched 0
 	 - match 0
 	 - text not matched 1
@@ -255,17 +269,16 @@ Match.prototype.setTextAfter = function( text )
 	 - ...
 	 - match n
 	 - text not matched n+1 (= tail)
-	Furthermore, each match can be made of several groups if the regular expression contains such selectors.
-	What's important when working with regular expressions is to be able to identify the parts that matched.
-	This is why match x is directly accessible via this.matches[x)
+	Furthermore, each match can have several groups (backreferences) if the regular expression contains such selectors.
 
-	@ctor
-	Constructor
+	@ctor Constructor
 	@tparam String subject	The text to apply the regex to
 	@tparam RegExp regexp	The regular expression or the corresponding Perl pattern
 */
-function Matcher( subject, pattern )
+Matcher = function( subject, pattern )
 {
+	console.debug("new Matcher(",subject,pattern,")");
+
 	/////////////////////
 	// public fields
 
@@ -338,4 +351,5 @@ function Matcher( subject, pattern )
 			this.matches[m].setTextAfter( subject.substring(match_index,subject.length) );
 	}
 }
+
 
