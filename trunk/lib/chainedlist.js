@@ -1,6 +1,6 @@
 /**///////////////////////////////////////////////////////////////////////////
-///
 /// @file
+///
 /// The Joint class is used to build chained lists.
 ///
 /// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
@@ -16,7 +16,7 @@
  * @tparam Joint previous	The previous Joint in the chain (or null if none)
  * @tparam Joint next		The next Joint in the chain (or null if none)
  */
-function Joint( previous, next )
+Joint = function( previous, next )
 {
 	/**
 	 * Access the Joint before this one
@@ -107,3 +107,5 @@ Joint.prototype.remove = function()
 		this.next.previous = this.previous;
 	return this;
 }
+
+
