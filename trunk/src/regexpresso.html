@@ -66,14 +66,14 @@
 		<script type="text/javascript" src="../lib/ie.js"></script>
 
 		<!-- libraries from this project -->
-		<script type="text/javascript" src="regex.js"></script>
+		<script type="text/javascript" src="util.js"></script>
 		<script type="text/javascript" src="regexpresso.js"></script>
 
 		<!-- additional init scripts -->
 		<script type="text/javascript">
 			// Initializes the dynamic elements not waiting for the images to load.
 			window.onDomReady( function() {
-				regexpresso = new RegExpresso();
+				regexpresso = new RegExpresso('output','input_subject','input_regex');
 			} );
 		</script>
 	</head>
@@ -156,7 +156,7 @@
 			<div class="accordion_stretcher">
 
 				<!-- user's input -->
-				<form id="section_input" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit('output','input_subject','input_regex');return false;">
+				<form id="section_input" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit();return false;">
 
 					<!-- the string representation of the regular expression to use ; is built depending what's typed into the section_regex -->
 					<input type="text" id="input_regex" name="regex" />
@@ -219,17 +219,11 @@
 
 					<br class="spacer">
 
-					<div id="section_output">
+					<div id="section_submit">
 						<input type="submit" id="submit" class="input" value="EVALUATE">
 					</div>
 				</form>
 
-
-
-				<!-- script's output (dynamic content) -->
-				<span id="section_output" class="output" style="width:100%;">
-				</span>
-	
 			</div>
 
 
@@ -237,8 +231,9 @@
 			<!-- Output -->
 			<h2 class="accordion_toggler output">results</h2>
 
+			<!-- script's output (dynamic content) -->
 			<div id="section_output" class="accordion_stretcher">
-                            <p id="output">No result yet.</p>
+                            <div id="output">No result yet.</div>
 			</div>
 
 
