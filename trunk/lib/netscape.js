@@ -1,4 +1,7 @@
 
+// (re)declares a package to add functions to
+NetscapeNavigator = {};
+
 /**
 	Adds a page to the Netscape sidebar.
 
@@ -8,7 +11,7 @@
 	@param sbLoc::String
 		The absolute (!) URL of the page to load
 */
-function cbonar_netscape_addPanel( sbTitle, sbLoc )
+NetscapeNavigator.addPanel = function( sbTitle, sbLoc )
 {
 	//alert("netscape_addPanel("+sbTitle+","+sbLoc+")");
 

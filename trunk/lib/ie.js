@@ -1,5 +1,8 @@
 
-function cbonar_ie_version()
+// (re)declares a package to add functions to
+MSInternetExplorer = {};
+
+MSInternetExplorer.version = function()
 {
 	var ua = window.navigator.userAgent
 	// Dans le cas d'un autre navigateur, renvoie 0
@@ -9,4 +12,4 @@ function cbonar_ie_version()
 	else
 		return 0;
 }
- 
+
