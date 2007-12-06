@@ -1,8 +1,15 @@
 /**///////////////////////////////////////////////////////////////////////////
-///
-/// @requires ie.js
 /// @file
+///
 /// Classes and functions specific to the RegexPresso project.
+///
+/// @requires mootools
+if ( $$ == null ) throw new Error("'$$' function is missing. Make sure the Mootools library has been correctly loaded.");
+/// @requires nicommons.ie
+if ( MSInternetExplorer == null ) throw new Error("Class 'MSInternetExplorer' is missing. Make sure the corresponding library has been correctly loaded.");
+/// @requires Matcher
+if ( Matcher == null ) throw new Error("Class 'Matcher' is missing. Make sure that the corresponding library has been correctly loaded.");
+///
 /// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
 ///
 ///////////////////////////////////////////////////////////////////////////*/
@@ -51,7 +58,7 @@ document.createSimpleElement = function( dom_type, css_class, dom_child )
 	A simple iterator on an array, looping forever.
 	@tparam Array values
 */
-function Loop( values )
+Loop = function( values )
 {
 	this.index = 0;
 	this.values = values;
@@ -69,6 +76,7 @@ function Loop( values )
 	A MatchContext is used to locate the match inside a text.
 	It gathers the text before and the text after the match.
 	It's not usefull to call this constructor directly, it's meant to be instanciated by RegexPressoWorker#getContext().
+
 	@ctor
 	All arguments to this constructor are just stored and can simply be accessed later as member variables.
 */
@@ -102,7 +110,7 @@ MatchContext = function( matchIndex, matchText, textBefore, textAfter )
 
 
 /**
- * @treturn Array	The differents parts of this object that makes a string : { textBefore, matchText, textAfter }
+ * @treturn Array	The 'string' parts of this object : { textBefore, matchText, textAfter }
  */
 MatchContext.prototype.valueOf = function()
 {
@@ -124,8 +132,11 @@ MatchContext.prototype.toString = function()
 /**
 	The RegexWorker class is a specialized Matcher
 */
-RegexWorker = function() {};
-RegexWorker.prototype = new Matcher;
+RegexWorker = function( subject, pattern ) {
+	Matcher.apply(this,[subject,pattern]);
+	console.debug("new RegexWorker(",subject,pattern,")=",this);
+};
+RegexWorker.prototype = new Matcher(null,null);
 
 
 
@@ -204,9 +215,16 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 	This class represents the whole application and holds global functions.
 	When instanciated, it initializes the application global parameters, sets default values, etc.
 	Therefore, it should be instanciated only once.
+
+	@tparam Element input_subject	The input field containing the subject to apply the regex to
+	@tparam Element input_regex	The input field containing the regular expression pattern to apply to the subject
 */
-RegExpresso = function()
+RegExpresso = function( output, input_subject, input_regex )
 {
+	this.dom_output = $(output);
+	this.dom_subject = $(input_subject);
+	this.dom_regex = $(input_regex);
+
 	// all options are gathered in this table
 	this.options = {
 		'accordion_opacity': true,
@@ -319,64 +337,94 @@ RegExpresso.prototype.onFieldUpdate = function( el )
 
 /**
 	Updates the result
-	@tparam Element input_subject	The input field containing the subject to apply the regex to
-	@tparam Element input_regex	The input field containing the regular expression pattern to apply to the subject
 	@throws Exception		If any occured and couldn't be catched
 */
-RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
+RegExpresso.prototype.onSubmit = function()
 {
-	console.debug('onSubmit(',output,input_subject,input_regex,')');
-	var dom_output = $(output);
+	console.debug(this,".onSubmit()");
+
+	// makes sure even the first time the pattern used is the one printed
+	// (when no change has occured yet in the fields)
+	console.debug("switch(",this.tabs_regex.tabs[this.tabs_regex.now],")");
+	switch ( this.tabs_regex.now )
+	{
+		case 0:
+			this.onFieldUpdate($('regex_search_a'));
+			this.onFieldUpdate($('regex_search_mod_i'));
+			this.onFieldUpdate($('regex_search_mod_g'));
+			this.onFieldUpdate($('regex_search_mod_m'));
+			break;
+		case 1:
+			this.onFieldUpdate($('regex_replace_a'));
+			this.onFieldUpdate($('regex_replace_mod_i'));
+			this.onFieldUpdate($('regex_replace_mod_g'));
+			this.onFieldUpdate($('regex_replace_mod_m'));
+			break;
+		case 2:
+			this.onFieldUpdate($('regex_expert_a'));
+			break;
+	}
+
 	try
 	{
 		// the following operation can take time if the input text is big
-		this.worker = new RegexWorker( $(input_subject).value, $(input_regex).value );
-		switch ( cbonar_regex_explainPerlRegexPattern(this.worker.pattern).action )
+		this.worker = new RegexWorker( this.dom_subject.value, this.dom_regex.value );
+		switch ( explainPerlRegexPattern(this.worker.pattern).action )
 		{
 			case 'm':
 			case '':
 			{
 				// first, prints the number of matches
 				var howmany_text = "No match.";
-				if ( this.worker.matches.length() > 0 )
+				if ( this.worker.matches.length > 0 )
 				{
-					if ( this.worker.matches.length() == 1 )
-						howmany_text = "1 match :";
+					if ( this.worker.matches.length == 1 )
+						howmany_text = "1 match";
 					else
-						howmany_text = this.worker.matches.length() + " matches :";
+						howmany_text = this.worker.matches.length + " matches";
 				}
-				dom_output.innerHTML = document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text));
+				// TODO : a special div for the count and/or a special tab with stats
+				while ( this.dom_output.childNodes.length > 0 )
+					this.dom_output.removeChild(this.dom_output.firstChild);
+				this.dom_output.appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
 
 				// then outputs the different kind of available representations
 				// the following operations can take time if the input text is big
-				if ( this.worker.matches.length() > 0 )
+				// TODO : implement addTab in the following code
+				/*if ( this.worker.matches.length > 0 )
 				{
-					dom_output.addTab( "output_text", this.worker.asHTML() );
-					dom_output.addTab( "output_table", this.worker.asTable() );
-				}
+					this.dom_output.addTab( "output_text", this.worker.asHTML() );
+					this.dom_output.addTab( "output_table", this.worker.asTable() );
+				}*/
 			}
 			break;
 
 			case 's':
 			{
 				// first, prints the number of matches
-				var howmany_text = this.worker.matches.length() > 0 ? this.worker.matches.length() + " replaced :" : "Nothing was replaced.";
-				dom_output.innerHTML = document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text));
+				var howmany_text = this.worker.matches.length > 0 ? this.worker.matches.length + " replaced :" : "Nothing was replaced.";
+				while ( this.dom_output.childNodes.length > 0 )
+					this.dom_output.removeChild(this.dom_output.firstChild);
+				this.dom_output.appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
 
 				// then outputs the different kind of available representations
 				// the following operations can take time if the input text is big
-				dom_output.addTab( "output_text", this.worker.asHTML() );
-				dom_output.addTab( "output_text", this.worker.asText() );
+				/*this.dom_output.addTab( "output_text", this.worker.asHTML() );
+				this.dom_output.addTab( "output_text", this.worker.asText() );*/
 			}
 			break;
 		}
+
+		// in all cases, make sure to show the results
+		this.accordion.showSection(1);
 	}
 	catch ( e )
 	{
-		console.debug(e);
+		if( console != null )
+			console.debug(e);
 
 		// @see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/script56/html/js56jslrfJScriptErrorsTOC.asp
-		if ( cbonar_ie_version() > 0 )
+		if ( MSInternetExplorer.version() > 0 )
 		{
 			switch ( e.number & 0xFFFF )
 			{
@@ -394,7 +442,7 @@ RegExpresso.prototype.onSubmit = function( output, input_subject, input_regex )
 		}
 		else if ( e instanceof SyntaxError )
 		{
-			dom_output.innerHTML = document.createSimpleElement("pre","error",document.createTextNode(e.message));
+			this.dom_output.innerHTML = document.createSimpleElement("pre","error",document.createTextNode(e.message));
 		}
 		else
 		{
