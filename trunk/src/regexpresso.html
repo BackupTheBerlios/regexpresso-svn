@@ -72,8 +72,28 @@
 		<!-- additional init scripts -->
 		<script type="text/javascript">
 			// Initializes the dynamic elements not waiting for the images to load.
-			window.onDomReady( function() {
-				regexpresso = new RegExpresso('output','input_subject','input_regex');
+			window.addEvent( 'domready', function() {
+
+				regexpresso = new RegExpresso({
+					// fields' id
+					'widgets': {
+						'output': ["output"],
+						'regex': ["input_regex"],
+						'subject': ["input_subject","input_subject_resizer"],
+						'search': ["regex_search_a","regex_search_mod_i","regex_search_mod_g","regex_search_mod_m"],
+						'replace': ["regex_replace_a","regex_replace_b","regex_replace_mod_i","regex_replace_mod_g","regex_replace_mod_m"],
+						'expert': ["regex_expert_a"],
+						'options': ["options"]
+						},
+					// default options
+					'options': {
+						'accordion_opacity': true,
+						'tabswapper_smooth': true,
+						'autorefresh': false,
+						'show_count': true,
+						'show_results': true
+						}
+					});
 			} );
 		</script>
 	</head>
@@ -162,6 +182,7 @@
 					<input type="text" id="input_regex" name="regex" />
 
 					<textarea id="input_subject" class="input" name="subject" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:100%;">[Type / paste here the text to evaluate]</textarea>
+					<img id='input_subject_resizer' src="" alt="&uarr;&darr;">
 
 					<br class="spacer">
 
@@ -240,7 +261,7 @@
 			<h2 class="accordion_toggler options">options</h2>
 
 			<div id="section_options" class="accordion_stretcher">
-                            <p>
+                            <p id="options">
 				<table>
 					<tr>
 						<td>OPTION 1</td>
