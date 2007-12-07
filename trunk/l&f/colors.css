@@ -65,6 +65,10 @@ a img {
 	padding: 2pt;
 	}
 
+#input_subject_resizer:hover {
+	cursor:move;
+	cursor:s-resize;
+}
 
 
 /* ////////////////////////////////
