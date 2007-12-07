@@ -3,8 +3,12 @@
 ///
 /// Utility classes to make the RegExp object easier to use.
 ///
+/// @requires String
+if ( String == null ) throw new Error("Class 'String' is missing. Make sure your browser is Javascript 1.2+ compliant.");
+/// @requires RegExp
+if ( RegExp == null ) throw new Error("Class 'RegExp' is missing. Make sure your browser is Javascript 1.2+ compliant.");
 /// @requires Joint
-if ( Joint == null ) throw new Error("Class 'Joint' is missing. Make sure that the corresponding library has been correctly loaded.");
+if ( Joint == null ) throw new Error("Class 'Joint' is missing. Make sure the corresponding library has been correctly loaded.");
 ///
 /// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
 ///
@@ -13,7 +17,7 @@ if ( Joint == null ) throw new Error("Class 'Joint' is missing. Make sure that t
 
 
 //////////////////////////////////////////////////////////////////////////////
-// Utility functions
+// Utility functions as extensions to existing Javascript core classes
 
 
 /**
@@ -21,9 +25,9 @@ if ( Joint == null ) throw new Error("Class 'Joint' is missing. Make sure that t
 
 	@tparam String pattern The pattern to normalize
 */
-asPerlRegexPattern = function( pattern )
+RegExp.asPerlRegexPattern = function( pattern )
 {
-	var perl_pattern = pattern;
+	var perl_pattern = new String(pattern);
 
 	var slashes = perl_pattern.replace(/\\\\/g,"").replace(/\\\//,"").split("/").length-1;
 	//alert(slashes+" slashes");
@@ -51,10 +55,10 @@ asPerlRegexPattern = function( pattern )
 		action is 'm' or '' (empty) for search, 's' for search & replace ;
 		replace_string is present only if action = 's'.
 */
-explainPerlRegexPattern = function( pattern )
+RegExp.explainPerlRegexPattern = function( pattern )
 {
 	var explained = new Object();
-	var perl_pattern = asPerlRegexPattern(pattern);
+	var perl_pattern = RegExp.asPerlRegexPattern(pattern);
 
 	explained.action = perl_pattern.match(/([ms]?)\//)[1];	// we can do that because we previously added (possibly) missing slashes in asPerlRegexPattern
 	switch ( explained.action )
@@ -92,15 +96,20 @@ explainPerlRegexPattern = function( pattern )
 	@tparam String pattern	A 'loose' pattern : it is expected to be typed by a user, and does not need to be in the exact format the RegExp object requires
 	@return a RegExp object, based on the given pattern or pattern itself if it's already a RegExp
 */
-asRegExp = function( pattern )
+String.prototype.asRegExp = function()
 {
-	// a bit of easy coding...
+	var pattern = this;
+
+	// makes coding more funny
 	if ( pattern && pattern.prototype && pattern.prototype == RegExp )
+	{
 		return pattern;
-
-	var roger = explainPerlRegexPattern(pattern);
-
-	return new RegExp( roger.pattern, roger.modifiers );
+	}
+	else
+	{
+		var roger = RegExp.explainPerlRegexPattern(pattern);
+		return new RegExp( roger.pattern, roger.modifiers );
+	}
 }
 
 
@@ -311,7 +320,7 @@ Matcher = function( subject, pattern )
 	// initialization
 
 	// makes sure we have an instance of RegExp
-	var regex = asRegExp(pattern);
+	var regex = pattern.asRegExp();
 
 	// computes the matches
 	var results = regex.exec(subject);
