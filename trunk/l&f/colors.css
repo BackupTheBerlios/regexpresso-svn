@@ -82,7 +82,7 @@ a img {
 	color: red;
 }
 
-img.topmenu:hover {
+img.topmenu:hover, #section_menu a.hover img {
 	background:#DBDBFF;
 }
 
