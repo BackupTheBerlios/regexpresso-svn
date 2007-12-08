@@ -1,0 +1,19 @@
+/**
+  Patch(es) for Internet Explorer
+*/
+
+
+/* ////////////////////////////////
+	The top menu
+//////////////////////////////// */
+
+/* no support for 'position:fixed;' however 'absolute' is not far */
+#section_menu {
+  position:absolute;
+  top:expression(document.body.scrollTop-15);
+}
+
+/* no ':hover' selector : the element under the cursor has its id changed to 'hover' by script */
+#section_menu.hover {
+  top:expression(document.body.scrollTop);
+}
