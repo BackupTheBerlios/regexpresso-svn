@@ -1,7 +1,7 @@
 /**///////////////////////////////////////////////////////////////////////////
 /// @file
 ///
-/// Classes and functions specific to the RegexPresso project.
+/// Classes and functions specific to the regexpresso project.
 ///
 /// @requires mootools
 if ( MooTools == null || MooTools['version'] < 1.1 ) throw new Error("'MooTools 1.1+' is missing. Make sure the Mootools library has been correctly loaded.");
@@ -75,7 +75,7 @@ Loop = function( values )
 /**
 	A MatchContext is used to locate the match inside a text.
 	It gathers the text before and the text after the match.
-	It's not usefull to call this constructor directly, it's meant to be instanciated by RegexPressoWorker#getContext().
+	It's not usefull to call this constructor directly, it's meant to be instanciated by RegexpressoWorker#getContext().
 
 	@ctor
 	All arguments to this constructor are just stored and can simply be accessed later as member variables.
@@ -207,7 +207,7 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 
 
 //////////////////////////////////////////////////////////////////////////////
-// RegExpresso class
+// Regexpresso class : the application
 
 
 
@@ -218,9 +218,9 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 
 	TODO : moo-ishize this class (initialize, options, ...)
 */
-RegExpresso = function( args )
+Regexpresso = function( args )
 {
-	console.debug("new RegExpresso(",args,")");
+	console.debug("new Regexpresso(",args,")");
 
 	// output div : where to print the results
 	this.dom_output = $(args['widgets']['output'][0]);
@@ -260,7 +260,6 @@ RegExpresso = function( args )
 	// even if the result is exactly the same
 	this.desc_again = new Loop(["desc","desc_again"]);
 
-
 	// Tabs have to be initialized before accordion so the accordion
 	// opens with the right size when it opens itself.
 	// Actually, the accordion seems to use the size of the selected tab
@@ -294,6 +293,14 @@ RegExpresso = function( args )
 
 	// Apply common properties / methods to objects.
 
+  // what follows is more or less a patch for IE to simulate ':hover' with the class '.hover'
+  // it enables the retractible menu to work with IE
+  // note : *[hover=on] doesn't work, but div[hover=on] does, so I choosed .hover as the selector
+  $$(".hoverme").each( function(item,index) {
+    item.addEvent( "mouseenter", function(){ this.addClass("hover") } );
+    item.addEvent( "mouseleave", function(){ this.removeClass("hover") } );
+  } );
+
 	// auto-select the text in the input fields when focused
 	$$(".input[type=text]",".input[type=password]","textarea.input").each( function(el,p) {
 		el.onfocus = function() { this.select(); };
@@ -314,7 +321,7 @@ RegExpresso = function( args )
 	It's a clearer view than to have it in every object.
 	@tparam Element el	The field (or its id)
 */
-RegExpresso.prototype.onFieldUpdate = function( el )
+Regexpresso.prototype.onFieldUpdate = function( el )
 {
 	var oldval = this.dom_regex.value;
 
@@ -361,7 +368,7 @@ RegExpresso.prototype.onFieldUpdate = function( el )
 	Updates the result
 	@throws Exception		If any occured and couldn't be catched
 */
-RegExpresso.prototype.onSubmit = function()
+Regexpresso.prototype.onSubmit = function()
 {
 	console.debug(this,".onSubmit()");
 
