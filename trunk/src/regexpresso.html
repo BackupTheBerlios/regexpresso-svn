@@ -18,10 +18,18 @@
 		<!-- stylesheets -->
 		<link rel="stylesheet" type="text/css" href="../l&amp;f/colors.css">
 		<link rel="stylesheet" type="text/css" href="../l&amp;f/layout.css">
+		<!-- IE specific style -->
+		<!--[if IE]>
+			<link rel="stylesheet" type="text/css" href="../l&amp;f/layout-ie.css">
+		<![endif]-->
+
 
 
 
 		<!-- frameworks -->
+
+    <!-- firebug lite for IE -->
+    <script type="text/javascript" src="firebug.js"></script>
 
 		<!-- the basic prototype -->
 		<!--script type="text/javascript" src="lib/prototype.js"></script-->
@@ -74,7 +82,7 @@
 			// Initializes the dynamic elements not waiting for the images to load.
 			window.addEvent( 'domready', function() {
 
-				regexpresso = new RegExpresso({
+				regexpresso = new Regexpresso({
 					// fields' id
 					'widgets': {
 						'output': ["output"],
@@ -145,22 +153,23 @@
 			There is also a link that opens this page with the current fields values in a new window.
 			Finally, there is a link that opens the results in the main (bigger) window, while in sidebar mode.
 		-->
-		<div id="section_menu"><!--
+		<div id="section_menu" class="hoverme"><!--
 				Left (start) boundary
 			--><img src="../l&amp;f/menu-down-left.png" alt="{"><!--
 				To the sidebar (only for IE and Firefox)
-			--><a id="toSidebar" target="_search" href="regexpresso.html"><!--
+			--><a id="toSidebar" target="_search" href="regexpresso.html" class="hoverme"><!--
 				--><img class="topmenu" src="../l&amp;f/tosidebar-22x22.gif" alt="[bar]" title="Open result in sidebar (Internet Explorer and Firefox only)"><!--
 			--></a><!--
 				In a new window
-			--><img id="popOut" class="topmenu" src="../l&amp;f/popout-22x22.gif" alt="[pop]" title="Pop the results up in a new window" onClick="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');"><!--
+			--><a href="javascript:window.open(newLocation(),'_blank','width=240,height=640,scrollbars=yes,resizable=yes');" class="hoverme"><!--
+        --><img id="popOut" class="topmenu" src="../l&amp;f/popout-22x22.gif" alt="[pop]" title="Pop the results up in a new window"><!--
+      --></a><!--
 				Reopen in the current window
-			--><a id="toMain" target="_main" href="regexpresso.html"><!--
+			--><a id="toMain" target="_main" href="regexpresso.html" class="hoverme"><!--
 				--><img class="topmenu" src="../l&amp;f/tomain-22x22.gif" alt="[=&gt;]" title="Open result in the main window"><!--
 			--></a><!--
 				--><img src="../l&amp;f/menu-down-right.png" alt="}"><!--
 		--></div>
-
 
 
 		<!--
@@ -168,8 +177,6 @@
 		-->
 		<div id="content">
 
-			<br class="spacer">
-					
 			<!-- title -->
 			<h1 id="title" class="accordion_toggler">RegEx<span class="presto">presso</span><span class="square">&nbsp;2</span></h1>
 
