@@ -299,10 +299,26 @@ input[type=checkbox] {
 	font-size:x-small;
 }
 
-#output_result {
+/* output as text */
+#output_result pre {
 	border: solid #DBFF00 2px;
-	border-collapse:collapse;
 	background-color:white;
+}
+
+/* output as table */
+#output_result table {
+	margin-top:1px;
+	border: solid black 1px;
+	border-collapse:collapse;
+}
+#output_result td {
+	border: solid black 1px;
+	backround: none;
+}
+#output_result thead td {
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	background:#DBFF00;
 }
 
 /* when there is no result */

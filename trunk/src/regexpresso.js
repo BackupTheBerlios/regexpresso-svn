@@ -7,8 +7,8 @@
 if ( MooTools == null || MooTools['version'] < 1.1 ) throw new Error("'MooTools 1.1+' is missing. Make sure the Mootools library has been correctly loaded.");
 /// @requires nicommons.ie
 if ( !$defined(MSInternetExplorer) ) throw new Error("Class 'MSInternetExplorer' is missing. Make sure the corresponding library has been correctly loaded.");
-/// @requires Matcher
-if ( !$defined(Matcher) ) throw new Error("Class 'Matcher' is missing. Make sure that the corresponding library has been correctly loaded.");
+/// @requires Matcher, Match
+if ( !$defined(Matcher) || !$defined(Match) ) throw new Error("Class 'Matcher' or 'Match' is missing. Make sure that the corresponding library has been correctly loaded.");
 ///
 /// Placed in public domain by cbonar@users.berlios.de, 2005. Share and enjoy!
 ///
@@ -40,7 +40,7 @@ function warning( text )
 	@tparam DOMElement dom_child	The DOM Node to insert into the node
 	@treturn DOMElement sets some properties ; null parameters are ignored
 */
-document.createSimpleElement = function( dom_type, css_class, dom_child )
+/*document.createSimpleElement = function( dom_type, css_class, dom_child )
 {
 	//console.debug("createSimpleElement("+dom_type+","+text+","+css_class+")");
 
@@ -50,7 +50,7 @@ document.createSimpleElement = function( dom_type, css_class, dom_child )
 	if ( dom_child != null )
 		el.appendChild(dom_child);
 	return el;
-}
+}*/
 
 
 
@@ -92,6 +92,9 @@ MatchContext = function( matchIndex, matchText, textBefore, textAfter )
 	 * @type String
 	 */
 	this.textAfter = textAfter;
+
+	this.indexBefore = this.matchIndex - this.textBefore.length;
+	this.indexAfter = this.matchIndex + this.matchText.length + this.textAfter.length;
 }
 
 
@@ -101,7 +104,7 @@ MatchContext = function( matchIndex, matchText, textBefore, textAfter )
  */
 MatchContext.prototype.valueOf = function()
 {
-	return [ this.matchText, this.textBefore, this.textAfter ];
+	return [ this.matchIndex, this.matchText, this.textBefore, this.textAfter ];
 }
 
 
@@ -187,13 +190,14 @@ RegexWorker.showNonPrintable = function( text, classPrefix )
 	@tparam int length_after	the number of characters to take into account after the match
 	@treturn Context		the context surrounding the matched text
 */
-RegexWorker.prototype.getContext = function( match, subject, length_before, length_after )
+RegexWorker.prototype.getContext = function( match, length_before, length_after )
 {
+	var subject = this.subject;
 	return new MatchContext(
-		match.text,
 		match.index,
-		this.subject.substring( Math.max(0,match.index-length_before), match.index ),
-		this.subject.substring( Math.min(match.index+match.length,subject.length), Math.min(match.index+text.length+length_after,subject.length) )
+		match.text,
+		subject.substring( Math.max(0,match.index-length_before), match.index ),
+		subject.substring( Math.min(match.index+match.text.length,subject.length), Math.min(match.index+match.text.length+length_after,subject.length) )
 		);
 }
 
@@ -203,17 +207,17 @@ RegexWorker.prototype.getContext = function( match, subject, length_before, leng
 	Updates the context with dots before and after to emphasize that there's text even before and/or after.
 	@return the modified context
 */
-RegexWorker.prototype.getDottedContext = function( match, subject, length_before, length_after )
+/*RegexWorker.prototype.getDottedContext = function( match, subject, length_before, length_after )
 {
-	var context = this.getContext(match,length_before,length_after);
+	var context = this.getContext(match,subject,length_before,length_after);
 
-	if ( context.index_before > 0 )
-		context.text_before = "..." + context.text_before;
-	if ( context.index_after < this.subject.length-1 )
-		context.text_after += "...";
+	if ( context.indexBefore > 0 )
+		context.textBefore = "..." + context.textBefore;
+	if ( context.indexAfter < this.subject.length-1 )
+		context.textAfter += "...";
 
 	return context;
-}
+}*/
 
 
 
@@ -221,34 +225,31 @@ RegexWorker.prototype.getDottedContext = function( match, subject, length_before
 	Formats a match in an extract of text
 	@return a TextNode
 */
-RegexWorker.prototype.getContextAsText = function ( match, mode )
+/*RegexWorker.prototype.getContextAsText = function ( match, mode )
 {
 	var context = this.getDottedContext( match, 10, 10 );
-	return document.createTextNode( "char. " + context.match_index + " : " + context.text_before + "*" + context.text + "*" + context.text_after );
-}
+	return document.createTextNode( "char. " + context.match_index + " : " + context.text_before + "*" + match.text + "*" + context.text_after );
+}*/
 
 
 
 /**
-	Formats a match in an extract of text
-	@return a <span/> DOM node
+	Extracts text before and after a match
+	@return a <span/> DOM node, with the match surrounded by the text before and after
 */
-RegexWorker.prototype.getContextAsNode = function ( match, mode )
+RegexWorker.prototype.formatContextAsHTML = function ( context )
 {
-	var context = this.getDottedContext( match, 10, 10 );
-	var span = document.createElement("span");
-	span.appendChild( document.createSimpleElement("span","context_info",document.createTextNode("char. "+match_index+" : ")) );
-	span.appendChild( document.createSimpleElement("span","context_before",document.createTextNode(context_before)) );
-	span.appendChild( document.createSimpleElement("span","context_match",document.createTextNode(match)) );
-	span.appendChild( document.createSimpleElement("span","context_after",document.createTextNode(context_after)) );
-	return span;
+	var beforeBefore = context.indexBefore > 0 ? "..." : "";
+	var afterAfter = context.indexAfter < this.subject.length-1 ? "..." : "";
+
+	return "<span class='context_info'>char. " + context.matchIndex + " : </span>"
+		+ "<span class='context_before'>" + beforeBefore + context.textBefore + "</span>"
+		+ "<span class='context_match'>" + context.matchText + "</span>"
+		+ "<span class='context_after'>" + context.textAfter + afterAfter + "</span>";
 }
 
 
 
-/**
-	Only usefull with replace
-*/
 RegexWorker.prototype.asRawText = function()
 {
 	var string = "";
@@ -339,6 +340,117 @@ RegexWorker.prototype.asRawHTML = function( options )
 
 
 
+RegexWorker.prototype.asTable = function()
+{
+	var rows = [];
+
+	// the first row is the header
+	var header = [];
+	header.push("N&deg;");
+	header.push("MATCH");
+	header.push("BACKREF.");
+	header.push("CONTEXT");
+	rows.push(header);
+
+	// one row for each match
+	for ( var m=0 ; m<this.matches.length ; m++ )
+	{
+		var row = [];
+		var match = this.matches[m];
+
+		// number of the match
+		row.push(m);
+
+		// text of the match
+		row.push(match.text);
+
+		// backreferences
+		var backrefs = [];
+		for ( var b=0 ; b<match.groups.length ; b++ )
+		{
+			backrefs.push(match.groups[b]);
+		}
+		row.push(backrefs);
+
+		// context around the match
+		row.push(this.getContext(match,10,10));
+
+		// finally add the newly created row to the table
+		rows.push(row);
+	}
+
+	return rows;
+}
+
+
+
+// TODO : create the columns as they are asked for (resource optimization)
+RegexWorker.prototype.asHTMLTable = function( options )
+{
+	var table = document.createElement("table");
+
+	// allowed columns
+	// TODO : use this at display level
+	var cols = [];
+	if ( options.showIndexes )
+		cols.push("index");
+	cols.push("match");
+	if ( options.showBackreferences )
+		cols.push("backref");
+	if ( options.showContext )
+		cols.push("context");
+
+	// one row for each match
+	var rows = this.asTable();
+	for ( var r=1 ; r<rows.length ; r++ )
+	{
+		var newrow = table.insertRow(-1);
+
+		// number of the match
+		$(newrow.insertCell(-1)).setHTML(rows[r][0]);
+
+		// the match
+		$(newrow.insertCell(-1)).setHTML(rows[r][1]);
+
+		// the backrefs
+		$(newrow.insertCell(-1)).setHTML(rows[r][2].join());
+
+		// context around the match
+		$(newrow.insertCell(-1)).setHTML(this.formatContextAsHTML(rows[r][3]));
+	}
+
+	// header
+	var thead = table.createTHead().insertRow(-1);
+	$(thead.insertCell(-1)).setHTML(rows[0][0]);
+	$(thead.insertCell(-1)).setHTML(rows[0][1]);
+	$(thead.insertCell(-1)).setHTML(rows[0][2]);
+	$(thead.insertCell(-1)).setHTML(rows[0][3]);
+
+	return table;
+}
+
+
+
+RegexWorker.prototype.asCSV = function( separator )
+{
+	var string = "";
+
+	var rows = this.asTable();
+	for ( var r=0 ; r<rows.length ; r++ )
+	{
+		var row = rows[r];
+		for ( var c=0 ; c<row.length ; c++ )
+		{
+			string += row[c] instanceof Array ? row[c].join(" ") : row[c];
+			string += c<row.length-1 ? separator : "\n";
+		}
+	}
+
+	return string;
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Regexpresso class : the application
 
@@ -360,7 +472,7 @@ var Regexpresso = new Class({
 		showNonPrintable: true, 
 		showIndexes: true,
 		showBackreferences: true,
-		renderer: "text",
+		renderer: "table",
 	},
 
 	initialize: function(options) {
@@ -425,7 +537,7 @@ var Regexpresso = new Class({
 		// active accordion title has CSS class 'on'
 		this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
 			openAll: false,
-			firstElementsOpen: [0,3],
+			firstElementsOpen: [2],
 			opacity: this.options['smoothTransitions'],
 			onActive: function(toggler,el) { toggler.addClass("on"); },
 			onBackground: function(toggler,i) { toggler.removeClass("on") }
@@ -606,7 +718,7 @@ Regexpresso.prototype.onSubmit = function()
 				if ( this.options.showResults && this.worker.matches.length > 0 )
 				{
 					// builds the icons menu and displays/hides all of its clones
-					this.filterMenu(['asText','asTable','showIndexes','showBackrefs','showNonPrintable']);
+					this.filterMenu(['asText','asTable','showIndexes','showBackrefs','showNonPrintable','copy']);
 				}
 				this.duplicateMenu();
 
@@ -617,7 +729,16 @@ Regexpresso.prototype.onSubmit = function()
 					if ( this.worker.matches.length > 0 )
 					{
 						this.dom_output_result.removeClass("empty");
-						this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+						switch ( this.options.renderer )
+						{
+							case "text":
+								this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+								break;
+							case "table":
+								console.debug($(this.worker.asHTMLTable(this.options)));
+								this.dom_output_result.empty().adopt($(this.worker.asHTMLTable(this.options)));
+								break;
+						}
 					}
 					else
 					{
@@ -687,7 +808,9 @@ Regexpresso.prototype.onSubmit = function()
 				case 5019:	// Expected ']' in regular expression
 				case 5020:	// Expected ')' in regular expression
 				case 5021:	// Invalid range in character set
-					dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.description)) );
+					var node = new Element("pre",{'class':"error"});
+					node.setText(e.description);
+					this.dom_output_result.empty().adopt(node);
 					break;
 				default:
 					if ( this.options.debug )
@@ -698,7 +821,9 @@ Regexpresso.prototype.onSubmit = function()
 		}
 		else if ( e instanceof SyntaxError )
 		{
-			this.dom_output.innerHTML = document.createSimpleElement("pre","error",document.createTextNode(e.message));
+			var node = new Element("pre",{'class':"error"});
+			node.setText(e.message);
+			this.dom_output_result.empty().adopt(node);
 		}
 		else
 		{
@@ -728,6 +853,7 @@ Regexpresso.prototype.copy = function()
 			break;
 		case "table":
 			// copies as CSV
+			Clipboard.copy(this.worker.asCSV("\t"));
 			break;
 	}
 }
