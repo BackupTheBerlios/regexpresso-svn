@@ -451,6 +451,7 @@ RegexWorker.prototype.asCSV = function( separator )
 
 
 
+
 //////////////////////////////////////////////////////////////////////////////
 // Regexpresso class : the application
 
@@ -470,8 +471,9 @@ var Regexpresso = new Class({
 		autorefresh: false,
 		showResults: true,
 		showNonPrintable: true, 
-		showIndexes: true,
+		showIndexes: false,
 		showBackreferences: true,
+		showContext: false,
 		renderer: "table",
 	},
 
@@ -483,7 +485,7 @@ var Regexpresso = new Class({
 
 		// output div : where to print the results
 		this.dom_output_count = $(this.options.output[0]);
-		this.dom_results_menus = this.options.output[1];
+		this.sel_results_menus = this.options.output[1];
 		this.dom_output_result = $(this.options.output[2]);
 
 		// exact input values from which to compute the results
@@ -568,9 +570,50 @@ var Regexpresso = new Class({
 			item.onkeyup = item.onchange;
 		}, this );
 
+		// links some input to this object's options
+		this.dom_options.getElements("input[type=checkbox]").each( function(item,index) {
+		 	var me = this;
+		 	item.onclick = function() {
+		 		me.setOption(this.value, this.ckecked != "");
+		 	};
+		 	// makes sure the value displayed is the one used internaly
+		 	this.setOption( item.value, this.options[item.value] );
+		 }, this );
+
 	} // end of initialize
 });
 Regexpresso.implement(new Options, new Events);
+
+
+
+Regexpresso.prototype.setOption = function( name, value )
+{
+	console.debug(this,"setOption(",name,value,")");
+
+	this.options[name] = value;
+
+	// makes sure the change will be visible to the user by setting the corresponding input fields
+	var checkboxes = this.dom_options.getElements("input[type=checkbox]").filterByAttribute('value',"=",name);
+	var newvalue = value ? "checked" : "";
+	if ( fields.length > 0 && fields[0].checked != newvalue )
+		checkboxes[0].checked = newvalue;
+
+	// also reflects the change into the class
+	// TODO : change the pictures -> build a 'checkbox object that works'
+	checkboxes.merge($$(sel_results_menus)).each( function(item,index) {
+		if ( value )
+			item.addClass("selected");
+		else
+			item.removeClass("selected");
+	} );
+}
+
+
+
+Regexpresso.prototype.toggleOption = function( name )
+{
+	this.setOption( name, !this.options[name] );
+}
 
 
 
@@ -625,7 +668,7 @@ Regexpresso.prototype.onFieldUpdate = function( el )
 // filters the action icons to show depending on the current state
 Regexpresso.prototype.filterMenu = function( allowedActions )
 {
-	var menu = $$(this.dom_results_menus)[0];
+	var menu = $$(this.sel_results_menus)[0];
 	menu.getChildren().each(
 		function(action,a){
 			if ( allowedActions.contains(action.id) )
@@ -645,8 +688,8 @@ Regexpresso.prototype.filterMenu = function( allowedActions )
 // duplicates the menu after the results to gain accessibility
 Regexpresso.prototype.duplicateMenu = function()
 {
-	var menu = $$(this.dom_results_menus)[0];
-	$$(this.dom_results_menus).each(
+	var menu = $$(this.sel_results_menus)[0];
+	$$(this.sel_results_menus).each(
 		function(item,index){
 			if( index > 0 ) {
 				$(item).empty().adopt(menu.clone());
@@ -718,7 +761,7 @@ Regexpresso.prototype.onSubmit = function()
 				if ( this.options.showResults && this.worker.matches.length > 0 )
 				{
 					// builds the icons menu and displays/hides all of its clones
-					this.filterMenu(['asText','asTable','showIndexes','showBackrefs','showNonPrintable','copy']);
+					this.filterMenu(['asText','asTable','showIndexes','showBackrefs','showNonPrintable','showContext','copy']);
 				}
 				this.duplicateMenu();
 
@@ -735,7 +778,6 @@ Regexpresso.prototype.onSubmit = function()
 								this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
 								break;
 							case "table":
-								console.debug($(this.worker.asHTMLTable(this.options)));
 								this.dom_output_result.empty().adopt($(this.worker.asHTMLTable(this.options)));
 								break;
 						}
