@@ -101,7 +101,7 @@ a.doc {
 }
 
 li.doc {
-	list-style-image: url(../pix/paperclip.gif);
+	list-style-image: url(paperclip.gif);
 }
 
 ul.doc {
@@ -259,12 +259,18 @@ input[type=checkbox] {
 }
 
 /* text mode */
-.highlight { background-color:#DBFF00; border:dotted #999999 1px; }
-.highlight_empty { background-color:yellow; border:dotted #999999 1px; }
+.highlight {
+	background-color:#DBFF00;
+	border:dotted #999999 1px;
+}
+.highlight_empty {
+	background-color:yellow;
+	border:dotted #999999 1px;
+}
 .highlight_index {
 	background:black;
 	color:white;
-	font-weight:bold;
+	/*font-weight:bold;*/
 	font-family:courier;
 	border:none;
 	padding:0;
@@ -275,10 +281,23 @@ input[type=checkbox] {
 	IE messes up the ".highlight>.highlight" CSS 2 notation,
 	so we must use a separate class to render highlights inside highlights.
 	Don't even think about having :before and :after working with IE, either. */
-.highlight_backref { background-color:white; border:none; border-left:dotted #999999 1px; }
+.highlight_backref {
+	background-color:white;
+	border:none;
+	border-left:dotted #999999 1px;
+}
 .highlight_backref:before, .highlight_backref:after { color:#999999; }
 .highlight_backref:before { content:"("; }
 .highlight_backref:after { content:")"; }
 
 /* empty matches : for those browsers that just cannot guess the right font by themselves ; tested on WinXP only */
-.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:x-small; }
+.highlight_empty, .match_empty, .backref_empty {
+	font-family:"Lucida sans Unicode";
+	font-size:x-small;
+}
+
+#output_result {
+	border: solid #DBFF00 2px;
+	border-collapse:collapse;
+	background-color:white;
+}

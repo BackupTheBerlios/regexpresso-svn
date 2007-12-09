@@ -85,7 +85,7 @@
 
 				regexpresso = new Regexpresso({
 					// widgets
-					output: ["output"],
+					output: ["output_count","results",".output_menu","output_result"],
 					regex: ["input_regex"],
 					subject: ["input_subject","input_subject_resizer"],
 					search: ["regex_search_a","regex_search_mod_i","regex_search_mod_g","regex_search_mod_m"],
@@ -170,13 +170,14 @@
 		--></div>
 
 
+
 		<!--
 			Page content with subsections arranged into an accordion.
 		-->
 		<div id="content">
 
 			<!-- title -->
-			<h1 id="title" class="accordion_toggler">RegEx<span class="presto">presso</span><span class="square">&nbsp;2</span></h1>
+			<h1 id="title" class="accordion_toggler"><div style="height:5px;"></div>RegEx<span class="presto">presso</span><span class="square">&nbsp;2</span></h1>
 
 			<div class="accordion_stretcher">
 
@@ -184,13 +185,13 @@
 				<form id="section_input" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit();return false;">
 
 					<!-- the string representation of the regular expression to use ; is built depending what's typed into the section_regex -->
-					<input type="text" id="input_regex" name="regex" />
+					<input type="hidden" id="input_regex" name="regex" />
 
 					<textarea id="input_subject" class="input" name="subject" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:100%;">[Type / paste here the text to evaluate]
 					ededed
 					sfd
 					
-					dsfdeef</textarea>
+					dsfeef</textarea>
 					<img id='input_subject_resizer' src="" alt="&uarr;&darr;">
 
 					<br class="spacer">
@@ -263,7 +264,24 @@
 
 			<!-- script's output (dynamic content) -->
 			<div id="section_output" class="accordion_stretcher">
-                            <div id="output">No result yet.</div>
+
+				<div id="output_count">No result yet.</div>
+
+				<div id="results" style="display:none;">
+					<div class="output_menu">
+						<a href="javascript:;" title="Results as text" class="tabicon"><img src="../l&amp;f/text.gif" alt="text"></a>
+						<a href="javascript:;" title="Results in table" class="tabicon"><img src="../l&amp;f/table.gif" alt="table"></a>
+						<a href="javascript:regexpresso.options.showIndexes=!regexpresso.options.showIndexes;void(regexpresso.onSubmit());" title="Show / hide indexes" class="tabicon"><img src="../l&amp;f/showindexes.gif" alt="indexes"></a>
+						<a href="javascript:regexpresso.options.showBackreferences=!regexpresso.options.showBackreferences;void(regexpresso.onSubmit());" title="Show / hide backreferences" class="tabicon"><img src="../l&amp;f/showbackref.gif" alt="backrefs"></a>
+						<a href="javascript:regexpresso.options.showNonPrintable=!regexpresso.options.showNonPrintable;void(regexpresso.onSubmit());" title="Show / hide non-printable characters" class="tabicon"><img src="../l&amp;f/shownonprintable.gif" alt="non-printable"></a>
+						<a href="javascript:regexpresso.copy();" title="Copy to clipboard" class="tabicon"><img src="../l&amp;f/copy.gif" alt="copy"></a>
+					</div>
+
+					<div id="output_result"></div>
+
+					<div class="output_menu" style="text-align:right;"><!-- the first menu will be duplicated here --></div>
+				</div>
+
 			</div>
 
 

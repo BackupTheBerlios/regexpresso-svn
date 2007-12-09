@@ -29,7 +29,7 @@ if ( !$defined(Matcher) ) throw new Error("Class 'Matcher' is missing. Make sure
 function warning( text )
 {
 	$('warning').innerHTML = text;
-	$('warning').setOpacity( text.length > 0 ? 1 : 0 );
+	text.length > 0 ? $('warning').show() : $('warning').hide();
 }
 
 
@@ -157,7 +157,6 @@ RegexWorker.showNonPrintable = function( text, classPrefix )
 	// then the other caracters in any order
 	replaced = replaced.replace(/\x00/gm, "<span class='"+classPrefix+"Dark'>NUL</span>" );
 	replaced = replaced.replace(/\x01/gm, "<span class='"+classPrefix+"Dark'>SOH</span>" );
-	replaced = replaced.replace(/x/gm, "<span class='"+classPrefix+"Dark'>SOH</span>" );	// debug
 	replaced = replaced.replace(/\x02/gm, "<span class='"+classPrefix+"Dark'>STX</span>" );
 	replaced = replaced.replace(/\x03/gm, "<span class='"+classPrefix+"Dark'>ETX</span>" );
 	replaced = replaced.replace(/\x04/gm, "<span class='"+classPrefix+"Dark'>EOT</span>" );
@@ -261,6 +260,42 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 
 
 /**
+	Only usefull with replace
+*/
+RegexWorker.prototype.asRawText = function()
+{
+	var string = "";
+
+	for ( var m=0 ; m<this.matches.length ; m++ )
+	{
+		var match = this.matches[m];
+		var before = match.getTextBefore();
+		var after = match.getTextAfter();
+
+		if ( before != null )
+		{
+			string += before;
+		}
+
+		string += match.text;
+
+		if ( after != null )
+		{
+			string += after;
+		}
+	}
+
+	if ( this.tail != null )
+	{
+		string += this.tail;
+	}
+
+	return string;
+}
+
+
+
+/**
  *  @return the whole matches as an HTML bloc
  *  @tparam dictionary of options 
  */
@@ -286,7 +321,7 @@ RegexWorker.prototype.asRawHTML = function( options )
 			string += "<span class='" + options.classIndexes + "'>" + match.index + "</span>";
 		}
 
-		string += (options.showNonPrintable ? RegexWorker.showNonPrintable(match.text,options.classPrefixNonPrintable) : match.text)
+		string += (options.showNonPrintable ? RegexWorker.showNonPrintable(match.text,options.classPrefixNonPrintable) : match.text);
 
 		if ( options.showBackreferences && match.groups.length>0 )
 		{
@@ -326,8 +361,6 @@ RegexWorker.prototype.asRawHTML = function( options )
 	This class represents the whole application and holds global functions.
 	When instanciated, it initializes the application global parameters, sets default values, etc.
 	Therefore, it should be instanciated only once.
-
-	TODO : moo-ishize this class (initialize, options, ...)
 */
 var Regexpresso = new Class({
 
@@ -339,7 +372,8 @@ var Regexpresso = new Class({
 		showResults: true,
 		showNonPrintable: true, 
 		showIndexes: true,
-		showBackreferences: true
+		showBackreferences: true,
+		renderer: "text"
 	},
 
 	initialize: function(options) {
@@ -349,7 +383,19 @@ var Regexpresso = new Class({
 		this.setOptions(options);
 
 		// output div : where to print the results
-		this.dom_output = $(this.options['output'][0]);
+		this.dom_output_count = $(this.options.output[0]);
+		this.dom_results = $(this.options.output[1]);
+		this.dom_output_menu = $$(this.options.output[2])[0];
+		this.dom_output_result = $(this.options.output[3]);
+
+		// duplicates the menu after the results to gain accessibility
+		$$(this.options.output[2]).each(
+			function(item,index){
+				if( index > 0 ) {
+					item.adopt(this.dom_output_menu.clone());
+				}
+			},
+			this);
 
 		// exact input values from which to compute the results
 		this.dom_subject = $(this.options['subject'][0]);
@@ -541,25 +587,25 @@ Regexpresso.prototype.onSubmit = function()
 						else
 							howmany_text = this.worker.matches.length + " matches";
 					}
-					// TODO : a special div for the count and/or a special tab with stats
-					this.dom_output.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
-					this.dom_output.setOpacity(1);
+					this.dom_output_count.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
+					this.dom_output_count.show();
 				}
 				else
 				{
-					// hides this section if required
-					this.dom_output.setOpacity(0);
+					this.dom_output_count.hide();
 				}
 
 				// then outputs the different kind of available representations
 				// the following operations can take time if the input text is big
-				// TODO : implement addTab in the following code
-				this.dom_output.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
-				/*if ( this.options['showResults'] && this.worker.matches.length > 0 )
+				if ( this.options.showResults && this.worker.matches.length > 0 )
 				{
-					this.dom_output.addTab( "output_text", this.worker.asHTML() );
-					this.dom_output.addTab( "output_table", this.worker.asTable() );
-				}*/
+					this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+					this.dom_results.show();
+				}
+				else
+				{
+					this.dom_results.hide();
+				}
 			}
 			break;
 
@@ -568,23 +614,26 @@ Regexpresso.prototype.onSubmit = function()
 				// first, prints the number of matches
 				if ( this.options['showCount'] )
 				{
-					var howmany_text = this.worker.matches.length > 0 ? this.worker.matches.length + " replaced :" : "Nothing was replaced.";
-					this.dom_output.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
-					this.dom_output.setOpacity(1);
+					var howmany_text = this.worker.matches.length > 0 ? this.worker.matches.length + " replaced." : "Nothing was replaced.";
+					this.dom_output_count.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
+					this.dom_output_count.show();
 				}
 				else
 				{
-					// hides this section if required
-					this.dom_output.setOpacity(0);
+					this.dom_output_count.hide();
 				}
 
 				// then outputs the different kind of available representations
 				// the following operations can take time if the input text is big
-				/*if ( this.options['showResults'] )
+				if ( this.options['showResults'] )
 				{
-				this.dom_output.addTab( "output_text", this.worker.asHTML() );
-				this.dom_output.addTab( "output_text", this.worker.asText() );
-				}*/
+					this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+					this.dom_results.show();
+				}
+				else
+				{
+					this.dom_results.hide();
+				}
 			}
 			break;
 		}
@@ -628,3 +677,21 @@ Regexpresso.prototype.onSubmit = function()
 	return false;	
 }
 
+
+
+/**
+	Copies the current results into the clipboard
+*/
+Regexpresso.prototype.copy = function()
+{
+	switch( this.options.renderer )
+	{
+		case "text":
+			// copies as raw text
+			Clipboard.copy(this.worker.asRawText());
+			break;
+		case "table":
+			// copies as CSV
+			break;
+	}
+}

@@ -38,6 +38,13 @@
 	float:right;
 }
 
+.right {
+	text-align:right;
+}
+
+#output_result {
+	overflow:scroll;
+}
 
 
 /* ////////////////////////////////
