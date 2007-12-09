@@ -54,19 +54,6 @@ document.createSimpleElement = function( dom_type, css_class, dom_child )
 
 
 
-/**
-	A simple iterator on an array, looping forever.
-	@tparam Array values
-*/
-Loop = function( values )
-{
-	this.index = 0;
-	this.values = values;
-	this.next = function() { return this.values[ (this.index++) % this.values.length ]; }
-}
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 // extension : to the Match class for regular expressions add a context to the matches
 
@@ -366,14 +353,14 @@ var Regexpresso = new Class({
 
 	options: {
 		// default values for user-exposed options
+		debug: true,
 		smoothTransitions: true,
 		autorefresh: false,
-		showCount: true,
 		showResults: true,
 		showNonPrintable: true, 
 		showIndexes: true,
 		showBackreferences: true,
-		renderer: "text"
+		renderer: "text",
 	},
 
 	initialize: function(options) {
@@ -384,18 +371,8 @@ var Regexpresso = new Class({
 
 		// output div : where to print the results
 		this.dom_output_count = $(this.options.output[0]);
-		this.dom_results = $(this.options.output[1]);
-		this.dom_output_menu = $$(this.options.output[2])[0];
-		this.dom_output_result = $(this.options.output[3]);
-
-		// duplicates the menu after the results to gain accessibility
-		$$(this.options.output[2]).each(
-			function(item,index){
-				if( index > 0 ) {
-					item.adopt(this.dom_output_menu.clone());
-				}
-			},
-			this);
+		this.dom_results_menus = this.options.output[1];
+		this.dom_output_result = $(this.options.output[2]);
 
 		// exact input values from which to compute the results
 		this.dom_subject = $(this.options['subject'][0]);
@@ -425,10 +402,6 @@ var Regexpresso = new Class({
 
 		// the div where to print the options
 		this.dom_options = $(this.options['options'][0]);
-
-		// once of two, we alternate the style in order to show something has been done
-		// even if the result is exactly the same
-		this.desc_again = new Loop(["desc","desc_again"]);
 
 		// Tabs have to be initialized before accordion so the accordion
 		// opens with the right size when it opens itself.
@@ -537,6 +510,45 @@ Regexpresso.prototype.onFieldUpdate = function( el )
 
 
 
+// filters the action icons to show depending on the current state
+Regexpresso.prototype.filterMenu = function( allowedActions )
+{
+	var menu = $$(this.dom_results_menus)[0];
+	menu.getChildren().each(
+		function(action,a){
+			if ( allowedActions.contains(action.id) )
+			{
+				action.show();
+				action.style.display = "inline";
+			}
+			else
+				action.hide();
+		}
+	);
+	return menu;
+}
+
+
+
+// duplicates the menu after the results to gain accessibility
+Regexpresso.prototype.duplicateMenu = function()
+{
+	var menu = $$(this.dom_results_menus)[0];
+	$$(this.dom_results_menus).each(
+		function(item,index){
+			if( index > 0 ) {
+				$(item).empty().adopt(menu.clone());
+			}
+			if ( this.options.showResults && this.worker.matches.length > 0 )
+				item.show();
+			else
+				item.hide();
+		},
+		this);
+}
+
+
+
 /**
 	Updates the result
 	@throws Exception		If any occured and couldn't be catched
@@ -571,40 +583,52 @@ Regexpresso.prototype.onSubmit = function()
 	{
 		// the following operation can take time if the input text is big
 		this.worker = new RegexWorker( this.dom_subject.value, this.dom_regex.value );
+
+		// displays the results depending on the requested operation
 		switch ( RegExp.explainPerlRegexPattern(this.worker.pattern).action )
 		{
 			case 'm':
 			case '':
 			{
 				// first, prints the number of matches
-				if ( this.options['showCount'] )
+				var howmany_text = "no match.";
+				if ( this.worker.matches.length > 0 )
 				{
-					var howmany_text = "No match.";
-					if ( this.worker.matches.length > 0 )
-					{
-						if ( this.worker.matches.length == 1 )
-							howmany_text = "1 match";
-						else
-							howmany_text = this.worker.matches.length + " matches";
-					}
-					this.dom_output_count.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
-					this.dom_output_count.show();
+					if ( this.worker.matches.length == 1 )
+						howmany_text = "1 match";
+					else
+						howmany_text = this.worker.matches.length + " matches";
 				}
-				else
-				{
-					this.dom_output_count.hide();
-				}
+				this.dom_output_count.setText(" (" + howmany_text + ")");
+				this.dom_output_count.toggleClass("alt");
 
-				// then outputs the different kind of available representations
-				// the following operations can take time if the input text is big
+				// then the menus
 				if ( this.options.showResults && this.worker.matches.length > 0 )
 				{
-					this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
-					this.dom_results.show();
+					// builds the icons menu and displays/hides all of its clones
+					this.filterMenu(['asText','asTable','showIndexes','showBackrefs','showNonPrintable']);
+				}
+				this.duplicateMenu();
+
+				// then outputs one of the available views
+				// the following operations can take time if the input text is big
+				if ( this.options.showResults )
+				{
+					if ( this.worker.matches.length > 0 )
+					{
+						this.dom_output_result.removeClass("empty");
+						this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+					}
+					else
+					{
+						this.dom_output_result.addClass("empty");
+						this.dom_output_result.innerHTML = "No result.";
+					}
+					this.dom_output_result.show();
 				}
 				else
 				{
-					this.dom_results.hide();
+					this.dom_output_result.hide();
 				}
 			}
 			break;
@@ -612,27 +636,28 @@ Regexpresso.prototype.onSubmit = function()
 			case 's':
 			{
 				// first, prints the number of matches
-				if ( this.options['showCount'] )
-				{
-					var howmany_text = this.worker.matches.length > 0 ? this.worker.matches.length + " replaced." : "Nothing was replaced.";
-					this.dom_output_count.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
-					this.dom_output_count.show();
-				}
-				else
-				{
-					this.dom_output_count.hide();
-				}
+				var howmany_text = this.worker.matches.length > 0 ? this.worker.matches.length + " replaced" : "nothing was replaced";
+				this.dom_output_count.setText(" (" + howmany_text + ")");
+				this.dom_output_count.toggleClass("alt");
 
-				// then outputs the different kind of available representations
+				// builds the icons menu and displays/hides all of its clones
+				if ( this.options.showResults && this.worker.matches.length > 0 )
+				{
+					this.filterMenu(['asText','showNonPrintable','copy']);
+				}
+				this.duplicateMenu();
+
+				// then outputs one of the available views
 				// the following operations can take time if the input text is big
 				if ( this.options['showResults'] )
 				{
 					this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
-					this.dom_results.show();
+					this.dom_output_result.removeClass("empty");
+					this.dom_output_result.show();
 				}
 				else
 				{
-					this.dom_results.hide();
+					this.dom_output_result.hide();
 				}
 			}
 			break;
@@ -643,8 +668,14 @@ Regexpresso.prototype.onSubmit = function()
 	}
 	catch ( e )
 	{
-		if( console != null )
+		if( $defined(console) )
 			console.debug(e);
+
+		if ( this.options.debug )
+		{
+			warning(e.description+" "+e.message);
+			new ObjectBrowser($('warning'), { data:e });
+		}
 
 		// @see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/script56/html/js56jslrfJScriptErrorsTOC.asp
 		if ( MSInternetExplorer.version() > 0 )
@@ -659,8 +690,10 @@ Regexpresso.prototype.onSubmit = function()
 					dom_output.appendChild( createSimpleElement("pre","error",document.createTextNode(e.description)) );
 					break;
 				default:
-					throw e;
-					break;
+					if ( this.options.debug )
+						return false
+					else
+						throw e;
 			}
 		}
 		else if ( e instanceof SyntaxError )
@@ -669,12 +702,15 @@ Regexpresso.prototype.onSubmit = function()
 		}
 		else
 		{
-			//throw e;
-			return false;	// disable this line when debug is finished
+			if ( this.options.debug )
+				return false
+			else
+				throw e;
 		}
 	}
 
-	return false;	
+	// to signal the form should not be submitted
+	return false;
 }
 
 

@@ -85,7 +85,7 @@
 
 				regexpresso = new Regexpresso({
 					// widgets
-					output: ["output_count","results",".output_menu","output_result"],
+					output: ["output_count",".output_menu","output_result"],
 					regex: ["input_regex"],
 					subject: ["input_subject","input_subject_resizer"],
 					search: ["regex_search_a","regex_search_mod_i","regex_search_mod_g","regex_search_mod_m"],
@@ -260,27 +260,24 @@
 
 
 			<!-- Output -->
-			<h2 class="accordion_toggler output">results</h2>
+			<h2 class="accordion_toggler output">results<span id="output_count"></span></h2>
 
 			<!-- script's output (dynamic content) -->
 			<div id="section_output" class="accordion_stretcher">
 
-				<div id="output_count">No result yet.</div>
-
-				<div id="results" style="display:none;">
-					<div class="output_menu">
-						<a href="javascript:;" title="Results as text" class="tabicon"><img src="../l&amp;f/text.gif" alt="text"></a>
-						<a href="javascript:;" title="Results in table" class="tabicon"><img src="../l&amp;f/table.gif" alt="table"></a>
-						<a href="javascript:regexpresso.options.showIndexes=!regexpresso.options.showIndexes;void(regexpresso.onSubmit());" title="Show / hide indexes" class="tabicon"><img src="../l&amp;f/showindexes.gif" alt="indexes"></a>
-						<a href="javascript:regexpresso.options.showBackreferences=!regexpresso.options.showBackreferences;void(regexpresso.onSubmit());" title="Show / hide backreferences" class="tabicon"><img src="../l&amp;f/showbackref.gif" alt="backrefs"></a>
-						<a href="javascript:regexpresso.options.showNonPrintable=!regexpresso.options.showNonPrintable;void(regexpresso.onSubmit());" title="Show / hide non-printable characters" class="tabicon"><img src="../l&amp;f/shownonprintable.gif" alt="non-printable"></a>
-						<a href="javascript:regexpresso.copy();" title="Copy to clipboard" class="tabicon"><img src="../l&amp;f/copy.gif" alt="copy"></a>
-					</div>
-
-					<div id="output_result"></div>
-
-					<div class="output_menu" style="text-align:right;"><!-- the first menu will be duplicated here --></div>
+				<!-- the base menu with all icons (will be changed dynamically depending on state) -->
+				<div class="output_menu" style="display:none;">
+					<a id="asText" href="javascript:;" title="Results as text" class="tabicon"><img src="../l&amp;f/text.gif" alt="text"></a>
+					<a id="asTable" href="javascript:;" title="Results in table" class="tabicon"><img src="../l&amp;f/table.gif" alt="table"></a>
+					<a id="showIndexes" href="javascript:regexpresso.options.showIndexes=!regexpresso.options.showIndexes;void(regexpresso.onSubmit());" title="Show / hide indexes" class="tabicon"><img src="../l&amp;f/showindexes.gif" alt="indexes"></a>
+					<a id="showBackrefs" href="javascript:regexpresso.options.showBackreferences=!regexpresso.options.showBackreferences;void(regexpresso.onSubmit());" title="Show / hide backreferences" class="tabicon"><img src="../l&amp;f/showbackref.gif" alt="backrefs"></a>
+					<a id="showNonPrintable" href="javascript:regexpresso.options.showNonPrintable=!regexpresso.options.showNonPrintable;void(regexpresso.onSubmit());" title="Show / hide non-printable characters" class="tabicon"><img src="../l&amp;f/shownonprintable.gif" alt="non-printable"></a>
+					<a id="copy" href="javascript:regexpresso.copy();" title="Copy to clipboard" class="tabicon"><img src="../l&amp;f/copy.gif" alt="copy"></a>
 				</div>
+
+				<div id="output_result" class="empty">No result yet.</div>
+
+				<div class="output_menu" style="text-align:right;" style="display:none;"><!-- the first menu will be duplicated here --></div>
 
 			</div>
 

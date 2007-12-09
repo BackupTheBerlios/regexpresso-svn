@@ -127,9 +127,12 @@ h1.on, h2.on {
 }
 
 
+#output_count {
+	font-size:smaller;
+}
 
 /* alternate appearance of the description fields */
-.desc_again {
+#output_count.alt {
 	font-style:italic;
 }
 
@@ -300,4 +303,9 @@ input[type=checkbox] {
 	border: solid #DBFF00 2px;
 	border-collapse:collapse;
 	background-color:white;
+}
+
+/* when there is no result */
+#output_result.empty {
+	border:none;
 }
