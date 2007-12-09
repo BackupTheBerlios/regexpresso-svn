@@ -90,6 +90,29 @@ RegExp.explainPerlRegexPattern = function( pattern )
 
 
 /**
+ *  Usefull to get a random unique string in order -for instance- to isolate parts of a text to surround it with HTML tags.
+ *  Use this function to compute two boundaries that will be replaced one with the opening tag, the other with the closing tag.
+ */
+RegExp.genHTMLBound = function( string, max_length )
+{
+	var chars = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+	if ( max_length == undefined )
+		max_length = 20;
+	for( tries=0 ; tries<16 ; tries++ )
+	{
+		var size = 4 + Math.round(Math.random()*(max_length-4)); // the bound's length also is randomized every new try
+		var bound = "";
+		for ( c=0 ; c<size ; c++ )
+			bound += chars[Math.round(Math.random()*(chars.length-1))];// add a random character to the bound
+		if ( string.indexOf(bound) < 0 )
+			return bound;
+	}
+	return null;// failed
+}
+
+
+
+/**
 	Makes a new RegExp from a 'loose' pattern, typed by the end-user.
 
 	@see explainPerlRegexPattern
@@ -235,7 +258,7 @@ Match.prototype.getTextBefore = function()
 	else if ( this.previous && this.previous.getTextAfter() )
 		return this.previous.getTextAfter();
 	else
-		return "";
+		return null;
 }
 
 
@@ -251,7 +274,7 @@ Match.prototype.getTextAfter = function()
 	else if ( this.next && this.next.getTextBefore() )
 		return this.next.getTextBefore();
 	else
-		return "";
+		return null;
 }
 
 
@@ -345,7 +368,9 @@ Matcher = function( subject, pattern )
 		// saves the groups
 		this.matches[m].groups = new Array();
 		for ( r=1 ; r<results.length ; r++ )
+		{
 			this.matches[m].groups[r-1] = ( results[r] == undefined ? "" : results[r] );	// this happens when the match is empty
+		}
 
 		// prepares match_index for the next loop
 		text_before_index = match_index + results[0].length;

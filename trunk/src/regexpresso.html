@@ -79,30 +79,28 @@
 
 		<!-- additional init scripts -->
 		<script type="text/javascript">
+
 			// Initializes the dynamic elements not waiting for the images to load.
 			window.addEvent( 'domready', function() {
 
 				regexpresso = new Regexpresso({
-					// fields' id
-					'widgets': {
-						'output': ["output"],
-						'regex': ["input_regex"],
-						'subject': ["input_subject","input_subject_resizer"],
-						'search': ["regex_search_a","regex_search_mod_i","regex_search_mod_g","regex_search_mod_m"],
-						'replace': ["regex_replace_a","regex_replace_b","regex_replace_mod_i","regex_replace_mod_g","regex_replace_mod_m"],
-						'expert': ["regex_expert_a"],
-						'options': ["options"]
-						},
-					// default options
-					'options': {
-						'accordion_opacity': true,
-						'tabswapper_smooth': true,
-						'autorefresh': false,
-						'show_count': true,
-						'show_results': true
-						}
-					});
+					// widgets
+					output: ["output"],
+					regex: ["input_regex"],
+					subject: ["input_subject","input_subject_resizer"],
+					search: ["regex_search_a","regex_search_mod_i","regex_search_mod_g","regex_search_mod_m"],
+					replace: ["regex_replace_a","regex_replace_b","regex_replace_mod_i","regex_replace_mod_g","regex_replace_mod_m"],
+					expert: ["regex_expert_a"],
+					options: ["options"],
+					// hidden, rendering options
+					classMatched: "highlight",
+					classBackref: "highlight_backref",
+					classIndexes: "highlight_index",
+					classEmptyMatch: "emptyMatch",
+					classPrefixNonPrintable: "nonPrintable"
+				});
 			} );
+
 		</script>
 	</head>
 
@@ -188,7 +186,11 @@
 					<!-- the string representation of the regular expression to use ; is built depending what's typed into the section_regex -->
 					<input type="text" id="input_regex" name="regex" />
 
-					<textarea id="input_subject" class="input" name="subject" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:100%;">[Type / paste here the text to evaluate]</textarea>
+					<textarea id="input_subject" class="input" name="subject" rows="10" cols="20" title="The text ('subject') to evaluate" style="width:100%;">[Type / paste here the text to evaluate]
+					ededed
+					sfd
+					
+					dsfdeef</textarea>
 					<img id='input_subject_resizer' src="" alt="&uarr;&darr;">
 
 					<br class="spacer">
@@ -207,7 +209,7 @@
 								<input type="text" id="regex_search_a" class="input"
 									style="width:100%;"
 									title="Type your search expression here"
-									value="sss">
+									value="(e)(d)?">
 								<div id="regex_search_mod" class="input_regex_flags">
 									<span class="input_box" style="white-space:nowrap;" title="Check to make the search case insensitive"><input id="regex_search_mod_i" type="checkbox" class="input">no case</span>
 									<span class="input_box" style="white-space:nowrap;" title="Check to make the search global"><input id="regex_search_mod_g" type="checkbox" class="input">global</span>
@@ -288,7 +290,7 @@
 			<h2 class="accordion_toggler docs">documentation</h2>
 
 			<div id="section_doc" class="accordion_stretcher">
-                            <p>
+      <p>
 				<ul class="doc">
 					<!-- note : the following target : "_main" works well for IE (from which it comes), Mozilla and Firefox ; Opera opens a new tab -->
 					<li class="doc"><a class="doc" target="_blank" href="http://www.regular-expressions.info/javascript.html">Introduction to regular expressions</a></li>
@@ -311,7 +313,7 @@
 					<a href="http://validator.w3.org/check?uri=referer" target="_blank"><img src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01 Transitional"></a>
 					<a href="http://jigsaw.w3.org/css-validator/check/referer" target="_blank"><img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
 				</div>
-                            </p>
+      </p>
 			</div>
 		</div>
 </body>

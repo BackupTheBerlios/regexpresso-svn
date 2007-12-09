@@ -233,3 +233,52 @@ input[type=checkbox] {
 
 
 
+/* ////////////////////////////////
+	Results
+//////////////////////////////// */
+
+
+/* invisible characters, represented as 'light' symbols */
+.nonPrintableLight {
+	font-weight:normal;
+	padding:0;
+	color:#DB0000;
+	font-family:"Lucida sans Unicode", arial, verdana, "courier new"; /* the font has to be Unicode because special characters are not always included in standard fonts */
+}
+/* invisible characters, reprensented as a 2 or 3 letters word */
+.nonPrintableDark {
+	font-weight:bold;
+	padding:0;
+	padding-left:2px;
+	padding-right:2px;
+	color:white;
+	background:red;
+	font-family: arial bold, verdana, "courier new";
+	font-size:smaller;
+	border-left:dotted white 1px;	/* to show the limit when 2 special chars are concatenated */
+}
+
+/* text mode */
+.highlight { background-color:#DBFF00; border:dotted #999999 1px; }
+.highlight_empty { background-color:yellow; border:dotted #999999 1px; }
+.highlight_index {
+	background:black;
+	color:white;
+	font-weight:bold;
+	font-family:courier;
+	border:none;
+	padding:0;
+	margin:0;
+}
+
+/** Unfortunately (I'm starting to believe it's not due to misfortune),
+	IE messes up the ".highlight>.highlight" CSS 2 notation,
+	so we must use a separate class to render highlights inside highlights.
+	Don't even think about having :before and :after working with IE, either. */
+.highlight_backref { background-color:white; border:none; border-left:dotted #999999 1px; }
+.highlight_backref:before, .highlight_backref:after { color:#999999; }
+.highlight_backref:before { content:"("; }
+.highlight_backref:after { content:")"; }
+
+/* empty matches : for those browsers that just cannot guess the right font by themselves ; tested on WinXP only */
+.highlight_empty, .match_empty, .backref_empty { font-family:"Lucida sans Unicode"; font-size:x-small; }

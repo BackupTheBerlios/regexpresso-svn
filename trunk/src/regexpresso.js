@@ -141,6 +141,60 @@ RegexWorker.prototype = new Matcher(null,null);
 
 
 /**
+ *  Replaces non visible characters with a visible entity / symbol.
+ *
+ *  Hardcoded because they are special characters that should be handle 'specially'.
+ */
+RegexWorker.showNonPrintable = function( text, classPrefix )
+{
+	var replaced = text;
+
+	// first, the characters used down there in the replacement strings
+	// if we don't do this, "<span class="toto">tutu</span>" will be broken into
+	// something like "<span<span class="toto">tete</span>class="toto">tutu</span>"
+	replaced = replaced.replace(/\x20/gm, "<span class='"+classPrefix+"Light' style='font-weight:bold;'>&#183;</span>" );
+
+	// then the other caracters in any order
+	replaced = replaced.replace(/\x00/gm, "<span class='"+classPrefix+"Dark'>NUL</span>" );
+	replaced = replaced.replace(/\x01/gm, "<span class='"+classPrefix+"Dark'>SOH</span>" );
+	replaced = replaced.replace(/x/gm, "<span class='"+classPrefix+"Dark'>SOH</span>" );	// debug
+	replaced = replaced.replace(/\x02/gm, "<span class='"+classPrefix+"Dark'>STX</span>" );
+	replaced = replaced.replace(/\x03/gm, "<span class='"+classPrefix+"Dark'>ETX</span>" );
+	replaced = replaced.replace(/\x04/gm, "<span class='"+classPrefix+"Dark'>EOT</span>" );
+	replaced = replaced.replace(/\x05/gm, "<span class='"+classPrefix+"Dark'>ENQ</span>" );
+	replaced = replaced.replace(/\x06/gm, "<span class='"+classPrefix+"Dark'>ACK</span>" );
+	replaced = replaced.replace(/\x07/gm, "<span class='"+classPrefix+"Dark'>BEL</span>" );
+	replaced = replaced.replace(/\x08/gm, "<span class='"+classPrefix+"Dark'>BS</span>" );
+	replaced = replaced.replace(/\t/gm, "<span class='"+classPrefix+"Light'>&rarr;</span>\t" );
+	replaced = replaced.replace(/\n/gm, "<span class='"+classPrefix+"Light'>&#182;</span>\n" );
+	replaced = replaced.replace(/\x0B/gm, "<span class='"+classPrefix+"Dark'>VT</span>" );
+	replaced = replaced.replace(/\x0C/gm, "<span class='"+classPrefix+"Dark'>FF</span>" );
+	replaced = replaced.replace(/\r/gm, "<span class='"+classPrefix+"Light'>&#8629;</span>\r" );
+	replaced = replaced.replace(/\x0E/gm, "<span class='"+classPrefix+"Dark'>SO</span>" );
+	replaced = replaced.replace(/\x0F/gm, "<span class='"+classPrefix+"Dark'>SI</span>" );
+	replaced = replaced.replace(/\x10/gm, "<span class='"+classPrefix+"Dark'>DLE</span>" );
+	replaced = replaced.replace(/\x11/gm, "<span class='"+classPrefix+"Dark'>XON</span>" );
+	replaced = replaced.replace(/\x12/gm, "<span class='"+classPrefix+"Dark'>DC2</span>" );
+	replaced = replaced.replace(/\x13/gm, "<span class='"+classPrefix+"Dark'>XOFF</span>" );
+	replaced = replaced.replace(/\x14/gm, "<span class='"+classPrefix+"Dark'>DC4</span>" );
+	replaced = replaced.replace(/\x15/gm, "<span class='"+classPrefix+"Dark'>NAK</span>" );
+	replaced = replaced.replace(/\x16/gm, "<span class='"+classPrefix+"Dark'>SYN</span>" );
+	replaced = replaced.replace(/\x17/gm, "<span class='"+classPrefix+"Dark'>ETB</span>" );
+	replaced = replaced.replace(/\x18/gm, "<span class='"+classPrefix+"Dark'>CAN</span>" );
+	replaced = replaced.replace(/\x19/gm, "<span class='"+classPrefix+"Dark'>EM</span>" );
+	replaced = replaced.replace(/\x1A/gm, "<span class='"+classPrefix+"Dark'>SUB</span>" );
+	replaced = replaced.replace(/\x1B/gm, "<span class='"+classPrefix+"Dark'>ESC</span>" );
+	replaced = replaced.replace(/\x1C/gm, "<span class='"+classPrefix+"Dark'>FS</span>" );
+	replaced = replaced.replace(/\x1D/gm, "<span class='"+classPrefix+"Dark'>GS</span>" );
+	replaced = replaced.replace(/\x1E/gm, "<span class='"+classPrefix+"Dark'>RS</span>" );
+	replaced = replaced.replace(/\x1F/gm, "<span class='"+classPrefix+"Dark'>US</span>" );
+
+	return replaced;
+}
+
+
+
+/**
 	@tparam Match match		the match to generate the surrounding context
 	@tparam String subject		the text to extract the context from
 	@tparam int length_before	the number of characters to take into account before the match
@@ -206,6 +260,63 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 
 
 
+/**
+ *  @return the whole matches as an HTML bloc
+ *  @tparam dictionary of options 
+ */
+RegexWorker.prototype.asRawHTML = function( options )
+{
+	var string = "";
+
+	for ( var m=0 ; m<this.matches.length ; m++ )
+	{
+		var match = this.matches[m];
+		var before = match.getTextBefore();
+		var after = match.getTextAfter();
+
+		if ( before != null )
+		{
+			string += options.showNonPrintable ? RegexWorker.showNonPrintable(before,options.classPrefixNonPrintable) : before;
+		}
+
+		string += "<span class='" + options.classMatched + "'>";
+
+		if ( options.showIndexes )
+		{
+			string += "<span class='" + options.classIndexes + "'>" + match.index + "</span>";
+		}
+
+		string += (options.showNonPrintable ? RegexWorker.showNonPrintable(match.text,options.classPrefixNonPrintable) : match.text)
+
+		if ( options.showBackreferences && match.groups.length>0 )
+		{
+			for ( g=0 ; g<match.groups.length ; g++ )
+			{
+				var group = match.groups[g];
+				string += "<span class='" + options.classBackref + "'>"
+					+ (options.showNonPrintable ? RegexWorker.showNonPrintable(group,options.classPrefixNonPrintable) : group )
+					+ "</span>";
+			}
+		}
+
+		string += "</span>";
+
+		if ( after != null )
+		{
+			string += options.showNonPrintable ? RegexWorker.showNonPrintable(after,options.classPrefixNonPrintable) : after;
+		}
+	}
+
+	if ( this.tail != null )
+	{
+		string += options.showNonPrintable ? RegexWorker.showNonPrintable(this.tail,options.classPrefixNonPrintable) : this.tail;
+	}
+
+	return string;
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Regexpresso class : the application
 
@@ -218,101 +329,117 @@ RegexWorker.prototype.getContextAsNode = function ( match, mode )
 
 	TODO : moo-ishize this class (initialize, options, ...)
 */
-Regexpresso = function( args )
-{
-	console.debug("new Regexpresso(",args,")");
+var Regexpresso = new Class({
 
-	// output div : where to print the results
-	this.dom_output = $(args['widgets']['output'][0]);
+	options: {
+		// default values for user-exposed options
+		smoothTransitions: true,
+		autorefresh: false,
+		showCount: true,
+		showResults: true,
+		showNonPrintable: true, 
+		showIndexes: true,
+		showBackreferences: true
+	},
 
-	// exact input values from which to compute the results
-	this.dom_subject = $(args['widgets']['subject'][0]);
-	this.dom_subject.makeResizable({
-		handle: $(args['widgets']['subject'][1]),
-		modifiers:{x: false, y:'height'} /*limit the sizing to vertical*/
-	});
-	this.dom_regex = $(args['widgets']['regex'][0]);
+	initialize: function(options) {
 
-	// widgets to help the user to type the regular expression in input
-	this.widget_search = {
-		0: $(args['widgets']['search'][0]),
-		'i': $(args['widgets']['search'][1]),
-		'g': $(args['widgets']['search'][2]),
-		'm': $(args['widgets']['search'][3])
-	};
-	this.widget_replace = {
-		0: $(args['widgets']['replace'][0]),
-		1: $(args['widgets']['replace'][1]),
-		'i': $(args['widgets']['replace'][2]),
-		'g': $(args['widgets']['replace'][3]),
-		'm': $(args['widgets']['replace'][4])
-	};
-	this.widget_expert = {
-		0: $(args['widgets']['expert'][0])
-	};
+		console.debug("new Regexpresso(",options,")");
 
-	// the div where to print the options
-	this.dom_options = $(args['widgets']['options'][0]);
-	// the default values for all options
-	this.options = args['options'];
+		this.setOptions(options);
 
-	// once of two, we alternate the style in order to show something has been done
-	// even if the result is exactly the same
-	this.desc_again = new Loop(["desc","desc_again"]);
+		// output div : where to print the results
+		this.dom_output = $(this.options['output'][0]);
 
-	// Tabs have to be initialized before accordion so the accordion
-	// opens with the right size when it opens itself.
-	// Actually, the accordion seems to use the size of the selected tab
-	// so it has to be the largest one...
-	this.tabs_regex = new tabSwapper({
-		initPanel: 1,
-		selectedClass: "on",
-		deselectedClass: "off",
-		tabSelector: "#section_regex .tab",
-		sectionSelector: "#section_regex .tabbed_panel",
-		/*remember what the last tab the user clicked was*/
-		/*cookieName: "regexpresso",*/
-		/*use transitions to fade across*/
-		smooth: this.options['tabswapper_smooth']
+		// exact input values from which to compute the results
+		this.dom_subject = $(this.options['subject'][0]);
+		this.dom_subject.makeResizable({
+			handle: $(this.options['subject'][1]),
+			modifiers:{x: false, y:'height'} /*limit the sizing to vertical*/
 		});
+		this.dom_regex = $(this.options['regex'][0]);
+
+		// widgets to help the user to type the regular expression in input
+		this.widget_search = {
+			0: $(this.options['search'][0]),
+			'i': $(this.options['search'][1]),
+			'g': $(this.options['search'][2]),
+			'm': $(this.options['search'][3])
+		};
+		this.widget_replace = {
+			0: $(this.options['replace'][0]),
+			1: $(this.options['replace'][1]),
+			'i': $(this.options['replace'][2]),
+			'g': $(this.options['replace'][3]),
+			'm': $(this.options['replace'][4])
+		};
+		this.widget_expert = {
+			0: $(this.options['expert'][0])
+		};
+
+		// the div where to print the options
+		this.dom_options = $(this.options['options'][0]);
+
+		// once of two, we alternate the style in order to show something has been done
+		// even if the result is exactly the same
+		this.desc_again = new Loop(["desc","desc_again"]);
+
+		// Tabs have to be initialized before accordion so the accordion
+		// opens with the right size when it opens itself.
+		// Actually, the accordion seems to use the size of the selected tab
+		// so it has to be the largest one...
+		this.tabs_regex = new tabSwapper({
+			initPanel: 0,
+			selectedClass: "on",
+			deselectedClass: "off",
+			tabSelector: "#section_regex .tab",
+			sectionSelector: "#section_regex .tabbed_panel",
+			/*remember which tab the user clicked last*/
+			/*cookieName: "regexpresso",*/
+			/*use transitions to fade across*/
+			smooth: this.options['smoothTransitions']
+			});
 
 
-	// accordion 'titles' have CSS class 'accordion_toggler'
-	// accordion 'content panes' have CSS class 'accordion_stretcher'
-	// active accordion title has CSS class 'on'
-	this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
-		openAll: false,
-		firstElementsOpen: [0,3],
-		opacity: this.options['accordion_opacity'],
-		onActive: function(toggler,el) { toggler.addClass("on"); },
-		onBackground: function(toggler,i) { toggler.removeClass("on") }
+		// accordion 'titles' have CSS class 'accordion_toggler'
+		// accordion 'content panes' have CSS class 'accordion_stretcher'
+		// active accordion title has CSS class 'on'
+		this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
+			openAll: false,
+			firstElementsOpen: [0,3],
+			opacity: this.options['smoothTransitions'],
+			onActive: function(toggler,el) { toggler.addClass("on"); },
+			onBackground: function(toggler,i) { toggler.removeClass("on") }
+			} );
+
+
+		this.worker = null;
+
+		// Apply common properties / methods to objects.
+
+		// what follows is more or less a patch for IE to simulate ':hover' with the class '.hover'
+		// it enables the retractible menu to work with IE
+		// note : *[hover=on] doesn't work, but div[hover=on] does, so I choosed .hover as the selector
+		$$(".hoverme").each( function(item,index) {
+		item.addEvent( "mouseenter", function(){ this.addClass("hover") } );
+		item.addEvent( "mouseleave", function(){ this.removeClass("hover") } );
 		} );
 
+		// auto-select the text in the input fields when focused
+		$$(".input[type=text]",".input[type=password]","textarea.input").each( function(el,p) {
+			el.onfocus = function() { this.select(); };
+		} );
 
-	this.worker = null;
+		// registers this object as the listener to 'onchange' events on the following fields
+		$$(".input").each( function(item,index) {
+			var me = this;
+			item.onchange = function() { me.onFieldUpdate(this); };
+			item.onkeyup = item.onchange;
+		}, this );
 
-	// Apply common properties / methods to objects.
-
-  // what follows is more or less a patch for IE to simulate ':hover' with the class '.hover'
-  // it enables the retractible menu to work with IE
-  // note : *[hover=on] doesn't work, but div[hover=on] does, so I choosed .hover as the selector
-  $$(".hoverme").each( function(item,index) {
-    item.addEvent( "mouseenter", function(){ this.addClass("hover") } );
-    item.addEvent( "mouseleave", function(){ this.removeClass("hover") } );
-  } );
-
-	// auto-select the text in the input fields when focused
-	$$(".input[type=text]",".input[type=password]","textarea.input").each( function(el,p) {
-		el.onfocus = function() { this.select(); };
-	} );
-
-	// registers this object as the listener to 'onchange' events on the following fields
-	$$(".input").each( function(item,index) {
-		var me = this;
-		item.onchange = function() { me.onFieldUpdate(this); };
-		item.onkeyup = item.onchange;
-	}, this );
-}
+	} // end of initialize
+});
+Regexpresso.implement(new Options, new Events);
 
 
 
@@ -404,7 +531,7 @@ Regexpresso.prototype.onSubmit = function()
 			case '':
 			{
 				// first, prints the number of matches
-				if ( this.options['show_count'] )
+				if ( this.options['showCount'] )
 				{
 					var howmany_text = "No match.";
 					if ( this.worker.matches.length > 0 )
@@ -427,7 +554,8 @@ Regexpresso.prototype.onSubmit = function()
 				// then outputs the different kind of available representations
 				// the following operations can take time if the input text is big
 				// TODO : implement addTab in the following code
-				/*if ( this.options['show_results'] && this.worker.matches.length > 0 )
+				this.dom_output.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+				/*if ( this.options['showResults'] && this.worker.matches.length > 0 )
 				{
 					this.dom_output.addTab( "output_text", this.worker.asHTML() );
 					this.dom_output.addTab( "output_table", this.worker.asTable() );
@@ -438,7 +566,7 @@ Regexpresso.prototype.onSubmit = function()
 			case 's':
 			{
 				// first, prints the number of matches
-				if ( this.options['show_count'] )
+				if ( this.options['showCount'] )
 				{
 					var howmany_text = this.worker.matches.length > 0 ? this.worker.matches.length + " replaced :" : "Nothing was replaced.";
 					this.dom_output.empty().appendChild( document.createSimpleElement("div",this.desc_again.next(), document.createTextNode(howmany_text)) );
@@ -452,7 +580,7 @@ Regexpresso.prototype.onSubmit = function()
 
 				// then outputs the different kind of available representations
 				// the following operations can take time if the input text is big
-				/*if ( this.options['show_results'] )
+				/*if ( this.options['showResults'] )
 				{
 				this.dom_output.addTab( "output_text", this.worker.asHTML() );
 				this.dom_output.addTab( "output_text", this.worker.asText() );
