@@ -70,7 +70,6 @@
 		<script type="text/javascript" src="lib/moo.fx-prototype/moo.fx.transitions.js"></script-->
 
 		<!-- other generic libraries -->
-		<!--script type="text/javascript" src="../lib/moocheck.js"></script-->
 		<script type="text/javascript" src="../lib/chainedlist.js"></script>
 		<script type="text/javascript" src="../lib/ie.js"></script>
 
@@ -84,6 +83,8 @@
 			// Initializes the dynamic elements not waiting for the images to load.
 			window.addEvent( 'domready', function() {
 
+				// TODO ? initialize the dynamic elements outside from the class ?
+
 				regexpresso = new Regexpresso({
 					// widgets
 					output: ["output_count",".output_menu","output_result"],
@@ -92,7 +93,7 @@
 					search: ["regex_search_a","regex_search_mod_i","regex_search_mod_g","regex_search_mod_m"],
 					replace: ["regex_replace_a","regex_replace_b","regex_replace_mod_i","regex_replace_mod_g","regex_replace_mod_m"],
 					expert: ["regex_expert_a"],
-					options: ["options"],
+					options: ["section_options"],
 					// hidden, rendering options
 					classMatched: "highlight",
 					classBackref: "highlight_backref",
@@ -100,8 +101,6 @@
 					classEmptyMatch: "emptyMatch",
 					classPrefixNonPrintable: "nonPrintable"
 				});
-
-//				FancyForm.start($$("#section_options input"));
 			} );
 
 		</script>
@@ -177,7 +176,7 @@
 		<!--
 			Page content with subsections arranged into an accordion.
 		-->
-		<div id="content">
+		<form id="content" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit();return false;">
 
 			<!-- title -->
 			<h1 id="title" class="accordion_toggler"><div style="height:5px;"></div>RegEx<span class="presto">presso</span><span class="square">&nbsp;2</span></h1>
@@ -185,7 +184,7 @@
 			<div class="accordion_stretcher">
 
 				<!-- user's input -->
-				<form id="section_input" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit();return false;">
+				<div id="section_input">
 
 					<!-- the string representation of the regular expression to use ; is built depending what's typed into the section_regex -->
 					<input type="hidden" id="input_regex" name="regex" />
@@ -256,8 +255,8 @@
 					<div id="section_submit">
 						<input type="submit" id="submit" class="input" value="EVALUATE">
 					</div>
-				</form>
 
+				</div> <!-- end of input section -->
 			</div>
 
 
@@ -270,11 +269,12 @@
 
 				<!-- the base menu with all icons (will be changed dynamically depending on state) -->
 				<div class="output_menu" style="display:none;">
-					<a id="asText" href="javascript:regexpresso.options.renderer='text';void(regexpresso.onSubmit());" title="Results as text" class="tabicon"><img src="../l&amp;f/text.gif" alt="text"></a>
-					<a id="asTable" href="javascript:regexpresso.options.renderer='table';void(regexpresso.onSubmit());" title="Results in table" class="tabicon"><img src="../l&amp;f/table.gif" alt="table"></a>
-					<a id="showIndexes" href="javascript:regexpresso.options.showIndexes=!regexpresso.options.showIndexes;void(regexpresso.onSubmit());" title="Show / hide indexes" class="tabicon"><img src="../l&amp;f/showindexes.gif" alt="indexes"></a>
-					<a id="showBackrefs" href="javascript:regexpresso.options.showBackreferences=!regexpresso.options.showBackreferences;void(regexpresso.onSubmit());" title="Show / hide backreferences" class="tabicon"><img src="../l&amp;f/showbackref.gif" alt="backrefs"></a>
-					<a id="showNonPrintable" href="javascript:regexpresso.options.showNonPrintable=!regexpresso.options.showNonPrintable;void(regexpresso.onSubmit());" title="Show / hide non-printable characters" class="tabicon"><img src="../l&amp;f/shownonprintable.gif" alt="non-printable"></a>
+					<a id="asText" href="javascript:regexpresso.setOption('renderer','text');void(regexpresso.onSubmit());" title="Results as text" class="tabicon"><img src="../l&amp;f/text.gif" alt="text"></a>
+					<a id="asTable" href="javascript:regexpresso.setOption('renderer','table');void(regexpresso.onSubmit());" title="Results in table" class="tabicon"><img src="../l&amp;f/table.gif" alt="table"></a>
+					<a id="showIndexes" href="javascript:regexpresso.toggleOption('showIndexes');void(regexpresso.onSubmit());" title="Show / hide indexes" class="tabicon"><img src="../l&amp;f/showindexes.gif" alt="indexes"></a>
+					<a id="showBackrefs" href="javascript:regexpresso.toggleOption('showBackreferences');void(regexpresso.onSubmit());" title="Show / hide backreferences" class="tabicon"><img src="../l&amp;f/showbackref.gif" alt="backrefs"></a>
+					<a id="showContext" href="javascript:regexpresso.toggleOption('showContext');void(regexpresso.onSubmit());" title="Show / hide surrounding text" class="tabicon"><img src="../l&amp;f/showcontext.gif" alt="context"></a>
+					<a id="showNonPrintable" href="javascript:regexpresso.setOption('showNonPrintable',!regexpresso.options.showNonPrintable);void(regexpresso.onSubmit());" title="Show / hide non-printable characters" class="tabicon"><img src="../l&amp;f/shownonprintable.gif" alt="non-printable"></a>
 					<a id="copy" href="javascript:regexpresso.copy();" title="Copy to clipboard" class="tabicon"><img src="../l&amp;f/copy.gif" alt="copy"></a>
 				</div>
 
@@ -288,15 +288,19 @@
 			<h2 class="accordion_toggler options">options</h2>
 
 			<div id="section_options" class="accordion_stretcher">
-                            <p id="options">
+                            <p>
 				<table>
 					<tr>
-						<td>OPTION 1</td>
-						<td><input name="option1" type="checkbox" value="option1"></td>
+						<td>Show indexes</td>
+						<td><input name="options[]" type="checkbox" value="showIndexes"></td>
 					</tr>
 					<tr>
-						<td>OPTION 2</td>
-						<td><input name="option2" type="checkbox" value="option2"></td>
+						<td>Show backreferences</td>
+						<td><input name="options[]" type="checkbox" value="showBackreferences"></td>
+					</tr>
+					<tr>
+						<td>Show context</td>
+						<td><input name="options[]" type="checkbox" value="showContext"></td>
 					</tr>
 				</table>
                             </p>
@@ -333,7 +337,9 @@
 				</div>
       </p>
 			</div>
-		</div>
+
+		</form> <!-- end of page content -->
+
 </body>
 
 </html>
