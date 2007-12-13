@@ -229,6 +229,36 @@ input[type=checkbox] {
 //////////////////////////////// */
 
 
+/* ////////////////////////////////
+	tool tips
+//////////////////////////////// */
+
+
+.tooltip {
+	cursor: help;
+}
+
+.tool-tip {
+	color: #fff;
+	width: 172px;
+	z-index: 13000;
+}
+ 
+.tool-title {
+	font-weight: bold;
+	font-size: 11px;
+	margin: 0;
+	padding: 8px 8px 4px;
+	background: url(cooltip.png) top left;
+}
+ 
+.tool-text {
+	font-size: 11px;
+	padding: 4px 8px 8px;
+	background: url(cooltip.png) bottom right;
+}
+
+
 
 /* ////////////////////////////////
 	Options
@@ -314,6 +344,7 @@ input[type=checkbox] {
 
 /* output as table */
 #output_result table {
+	background: white;
 	margin-top:1px;
 	border: solid black 1px;
 	border-collapse:collapse;
@@ -332,3 +363,17 @@ input[type=checkbox] {
 #output_result.empty {
 	border:none;
 }
+
+/* desktop-like background for the results */
+table.section_output {
+	margin:10px;
+	margin-left:0;
+	/*padding:10px;
+	background:#DBDBFF;*/
+}
+
+td.output_menu {
+	background:#DBDBFF;
+	margin:10px;
+}
+

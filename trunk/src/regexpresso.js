@@ -592,20 +592,20 @@ Regexpresso.prototype.setOption = function( name, value )
 
 	this.options[name] = value;
 
-	// makes sure the change will be visible to the user by setting the corresponding input fields
+// TODO : change the pictures -> build a 'checkbox object that works'
+/*	// makes sure the change will be visible to the user by setting the corresponding input fields
 	var checkboxes = this.dom_options.getElements("input[type=checkbox]").filterByAttribute('value',"=",name);
 	var newvalue = value ? "checked" : "";
 	if ( fields.length > 0 && fields[0].checked != newvalue )
 		checkboxes[0].checked = newvalue;
 
 	// also reflects the change into the class
-	// TODO : change the pictures -> build a 'checkbox object that works'
 	checkboxes.merge($$(sel_results_menus)).each( function(item,index) {
 		if ( value )
 			item.addClass("selected");
 		else
 			item.removeClass("selected");
-	} );
+	} );*/
 }
 
 
