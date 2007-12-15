@@ -306,17 +306,17 @@ RegexWorker.prototype.asRawHTML = function( options )
 
 		if ( options.showIndexes )
 		{
-			string += "<span class='" + options.classIndexes + "'>" + match.index + "</span>";
+			string += "<span class='" + options.classIndexes + "'>" + m + "</span>";
 		}
 
 		string += (options.showNonPrintable ? RegexWorker.showNonPrintable(match.text,options.classPrefixNonPrintable) : match.text);
 
-		if ( options.showBackreferences && match.groups.length>0 )
+		if ( options.showBackRef && match.groups.length>0 )
 		{
 			for ( g=0 ; g<match.groups.length ; g++ )
 			{
 				var group = match.groups[g];
-				string += "<span class='" + options.classBackref + "'>"
+				string += "<span class='" + options.classBackRef + "'>"
 					+ (options.showNonPrintable ? RegexWorker.showNonPrintable(group,options.classPrefixNonPrintable) : group )
 					+ "</span>";
 			}
@@ -395,7 +395,7 @@ RegexWorker.prototype.asHTMLTable = function( options )
 	if ( options.showIndexes )
 		cols.push("index");
 	cols.push("match");
-	if ( options.showBackreferences )
+	if ( options.showBackRef )
 		cols.push("backref");
 	if ( options.showContext )
 		cols.push("context");
@@ -468,13 +468,13 @@ var Regexpresso = new Class({
 		// default values for user-exposed options
 		debug: true,
 		smoothTransitions: true,
-		autorefresh: false,
+		autoRefresh: false,
 		showResults: true,
 		showNonPrintable: true, 
 		showIndexes: false,
-		showBackreferences: true,
+		showBackRef: true,
 		showContext: false,
-		renderer: "table",
+		renderer: "text",
 	},
 
 	initialize: function(options) {
@@ -492,7 +492,7 @@ var Regexpresso = new Class({
 		this.dom_subject = $(this.options['subject'][0]);
 		this.dom_subject.makeResizable({
 			handle: $(this.options['subject'][1]),
-			modifiers:{x: false, y:'height'} /*limit the sizing to vertical*/
+			modifiers:{x: false, y:'height'} /*limits the sizing to vertical*/
 		});
 		this.dom_regex = $(this.options['regex'][0]);
 
@@ -539,7 +539,7 @@ var Regexpresso = new Class({
 		// active accordion title has CSS class 'on'
 		this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
 			openAll: false,
-			firstElementsOpen: [2],
+			firstElementsOpen: [0,3],
 			opacity: this.options['smoothTransitions'],
 			onActive: function(toggler,el) { toggler.addClass("on"); },
 			onBackground: function(toggler,i) { toggler.removeClass("on") }
@@ -570,15 +570,27 @@ var Regexpresso = new Class({
 			item.onkeyup = item.onchange;
 		}, this );
 
-		// links some input to this object's options
+	 	// makes sure the value displayed is the one used internaly
 		this.dom_options.getElements("input[type=checkbox]").each( function(item,index) {
-		 	var me = this;
-		 	item.onclick = function() {
-		 		me.setOption(this.value, this.ckecked != "");
-		 	};
-		 	// makes sure the value displayed is the one used internaly
-		 	this.setOption( item.value, this.options[item.value] );
+		 	item.checked = this.options[item.value];
 		 }, this );
+
+		// initializes the graphical checkboxes
+		var imgChks = [];
+		imgChks.extend(new ImgCheckBox("img.showIndexes","showIndexes",{srcOn: "../l&amp;f/showindexes.gif", srcOff: "../l&amp;f/hideindexes.gif" }));
+		imgChks.extend(new ImgCheckBox("img.showBackRef","showBackRef",{srcOn: "../l&amp;f/showbackref.gif", srcOff: "../l&amp;f/hidebackref.gif" }));
+		imgChks.extend(new ImgCheckBox("img.showContext","showContext",{srcOn: "../l&amp;f/showcontext.gif", srcOff: "../l&amp;f/hidecontext.gif" }));
+		imgChks.extend(new ImgCheckBox("img.showNonPrintable","showNonPrintable",{srcOn: "../l&amp;f/shownonprintable.gif", srcOff: "../l&amp;f/hidenonprintable.gif" }));
+
+		// forces refresh on those buttons
+		var me = this;
+		console.debug(imgChks);
+		for ( var i=0 ; i<imgChks.length ; i++ )
+		{
+ 			console.debug(imgChks[i]);
+			//debugger;
+			imgChks[i].input.addEvent( "change", function(){ me.onSubmit(); } );
+		}
 
 	} // end of initialize
 });
@@ -586,26 +598,23 @@ Regexpresso.implement(new Options, new Events);
 
 
 
+/**
+ * Sets the value of an option and refreshes the result if needed
+ */
 Regexpresso.prototype.setOption = function( name, value )
 {
 	console.debug(this,"setOption(",name,value,")");
 
-	this.options[name] = value;
+	var refreshActions = ['showIndexes','showNonPrintable','showBackRef','showContext'];
 
-// TODO : change the pictures -> build a 'checkbox object that works'
-/*	// makes sure the change will be visible to the user by setting the corresponding input fields
-	var checkboxes = this.dom_options.getElements("input[type=checkbox]").filterByAttribute('value',"=",name);
-	var newvalue = value ? "checked" : "";
-	if ( fields.length > 0 && fields[0].checked != newvalue )
-		checkboxes[0].checked = newvalue;
-
-	// also reflects the change into the class
-	checkboxes.merge($$(sel_results_menus)).each( function(item,index) {
-		if ( value )
-			item.addClass("selected");
-		else
-			item.removeClass("selected");
-	} );*/
+	if ( this.options[name] != value )
+	{
+		this.options[name] = value;
+		if ( refreshActions.contains(name) && this.options.autoRefresh )
+		{
+			this.onSubmit();
+		}
+	}
 }
 
 
@@ -657,7 +666,7 @@ Regexpresso.prototype.onFieldUpdate = function( el )
 	}
 
 	// updates the result if needed
-	if ( this.options['autorefresh'] && this.dom_regex.value != oldval )
+	if ( this.options['autoRefresh'] && this.dom_regex.value != oldval )
 	{
 		this.onSubmit();
 	}
@@ -666,40 +675,38 @@ Regexpresso.prototype.onFieldUpdate = function( el )
 
 
 // filters the action icons to show depending on the current state
-Regexpresso.prototype.filterMenu = function( allowedActions )
+Regexpresso.prototype.filterMenus = function( allowedActions )
 {
-	var menu = $$(this.sel_results_menus)[0];
-	menu.getChildren().each(
-		function(action,a){
-			if ( allowedActions.contains(action.id) )
-			{
-				action.show();
-				action.style.display = "inline";
+	var menus = $$(this.sel_results_menus);
+
+	// for each menu
+	for ( var m=0 ; m<menus.length ; m++ )
+	{
+		var menu = menus[m];
+
+		// shows / hides some of the icons
+		menu.getChildren().each(
+			function(action,a){
+				// if this actions has one class that's also in allowedActions, show the icon
+				if ( allowedActions.some( function(item,index) { return action.hasClass(item); } ) )
+				{
+					action.show();
+					action.style.display = "inline";
+				}
+				else
+				{
+					action.hide();
+				}
 			}
-			else
-				action.hide();
-		}
-	);
-	return menu;
-}
+		);
 
+		// and shows/ hides the whole menu
+		if ( this.options.showResults && this.worker.matches.length > 0 )
+			menu.show();
+		else
+			menu.hide();
 
-
-// duplicates the menu after the results to gain accessibility
-Regexpresso.prototype.duplicateMenu = function()
-{
-	var menu = $$(this.sel_results_menus)[0];
-	$$(this.sel_results_menus).each(
-		function(item,index){
-			if( index > 0 ) {
-				$(item).empty().adopt(menu.clone());
-			}
-			if ( this.options.showResults && this.worker.matches.length > 0 )
-				item.show();
-			else
-				item.hide();
-		},
-		this);
+	}
 }
 
 
@@ -761,9 +768,18 @@ Regexpresso.prototype.onSubmit = function()
 				if ( this.options.showResults && this.worker.matches.length > 0 )
 				{
 					// builds the icons menu and displays/hides all of its clones
-					this.filterMenu(['asText','asTable','showIndexes','showBackrefs','showNonPrintable','showContext','copy']);
+					switch( this.options.renderer )
+					{
+						case "text":
+							this.filterMenus(['asText','asTable','showIndexes','showBackRef','showNonPrintable','copy']);
+							break;
+						case "table":
+							this.filterMenus(['asText','asTable','showIndexes','showBackRef','showNonPrintable','showContext','copy']);
+							break;
+						default:
+							this.filterMenus(['asText','asTable']);
+					}
 				}
-				this.duplicateMenu();
 
 				// then outputs one of the available views
 				// the following operations can take time if the input text is big
@@ -806,9 +822,8 @@ Regexpresso.prototype.onSubmit = function()
 				// builds the icons menu and displays/hides all of its clones
 				if ( this.options.showResults && this.worker.matches.length > 0 )
 				{
-					this.filterMenu(['asText','showNonPrintable','copy']);
+					this.filterMenus(['asText','showNonPrintable','copy']);
 				}
-				this.duplicateMenu();
 
 				// then outputs one of the available views
 				// the following operations can take time if the input text is big

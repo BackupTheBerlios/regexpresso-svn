@@ -265,6 +265,12 @@ input[type=checkbox] {
 //////////////////////////////// */
 
 
+table.section_options {
+	/*margin:10px;
+	margin-left:0;
+	padding:10px;*/
+	background-color:#DBFF92;	/* pastel green */
+}
 
 /*#options {
 	font-size:small;
@@ -336,10 +342,16 @@ input[type=checkbox] {
 	font-size:x-small;
 }
 
+#section_output {
+	background:#DBDBFF;
+}
+
 /* output as text */
 #output_result pre {
 	border: solid #DBFF00 2px;
 	background-color:white;
+	margin:0;
+	padding:0;
 }
 
 /* output as table */
@@ -368,11 +380,13 @@ input[type=checkbox] {
 table.section_output {
 	margin:10px;
 	margin-left:0;
-	/*padding:10px;
-	background:#DBDBFF;*/
+	padding:10px;
+	background:#DBDBFF;
 }
 
+/* icons menu around the output */
 td.output_menu {
+	background:#9FD7EF;
 	background:#DBDBFF;
 	margin:10px;
 }

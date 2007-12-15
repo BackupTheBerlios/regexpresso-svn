@@ -72,7 +72,8 @@
 		<!-- other generic libraries -->
 		<script type="text/javascript" src="../lib/chainedlist.js"></script>
 		<script type="text/javascript" src="../lib/ie.js"></script>
-		<script type="text/javascript" src="../lib/tooltip.js"></script>
+		<script type="text/javascript" src="../lib/htmlentities.js"></script>
+		<script type="text/javascript" src="../lib/forms.js"></script>
 
 		<!-- libraries from this project -->
 		<script type="text/javascript" src="util.js"></script>
@@ -97,11 +98,12 @@
 					options: ["section_options"],
 					// hidden, rendering options
 					classMatched: "highlight",
-					classBackref: "highlight_backref",
+					classBackRef: "highlight_backref",
 					classIndexes: "highlight_index",
 					classEmptyMatch: "emptyMatch",
 					classPrefixNonPrintable: "nonPrintable"
 				});
+
 			} );
 
 		</script>
@@ -180,7 +182,7 @@
 		<form id="content" enctype="UTF-8" onsubmit="javascript:regexpresso.onSubmit();return false;">
 
 			<!-- title -->
-			<h1 id="title" class="accordion_toggler"><div style="height:5px;"></div>RegEx<span class="presto">presso</span><span class="square">&nbsp;2</span></h1>
+			<h1 id="title" class="accordion_toggler">RegEx<span class="presto">presso</span><span class="square">&nbsp;2</span></h1>
 
 			<div class="accordion_stretcher">
 
@@ -270,22 +272,32 @@
 			<!-- script's output (dynamic content) -->
 			<div id="section_output" class="accordion_stretcher">
 
-				<table>
+				<table class="section_output">
 
 					<!-- the base menu with all icons (will be changed dynamically depending on state) -->
 					<tr><td class="output_menu"><div class="output_menu" style="display:none;">
-						<a id="asText" href="javascript:regexpresso.setOption('renderer','text');void(regexpresso.onSubmit());" title="Results as text" class="tabicon"><img src="../l&amp;f/text.gif" alt="text"></a>
-						<a id="asTable" href="javascript:regexpresso.setOption('renderer','table');void(regexpresso.onSubmit());" title="Results in table" class="tabicon"><img src="../l&amp;f/table.gif" alt="table"></a>
-						<a id="showIndexes" href="javascript:regexpresso.toggleOption('showIndexes');void(regexpresso.onSubmit());" title="Show / hide indexes" class="tabicon"><img src="../l&amp;f/showindexes.gif" alt="indexes"></a>
-						<a id="showBackrefs" href="javascript:regexpresso.toggleOption('showBackreferences');void(regexpresso.onSubmit());" title="Show / hide backreferences" class="tabicon"><img src="../l&amp;f/showbackref.gif" alt="backrefs"></a>
-						<a id="showContext" href="javascript:regexpresso.toggleOption('showContext');void(regexpresso.onSubmit());" title="Show / hide surrounding text" class="tabicon"><img src="../l&amp;f/hidecontext.gif" alt="context"></a>
-						<a id="showNonPrintable" href="javascript:regexpresso.setOption('showNonPrintable',!regexpresso.options.showNonPrintable);void(regexpresso.onSubmit());" title="Show / hide non-printable characters" class="tabicon"><img src="../l&amp;f/shownonprintable.gif" alt="non-printable"></a>
-						<a id="copy" href="javascript:regexpresso.copy();" title="Copy to clipboard" class="tabicon"><img src="../l&amp;f/copy.gif" alt="copy"></a>
+						<a href="javascript:regexpresso.setOption('renderer','text');void(regexpresso.onSubmit());" title="Results as text" class="tabicon asText"><img src="../l&amp;f/text.gif" alt="[text]"></a>
+						<a href="javascript:regexpresso.setOption('renderer','table');void(regexpresso.onSubmit());" title="Results in table" class="tabicon asTable"><img src="../l&amp;f/table.gif" alt="[table]"></a>
+						<!--div style="display:none;"-->
+							<input name="renderAs" type="radio" value="text" onchange="javascript:regexpresso.setOption('renderer','text');">
+							<input name="renderAs" type="radio" value="table" onchange="javascript:regexpresso.setOption('renderer','table');">
+						<!--/div-->
+						<a title="Show / hide indexes" class="tabicon showIndexes"><img class="showIndexes" alt="[1..x]"></a>
+						<a title="Show / hide backreferences" class="tabicon showBackRef"><img class="showBackRef" alt="(g)"></a>
+						<a title="Show / hide surrounding text" class="tabicon showContext"><img class="showContext" alt="[..]"></a>
+						<a title="Show / hide non-printable characters" class="tabicon showNonPrintable"><img class="showNonPrintable" alt="&para;"></a>
+						<a href="javascript:regexpresso.copy();" title="Copy to clipboard" class="tabicon copy"><img src="../l&amp;f/copy.gif" alt="[copy]"></a>
 					</div></td></tr>
 
 					<tr><td><div id="output_result" class="empty">No result yet.</div></td></tr>
 
-					<tr><td class="output_menu"><div class="output_menu" style="text-align:right;" style="display:none;"><!-- the first menu will be duplicated here --></div></td></tr>
+					<tr><td class="output_menu"><div id="output_menu2" class="output_menu" style="display:none; text-align:right;">
+						<script type="text/javascript">
+							$$('.output_menu')[0].getChildren().each( function(item,index) {
+								item.clone().injectInside( $('output_menu2') );
+							} );
+						</script>
+					</div></td></tr>
 
 				</table>
 
@@ -295,22 +307,33 @@
 			<h2 class="accordion_toggler options">options</h2>
 
 			<div id="section_options" class="accordion_stretcher">
-                            <p>
-				<table>
-					<tr>
-						<td>Show indexes</td>
-						<td><input name="options[]" type="checkbox" value="showIndexes"></td>
-					</tr>
-					<tr>
-						<td>Show backreferences</td>
-						<td><input name="options[]" type="checkbox" value="showBackreferences"></td>
-					</tr>
-					<tr>
-						<td>Show context</td>
-						<td><input name="options[]" type="checkbox" value="showContext"></td>
-					</tr>
-				</table>
-                            </p>
+
+				<p>
+					<table class="section_options">
+						<tr>
+							<td>Autorefresh</td>
+							<td><input id="autoRefresh" name="options[]" type="checkbox" value="autoRefresh" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+						</tr>
+						<tr>
+							<td>Show indexes</td>
+							<td><input id="showIndexes" name="options[]" type="checkbox" value="showIndexes" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+						</tr>
+						<tr>
+							<td>Show backreferences</td>
+							<td><input id="showBackRef" name="options[]" type="checkbox" value="showBackRef" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+						</tr>
+						<tr>
+							<td>Show context</td>
+							<td><input id="showContext" name="options[]" type="checkbox" value="showContext" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+						</tr>
+						<tr>
+							<td>Show special char.</td>
+							<td><input id="showNonPrintable" name="options[]" type="checkbox" value="showNonPrintable" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+						</tr>
+					</table>
+				</p>
+
+				<br class="spacer">
 			</div>
 
 
@@ -338,10 +361,12 @@
 				</div-->
 
 				<!-- hide the following before publishing -->
+				<!--
 				<div class="w3cvalid">
 					<a href="http://validator.w3.org/check?uri=referer" target="_blank"><img src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01 Transitional"></a>
 					<a href="http://jigsaw.w3.org/css-validator/check/referer" target="_blank"><img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
 				</div>
+				-->
       </p>
 			</div>
 
