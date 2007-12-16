@@ -21,39 +21,6 @@ if ( !$defined(Matcher) || !$defined(Match) ) throw new Error("Class 'Matcher' o
 
 
 
-/**
-	Writes a text into the tag dedicated to warnings.
-	Hides this tag if text == "".
-	@tparam String text	The text to write into the Warning zone
-*/
-function warning( text )
-{
-	$('warning').innerHTML = text;
-	text.length > 0 ? $('warning').show() : $('warning').hide();
-}
-
-
-
-/**
-	@tparam String dom_type			The type of the DOM Node
-	@tparam String css_class		The CSS class
-	@tparam DOMElement dom_child	The DOM Node to insert into the node
-	@treturn DOMElement sets some properties ; null parameters are ignored
-*/
-/*document.createSimpleElement = function( dom_type, css_class, dom_child )
-{
-	//console.debug("createSimpleElement("+dom_type+","+text+","+css_class+")");
-
-	var el = document.createElement(dom_type);
-	if ( css_class != null )
-		el.className = css_class;
-	if ( dom_child != null )
-		el.appendChild(dom_child);
-	return el;
-}*/
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 // extension : to the Match class for regular expressions add a context to the matches
 
@@ -200,36 +167,6 @@ RegexWorker.prototype.getContext = function( match, length_before, length_after 
 		subject.substring( Math.min(match.index+match.text.length,subject.length), Math.min(match.index+match.text.length+length_after,subject.length) )
 		);
 }
-
-
-
-/**
-	Updates the context with dots before and after to emphasize that there's text even before and/or after.
-	@return the modified context
-*/
-/*RegexWorker.prototype.getDottedContext = function( match, subject, length_before, length_after )
-{
-	var context = this.getContext(match,subject,length_before,length_after);
-
-	if ( context.indexBefore > 0 )
-		context.textBefore = "..." + context.textBefore;
-	if ( context.indexAfter < this.subject.length-1 )
-		context.textAfter += "...";
-
-	return context;
-}*/
-
-
-
-/**
-	Formats a match in an extract of text
-	@return a TextNode
-*/
-/*RegexWorker.prototype.getContextAsText = function ( match, mode )
-{
-	var context = this.getDottedContext( match, 10, 10 );
-	return document.createTextNode( "char. " + context.match_index + " : " + context.text_before + "*" + match.text + "*" + context.text_after );
-}*/
 
 
 
@@ -469,7 +406,6 @@ var Regexpresso = new Class({
 		debug: true,
 		smoothTransitions: true,
 		autoRefresh: false,
-		showResults: true,
 		showNonPrintable: true, 
 		showIndexes: false,
 		showBackRef: true,
@@ -481,41 +417,39 @@ var Regexpresso = new Class({
 
 		console.debug("new Regexpresso(",options,")");
 
-		this.setOptions(options);
-
 		// output div : where to print the results
-		this.dom_output_count = $(this.options.output[0]);
-		this.sel_results_menus = this.options.output[1];
-		this.dom_output_result = $(this.options.output[2]);
+		this.dom_output_count = $(options.output[0]);
+		this.sel_results_menus = options.output[1];
+		this.dom_output_result = $(options.output[2]);
 
 		// exact input values from which to compute the results
-		this.dom_subject = $(this.options['subject'][0]);
+		this.dom_subject = $(options['subject'][0]);
 		this.dom_subject.makeResizable({
-			handle: $(this.options['subject'][1]),
+			handle: $(options['subject'][1]),
 			modifiers:{x: false, y:'height'} /*limits the sizing to vertical*/
 		});
-		this.dom_regex = $(this.options['regex'][0]);
+		this.dom_regex = $(options['regex'][0]);
 
 		// widgets to help the user to type the regular expression in input
 		this.widget_search = {
-			0: $(this.options['search'][0]),
-			'i': $(this.options['search'][1]),
-			'g': $(this.options['search'][2]),
-			'm': $(this.options['search'][3])
+			0: $(options['search'][0]),
+			'i': $(options['search'][1]),
+			'g': $(options['search'][2]),
+			'm': $(options['search'][3])
 		};
 		this.widget_replace = {
-			0: $(this.options['replace'][0]),
-			1: $(this.options['replace'][1]),
-			'i': $(this.options['replace'][2]),
-			'g': $(this.options['replace'][3]),
-			'm': $(this.options['replace'][4])
+			0: $(options['replace'][0]),
+			1: $(options['replace'][1]),
+			'i': $(options['replace'][2]),
+			'g': $(options['replace'][3]),
+			'm': $(options['replace'][4])
 		};
 		this.widget_expert = {
-			0: $(this.options['expert'][0])
+			0: $(options['expert'][0])
 		};
 
 		// the div where to print the options
-		this.dom_options = $(this.options['options'][0]);
+		this.dom_options = $(options['options'][0]);
 
 		// Tabs have to be initialized before accordion so the accordion
 		// opens with the right size when it opens itself.
@@ -530,7 +464,7 @@ var Regexpresso = new Class({
 			/*remember which tab the user clicked last*/
 			/*cookieName: "regexpresso",*/
 			/*use transitions to fade across*/
-			smooth: this.options['smoothTransitions']
+			smooth: options['smoothTransitions']
 			});
 
 
@@ -540,7 +474,7 @@ var Regexpresso = new Class({
 		this.accordion = new MultipleOpenAccordion( $$(".accordion_toggler"), $$(".accordion_stretcher"), {
 			openAll: false,
 			firstElementsOpen: [0,3],
-			opacity: this.options['smoothTransitions'],
+			opacity: options['smoothTransitions'],
 			onActive: function(toggler,el) { toggler.addClass("on"); },
 			onBackground: function(toggler,i) { toggler.removeClass("on") }
 			} );
@@ -572,7 +506,7 @@ var Regexpresso = new Class({
 
 	 	// makes sure the value displayed is the one used internaly
 		this.dom_options.getElements("input[type=checkbox]").each( function(item,index) {
-		 	item.checked = this.options[item.value];
+		 	item.checked = options[item.value];
 		 }, this );
 
 		// initializes the graphical checkboxes
@@ -592,9 +526,26 @@ var Regexpresso = new Class({
 			imgChks[i].input.addEvent( "change", function(){ me.onSubmit(); } );
 		}
 
+		// updates the fields with passed-in values, if any
+		this.onPost( options );
+
 	} // end of initialize
 });
 Regexpresso.implement(new Options, new Events);
+
+
+
+Regexpresso.prototype.setField = function( name, value )
+{
+	// TODO
+}
+
+
+
+Regexpresso.prototype.getField = function( name )
+{
+	// TODO
+}
 
 
 
@@ -609,7 +560,22 @@ Regexpresso.prototype.setOption = function( name, value )
 
 	if ( this.options[name] != value )
 	{
+		// updates the internal value
 		this.options[name] = value;
+
+		// updates the corresponding checkbox (if it's the case)
+		var options = $$("input").filterByAttribute("name","=","options");
+		var checkboxes = options.filterByAttribute("type","=","checkbox");
+		var mycheck = checkboxes.filterByAttribute("value","=",name);
+		if ( mycheck.length && mycheck[0].checked != (value != "") )
+		{
+			mycheck[0].checked = (value != "");
+		}
+
+		// updates the corresponding select input (if it's the case)
+		// TODO
+
+		// updates the result if required
 		if ( refreshActions.contains(name) && this.options.autoRefresh )
 		{
 			this.onSubmit();
@@ -622,6 +588,23 @@ Regexpresso.prototype.setOption = function( name, value )
 Regexpresso.prototype.toggleOption = function( name )
 {
 	this.setOption( name, !this.options[name] );
+}
+
+
+
+Regexpresso.prototype.setOptions = function( options )
+{
+	Options.prototype.setOptions.apply(this,[options]);
+
+	if ( options.options )
+	{
+		for ( o in options.options )
+		{
+			this.setOption(o,options.options[o]);
+		}
+	}
+
+	return this;
 }
 
 
@@ -701,7 +684,7 @@ Regexpresso.prototype.filterMenus = function( allowedActions )
 		);
 
 		// and shows/ hides the whole menu
-		if ( this.options.showResults && this.worker.matches.length > 0 )
+		if ( this.worker.matches.length > 0 )
 			menu.show();
 		else
 			menu.hide();
@@ -765,7 +748,7 @@ Regexpresso.prototype.onSubmit = function()
 				this.dom_output_count.toggleClass("alt");
 
 				// then the menus
-				if ( this.options.showResults && this.worker.matches.length > 0 )
+				if ( this.worker.matches.length > 0 )
 				{
 					// builds the icons menu and displays/hides all of its clones
 					switch( this.options.renderer )
@@ -783,32 +766,25 @@ Regexpresso.prototype.onSubmit = function()
 
 				// then outputs one of the available views
 				// the following operations can take time if the input text is big
-				if ( this.options.showResults )
+				if ( this.worker.matches.length > 0 )
 				{
-					if ( this.worker.matches.length > 0 )
+					this.dom_output_result.removeClass("empty");
+					switch ( this.options.renderer )
 					{
-						this.dom_output_result.removeClass("empty");
-						switch ( this.options.renderer )
-						{
-							case "text":
-								this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
-								break;
-							case "table":
-								this.dom_output_result.empty().adopt($(this.worker.asHTMLTable(this.options)));
-								break;
-						}
+						case "text":
+							this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+							break;
+						case "table":
+							this.dom_output_result.empty().adopt($(this.worker.asHTMLTable(this.options)));
+							break;
 					}
-					else
-					{
-						this.dom_output_result.addClass("empty");
-						this.dom_output_result.innerHTML = "No result.";
-					}
-					this.dom_output_result.show();
 				}
 				else
 				{
-					this.dom_output_result.hide();
+					this.dom_output_result.addClass("empty");
+					this.dom_output_result.innerHTML = "No result.";
 				}
+				this.dom_output_result.show();
 			}
 			break;
 
@@ -820,23 +796,16 @@ Regexpresso.prototype.onSubmit = function()
 				this.dom_output_count.toggleClass("alt");
 
 				// builds the icons menu and displays/hides all of its clones
-				if ( this.options.showResults && this.worker.matches.length > 0 )
+				if ( this.worker.matches.length > 0 )
 				{
 					this.filterMenus(['asText','showNonPrintable','copy']);
 				}
 
 				// then outputs one of the available views
 				// the following operations can take time if the input text is big
-				if ( this.options['showResults'] )
-				{
-					this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
-					this.dom_output_result.removeClass("empty");
-					this.dom_output_result.show();
-				}
-				else
-				{
-					this.dom_output_result.hide();
-				}
+				this.dom_output_result.innerHTML = "<pre>" + this.worker.asRawHTML(this.options) + "</pre>";
+				this.dom_output_result.removeClass("empty");
+				this.dom_output_result.show();
 			}
 			break;
 		}
@@ -914,3 +883,38 @@ Regexpresso.prototype.copy = function()
 			break;
 	}
 }
+
+
+
+/**
+ * Sets values into the current page : fields that are part of the form
+ */
+Regexpresso.prototype.onPost = function( data )
+{
+	// the following fields are set only if present
+	[this.dom_subject.name,this.dom_regex.name].each( function(item,index) {
+		if ( $defined(data[item]) )
+		{
+			this.setField(item,data[item]);
+		}
+	}, this);
+
+	// if the 'options' array is present, all options are set
+	if ( $defined(data.options) )
+	{
+		var options = $$("input").filterByAttribute("name","=","options");
+
+		// reads checkboxes values
+		var checkboxes = options.filterByAttribute("type","=","checkbox");
+		checkboxes.each( function(checkbox,index) {
+			// => checkboxes are also unchecked if not present
+			this.setOption( checkbox.name, $defined(data.options[checkbox.name]) );
+		}, this );
+
+		// other options
+		[ 'debug', 'renderer' ].each( function(name) {
+			this.setOption(name,data.options[name]);
+		}, this );
+	}
+}
+

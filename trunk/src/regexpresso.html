@@ -25,11 +25,27 @@
 
 
 
+		<script type="text/javascript">
+		<!--
+			/**
+				Writes a text into the tag dedicated to warnings.
+				Hides this tag if text == "".
+				@tparam String text	The text to write into the Warning zone
+			*/
+			function warning( text )
+			{
+				$('warning').innerHTML = text;
+				text.length > 0 ? $('warning').show() : $('warning').hide();
+			}
+		// -->
+		</script>
+
+
 
 		<!-- frameworks -->
 
-    <!-- firebug lite for IE -->
-    <script type="text/javascript" src="firebug.js"></script>
+		<!-- firebug lite for IE -->
+		<script type="text/javascript" src="firebug.js"></script>
 
 		<!-- the basic prototype -->
 		<!--script type="text/javascript" src="lib/prototype.js"></script-->
@@ -81,7 +97,7 @@
 
 		<!-- additional init scripts -->
 		<script type="text/javascript">
-
+		<!--
 			// Initializes the dynamic elements not waiting for the images to load.
 			window.addEvent( 'domready', function() {
 
@@ -105,7 +121,7 @@
 				});
 
 			} );
-
+		// -->
 		</script>
 	</head>
 
@@ -312,23 +328,27 @@
 					<table class="section_options">
 						<tr>
 							<td>Autorefresh</td>
-							<td><input id="autoRefresh" name="options[]" type="checkbox" value="autoRefresh" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+							<td><input id="autoRefresh" name="options" type="checkbox" value="autoRefresh" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
 						</tr>
 						<tr>
 							<td>Show indexes</td>
-							<td><input id="showIndexes" name="options[]" type="checkbox" value="showIndexes" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+							<td><input id="showIndexes" name="options" type="checkbox" value="showIndexes" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
 						</tr>
 						<tr>
 							<td>Show backreferences</td>
-							<td><input id="showBackRef" name="options[]" type="checkbox" value="showBackRef" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+							<td><input id="showBackRef" name="options" type="checkbox" value="showBackRef" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
 						</tr>
 						<tr>
 							<td>Show context</td>
-							<td><input id="showContext" name="options[]" type="checkbox" value="showContext" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+							<td><input id="showContext" name="options" type="checkbox" value="showContext" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
 						</tr>
 						<tr>
 							<td>Show special char.</td>
-							<td><input id="showNonPrintable" name="options[]" type="checkbox" value="showNonPrintable" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+							<td><input id="showNonPrintable" name="options" type="checkbox" value="showNonPrintable" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
+						</tr>
+						<tr>
+							<td>Visual effects</td>
+							<td><input id="smoothTransitions" name="options" type="checkbox" value="smoothTransitions" checked="checked" onchange="javascript:regexpresso.setOption(this.value,this.checked);"></td>
 						</tr>
 					</table>
 				</p>
